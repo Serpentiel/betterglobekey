@@ -1,0 +1,23 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/dependency-review-action@v2

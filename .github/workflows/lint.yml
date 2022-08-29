@@ -1,0 +1,32 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+  push:
+    branches:
+      - main
+      - release-*
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: DavidAnson/markdownlint-cli2-action@v7
+        with:
+          globs: |
+            **/*.md
+            !.github/**
+            !LICENSE.md

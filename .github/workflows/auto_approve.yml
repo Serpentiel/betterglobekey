@@ -1,0 +1,23 @@
+name: Auto Approve
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'auto approve') || github.actor == 'dependabot[bot]'
+    steps:
+      - uses: hmarr/auto-approve-action@v2

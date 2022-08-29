@@ -1,0 +1,54 @@
+linters:
+  disable-all: true
+  enable:
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gocognit
+    - goconst
+    - gocyclo
+    - gofmt
+    - goimports
+    - gomnd
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nlreturn
+    - prealloc
+    - revive
+    - staticcheck
+    - typecheck
+    - unconvert
+    - unused
+    - whitespace
+    - wsl
+
+linters-settings:
+  gocognit:
+    min-complexity: 25
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  govet:
+    check-shadowing: true
+  lll:
+    line-length: 120
+    tab-width: 4
+
+issues:
+  exclude-use-default: false
+
+run:
+  go: "1.17" # See https://github.com/golangci/golangci-lint/issues/2649.
