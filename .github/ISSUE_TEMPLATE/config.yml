@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contributing guidelines
+    url: https://github.com/Serpentiel/betterglobekey/blob/main/CONTRIBUTING.md
+    about: Don't forget to check our contributing guidelines out!

@@ -1,0 +1,8 @@
+# An array of input sources to cycle through when the Globe key is pressed once.
+primary_input_sources:
+  - com.apple.keylayout.US
+  - com.apple.keylayout.Russian
+
+# An array of input sources to cycle through when the Globe key is double pressed.
+additional_input_sources:
+  - com.apple.keylayout.Finnish
