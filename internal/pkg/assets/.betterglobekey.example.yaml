@@ -1,8 +1,17 @@
-# An array of input sources to cycle through when the Globe key is pressed once.
-primary_input_sources:
-  - com.apple.keylayout.US
-  - com.apple.keylayout.Russian
+# Double press
+double_press:
+  # Maximum delay between two presses of the Globe key for them to be considered as a double press
+  maximum_delay: 250
 
-# An array of input sources to cycle through when the Globe key is double pressed.
-additional_input_sources:
-  - com.apple.keylayout.Finnish
+# Input sources
+input_sources:
+  # Primary input sources
+  # This is used when the Globe key has been pressed once
+  primary:
+    - com.apple.keylayout.US
+    - com.apple.keylayout.Russian
+
+  # Additional input sources
+  # This is used when the Globe key has been double pressed
+  additional:
+    - com.apple.keylayout.Finnish

@@ -5,15 +5,11 @@ import (
 	"time"
 
 	"github.com/Serpentiel/betterglobekey/pkg/inputsource"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
 // logger is the logger for the application.
 var logger *zap.SugaredLogger
-
-// doublePressThreshold is the threshold for a double press.
-const doublePressThreshold = 250
 
 // handlers is a map of rawcode to a map of kind to handler.
 var handlers HandlersMap
@@ -32,38 +28,37 @@ type handler interface {
 
 var _ handler = (*fnKeyHandler)(nil)
 
-// fnKeyHandler is a handler for the Fn key up event.
+// fnKeyHandler is a handler for the fn key up event.
 type fnKeyHandler struct {
-	// doublePressable is a bool that indicates if the key is double pressable.
-	doublePressable bool
-
-	// doublePressed is a bool that indicates if the key is double pressed.
-	doublePressed bool
-
-	// inputSources is a slice of all available input sources.
-	inputSources []string
-
-	// currentInputSource is the current input source.
-	currentInputSource string
-
-	// previousInputSource is the previous input source.
-	previousInputSource string
+	// doublePressMaximumDelay is the maximum delay between two presses of the fn key for them to be considered as a
+	// double press.
+	doublePressMaximumDelay int
 
 	// primaryInputSources is a slice of the primary input sources.
 	primaryInputSources []string
 
 	// additionalInputSources is a slice of the additional input sources.
 	additionalInputSources []string
+
+	// doublePressable is a bool that indicates if the key is double pressable.
+	doublePressable bool
+
+	// doublePressed is a bool that indicates if the key is double pressed.
+	doublePressed bool
+
+	// currentInputSource is the current input source.
+	currentInputSource string
+
+	// previousInputSource is the previous input source.
+	previousInputSource string
 }
 
 // newFnKeyHandler returns a new fnKeyHandler.
 func newFnKeyHandler() *fnKeyHandler {
 	return &fnKeyHandler{
-		inputSources: inputsource.All(),
-
-		primaryInputSources: viper.GetStringSlice("primary_input_sources"),
-
-		additionalInputSources: viper.GetStringSlice("additional_input_sources"),
+		doublePressMaximumDelay: intGet("double_press.maximum_delay"),
+		primaryInputSources:     stringSliceGet("input_sources.primary"),
+		additionalInputSources:  stringSliceGet("input_sources.additional"),
 	}
 }
 
@@ -97,7 +92,7 @@ func (h *fnKeyHandler) setInputSource(inputSource string) {
 func (h *fnKeyHandler) KeyUp() handlerFunc {
 	return func() {
 		{
-			doublePressTicker := time.NewTicker(doublePressThreshold * time.Millisecond)
+			doublePressTicker := time.NewTicker(time.Duration(h.doublePressMaximumDelay) * time.Millisecond)
 
 			h.doublePressed = h.doublePressable
 

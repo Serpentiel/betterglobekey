@@ -1,7 +1,7 @@
 // Package eventhandler encapsulates logic to handle keyboard events.
 package eventhandler
 
-// keyFn is the rawcode for the Fn key.
+// keyFn is the rawcode for the fn key.
 const keyFn rawCode = 179
 
 // rawCode is a type that holds the rawcode.
