@@ -29,11 +29,6 @@ func All() []string {
 		filter, unsafe.Pointer(C.kTISPropertyInputSourceIsSelectCapable), unsafe.Pointer(C.kCFBooleanTrue),
 	)
 
-	// nolint:govet
-	C.CFDictionarySetValue(
-		filter, unsafe.Pointer(C.kTISPropertyInputSourceType), unsafe.Pointer(C.kTISTypeKeyboardLayout),
-	)
-
 	defer C.CFRelease(C.CFTypeRef(filter))
 
 	sourceList := C.TISCreateInputSourceList(C.CFDictionaryRef(filter), 0)
@@ -44,6 +39,12 @@ func All() []string {
 
 	for i := C.CFIndex(0); i < C.CFArrayGetCount(sourceList); i++ {
 		inputSource := C.TISInputSourceRef(C.CFArrayGetValueAtIndex(sourceList, i))
+
+		t := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceType))
+		if C.CFStringCompare(t, C.kTISTypeKeyboardLayout, 0) != C.kCFCompareEqualTo &&
+			C.CFStringCompare(t, C.kTISTypeKeyboardInputMode, 0) != C.kCFCompareEqualTo {
+			continue
+		}
 
 		id := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceID))
 
