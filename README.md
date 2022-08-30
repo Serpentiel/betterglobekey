@@ -84,7 +84,7 @@ The utility replaces the default behavior of the Globe key and adds two new mode
 Single press mode is the mode that is activated when the Globe key is pressed once.
 
 Single press mode cycles between your primary input sources—I believe most of the users out there will not even need
-the other available mode as it is probably only useful if you have more than average input sources.
+the other available mode as it is probably only useful if you have more than average amount of input sources.
 
 Single press mode uses the input sources defined in the config's `primary_input_sources` array.
 
@@ -141,7 +141,8 @@ Double press mode uses the input sources defined in the config's `additional_inp
 - Now, evaluate `launchctl load -w ~/Library/LaunchAgents/me.serpentiel.betterglobekey.plist` in your favorite
   terminal app and you are all set and good to go!
 
-> **P.S.** Do not forget to disable the default Globe key behavior under **_System Preferences > Keyboard_**.
+> **P.S.** The utility's config file has been automatically generated for you at `~/.betterglobekey.yaml`.
+> Do not forget to disable the default Globe key behavior under **_System Preferences > Keyboard_**.
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
