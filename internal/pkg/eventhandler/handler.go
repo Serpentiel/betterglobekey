@@ -61,16 +61,13 @@ func newFnKeyHandler() *fnKeyHandler {
 	return &fnKeyHandler{
 		inputSources: inputsource.All(),
 
-		// TODO: Make this configurable.
 		primaryInputSources: viper.GetStringSlice("primary_input_sources"),
 
-		// TODO: Make this configurable.
-		additionalInputSources: []string{
-			"com.apple.keylayout.Finnish",
-		},
+		additionalInputSources: viper.GetStringSlice("additional_input_sources"),
 	}
 }
 
+// getNextInputSource returns the next input source.
 func (h *fnKeyHandler) getNextInputSource(inputSources *[]string) int {
 	nextInputSource := 0
 
