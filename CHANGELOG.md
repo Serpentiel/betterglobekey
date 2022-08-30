@@ -19,6 +19,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- ### Security -->
 
+## [2.0.0] - 2022-08-30
+
+### Changed
+
+- 38f6ec: docs: update changelog (@Serpentiel)
+- 12a6d2: refactor!: change config schema, add new option (@Serpentiel)
+
+### Removed
+
+- 1df393: ci: drop Changelog Enforcer workflow (@Serpentiel)
+
 ## [1.0.1] - 2022-08-30
 
 ### Added
@@ -46,6 +57,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - initial release
 
-[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v1.0.1...HEAD
+[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.0
 [1.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.0
