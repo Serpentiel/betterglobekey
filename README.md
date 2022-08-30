@@ -79,34 +79,34 @@ experience, and I sincerely hope that one day Apple is going to make it this way
 
 The utility replaces the default behavior of the Globe key and adds two new modes to it:
 
-### Single Press Mode
+1. **Single Press Mode**
 
-Single press mode is the mode that is activated when the Globe key is pressed once.
+   Single press mode is the mode that is activated when the Globe key is pressed once.
 
-Single press mode cycles between your primary input sources—I believe most of the users out there will not even need
-the other available mode as it is probably only useful if you have more than average amount of input sources.
+   Single press mode cycles between your primary input sources—I believe most of the users out there will not even need
+   the other available mode as it is probably only useful if you have more than average amount of input sources.
 
-Single press mode uses the input sources defined in the config's `primary_input_sources` array.
+   Single press mode uses the input sources defined in the config's `primary_input_sources` array.
 
-### Double Press Mode
+2. **Double Press Mode**
 
-Double press mode is the mode that is activated when the Globe key is double pressed.
+   Double press mode is the mode that is activated when the Globe key is double pressed.
 
-Double press mode cycles between your additional input sources. If you use multiple input sources, you
-probably use only several input sources frequently—you might consider putting those that you use the least under
-additional input sources.
+   Double press mode cycles between your additional input sources. If you use multiple input sources, you
+   probably use only several input sources frequently—you might consider putting those that you use the least under
+   additional input sources.
 
-Double press mode uses the input sources defined in the config's `additional_input_sources` array.
+   Double press mode uses the input sources defined in the config's `additional_input_sources` array.
 
-> **N.B.** This is not working as designed at the moment—this is supposed to open the original input source popup, but
-> implementing it requires some reverse engineering. There is probably a function in macOS private API that can be used
-> to open the popup.
+   > **N.B.** This is not working as designed at the moment—this is supposed to open the original input source popup, but
+   > implementing it requires some reverse engineering. There is probably a function in macOS private API that can be used
+   > to open the popup.
 
 ### Prerequisites
 
 - A macOS-powered computer
 - A keyboard that features the Globe key, e.g. MacBook's builtin keyboard
-- A will to use this utility
+- A will to use this utility and some effort
 
 ### Setting It Up
 
