@@ -1,4 +1,5 @@
 // Package inputsource provides access to macOS input sources.
+// nolint:nlreturn // nlreturn does not seems to work properly with this package.
 package inputsource
 
 /*
@@ -12,7 +13,7 @@ import "unsafe"
 
 // cfStringToString converts a CFString to a Go string.
 func cfStringToString(cfString C.CFStringRef) string {
-	length := C.CFStringGetLength(cfString) // nolint:nlreturn
+	length := C.CFStringGetLength(cfString)
 
 	maxSize := C.CFStringGetMaximumSizeForEncoding(length, C.kCFStringEncodingUTF8)
 
@@ -20,7 +21,7 @@ func cfStringToString(cfString C.CFStringRef) string {
 
 	bufferPtr := (*C.char)(unsafe.Pointer(&buffer[0]))
 
-	C.CFStringGetCString(cfString, bufferPtr, maxSize, C.kCFStringEncodingUTF8) // nolint:nlreturn
+	C.CFStringGetCString(cfString, bufferPtr, maxSize, C.kCFStringEncodingUTF8)
 
 	return C.GoString(bufferPtr)
 }
