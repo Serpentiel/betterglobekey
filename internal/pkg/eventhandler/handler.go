@@ -30,6 +30,8 @@ type handler interface {
 	KeyUp() handlerFunc
 }
 
+var _ handler = (*fnKeyHandler)(nil)
+
 // fnKeyHandler is a handler for the Fn key up event.
 type fnKeyHandler struct {
 	// doublePressable is a bool that indicates if the key is double pressable.
