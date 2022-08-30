@@ -3,9 +3,8 @@
 package inputsource
 
 /*
-#cgo LDFLAGS: -framework Carbon -framework CoreFoundation
+#cgo LDFLAGS: -framework CoreFoundation
 
-#include <Carbon/Carbon.h>
 #include <CoreFoundation/CoreFoundation.h>
 */
 import "C"
