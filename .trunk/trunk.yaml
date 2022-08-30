@@ -6,5 +6,5 @@ lint:
     - git-diff-check@SYSTEM
     - gitleaks@8.11.2
     - gofmt@1.16.7
-    # - golangci-lint@1.46.2 # This currently fails to lint files that use CGO.
+    # - golangci-lint@1.46.2 # This currently fails to lint files that use cgo.
     - prettier@2.6.2
