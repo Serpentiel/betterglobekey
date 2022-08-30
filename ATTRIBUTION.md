@@ -17,7 +17,7 @@ A special thank you to the people and projects that helped make betterglobekey p
       <a href="#projects">2. Projects</a>
       <ul>
         <li>
-          <a href="#template">2.1. Template</a>
+          <a href="#template">2.1. template</a>
         </li>
       </ul>
     </li>
@@ -43,7 +43,7 @@ A special thank you to the people and projects that helped make betterglobekey p
 
 Projects listed below are ordered alphabetically.
 
-### Template
+### template
 
 <https://github.com/Serpentiel/template>
 
