@@ -110,39 +110,21 @@ The utility replaces the default behavior of the Globe key and adds two new mode
 
 ### Setting It Up
 
-> **N.B.** The next release of the utility is going to feature a more convenient way to set it up and I really hope
-> that it is going to be a Homebrew Formulae.
+- Install the utility via [Homebrew](https://brew.sh):
 
-- Download the [latest prebuilt binary](https://github.com/Serpentiel/betterglobekey/releases/latest). You are also
-  free to build it from the source, e.g. by running `go install`.
-- Move it to a reasonable and secluded place, e.g. under `/usr/local/bin`. Make sure to rename it to `betterglobekey`
-  for convenience.
-- Touch `~/Library/LaunchAgents/me.serpentiel.betterglobekey.plist` and fill it with the following contents:
-
-  ```xml
-  <?xml version="1.0" encoding="UTF-8"?>
-  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-  <plist version="1.0">
-      <dict>
-          <key>Label</key>
-          <string>me.serpentiel.betterglobekey</string>
-          <key>ProgramArguments</key>
-          <array>
-              <string>/usr/local/bin/betterglobekey</string>
-          </array>
-          <key>RunAtLoad</key>
-          <true/>
-      </dict>
-  </plist>
+  ```bash
+  brew tap Serpentiel/betterglobekey https://github.com/Serpentiel/betterglobekey.git
+  brew install betterglobekey
   ```
 
-- Tired yet? Feel free to [contribute](#contributing) to the project by providing us with a more convenient way to set
-  it up.
-- Now, evaluate `launchctl load -w ~/Library/LaunchAgents/me.serpentiel.betterglobekey.plist` in your favorite
-  terminal app and you are all set and good to go!
+- Start the service:
+
+  ```bash
+  brew services start betterglobekey
+  ```
 
 > **P.S.** The utility's config file has been automatically generated for you at `~/.betterglobekey.yaml`.
-> Do not forget to disable the default Globe key behavior under **_System Preferences > Keyboard_**.
+> Do not forget to disable the default Globe key behavior under _System Preferences > Keyboard_.
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
