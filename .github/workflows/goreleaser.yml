@@ -3,7 +3,7 @@ name: goreleaser
 on:
   push:
     tags:
-      - "*"
+      - v*
 
 permissions:
   contents: write
@@ -24,3 +24,4 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: EndBug/latest-tag@latest
