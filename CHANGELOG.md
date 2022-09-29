@@ -19,6 +19,23 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- ### Security -->
 
+## [2.0.1] - 2022-09-29
+
+### Added
+
+- bf58002: build: add Homebrew formula, update docs (@Serpentiel)
+- 5bc9a59: ci: create latest tag for new releases (@Serpentiel)
+
+### Changed
+
+- 6b0ff7a: build(deps): bump github.com/spf13/viper from 1.12.0 to 1.13.0 (#4) (@dependabot[bot])
+- 6caa763: docs: update CONTRIBUTING.md (#3) (@Serpentiel)
+- bb43e04: docs: update changelog (@Serpentiel)
+
+### Fixed
+
+- 57f1f61: fix: CJK input sources (@Serpentiel)
+
 ## [2.0.0] - 2022-08-30
 
 ### Changed
@@ -57,7 +74,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - initial release
 
-[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.0
 [1.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.0
