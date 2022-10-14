@@ -86,7 +86,7 @@ The utility replaces the default behavior of the Globe key and adds two new mode
    Single press mode cycles between your primary input sources—I believe most of the users out there will not even need
    the other available mode as it is probably only useful if you have more than average amount of input sources.
 
-   Single press mode uses the input sources defined in the config's `primary_input_sources` array.
+   Single press mode uses the input sources defined in the config's `input_sources.primary` array.
 
 2. **Double Press Mode**
 
@@ -96,7 +96,9 @@ The utility replaces the default behavior of the Globe key and adds two new mode
    probably use only several input sources frequently—you might consider putting those that you use the least under
    additional input sources.
 
-   Double press mode uses the input sources defined in the config's `additional_input_sources` array.
+   Double press mode uses the input sources defined in the config's `input_sources.additional` array.
+
+   Double press maximum delay is also configurable in the config's `double_press.maximum_delay` property.
 
    > **N.B.** This is not working as designed at the moment—this is supposed to open the original input source popup, but
    > implementing it requires some reverse engineering. There is probably a function in macOS private API that can be used
