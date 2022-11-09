@@ -7,6 +7,7 @@ import (
 
 	"github.com/Serpentiel/betterglobekey/internal/pkg/assets"
 	"github.com/Serpentiel/betterglobekey/internal/pkg/eventlistener"
+	"github.com/Serpentiel/betterglobekey/pkg/inputsource"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -76,6 +77,11 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 
 			if err = viper.ReadInConfig(); err != nil {
 				logger.Fatalw("failed to read config", zap.Error(err))
+			}
+
+			viper.Set("input_sources.primary", inputsource.All())
+			if err = viper.WriteConfig(); err != nil {
+				logger.Fatalw("failed to write config", zap.Error(err))
 			}
 		}
 	}
