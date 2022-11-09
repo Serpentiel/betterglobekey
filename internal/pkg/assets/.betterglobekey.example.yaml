@@ -7,11 +7,8 @@ double_press:
 input_sources:
   # Primary input sources
   # This is used when the Globe key has been pressed once
-  primary:
-    - com.apple.keylayout.US
-    - com.apple.keylayout.Russian
+  primary: []
 
   # Additional input sources
   # This is used when the Globe key has been double pressed
-  additional:
-    - com.apple.keylayout.Finnish
+  additional: []
