@@ -119,7 +119,6 @@ func (h *fnKeyHandler) KeyUp() handlerFunc {
 			// TODO: This is not working as designed at the moment—this is supposed to open the original
 			//  input source popup, but implementing it requires some reverse engineering.
 			//  There is probably a function in macOS private API that can be used to open the popup.
-
 			logger.Info("globe key double pressed")
 
 			h.setInputSource(h.previousInputSource)
