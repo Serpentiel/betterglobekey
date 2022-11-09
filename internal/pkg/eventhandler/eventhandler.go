@@ -91,7 +91,7 @@ func (h *fnKeyHandler) setInputSource(inputSource string) {
 // KeyUp is called when the key is released.
 func (h *fnKeyHandler) KeyUp() handlerFunc {
 	return func() {
-		{
+		if len(h.additionalInputSources) > 0 {
 			doublePressTicker := time.NewTicker(time.Duration(h.doublePressMaximumDelay) * time.Millisecond)
 
 			h.doublePressed = h.doublePressable
