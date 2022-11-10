@@ -11,7 +11,8 @@
 - [ ] Dependencies bump, i.e. upgrade of dependencies this project uses
 - [ ] Documentation update, i.e. documentation-only change
 - [ ] New feature, i.e. non-breaking change which adds functionality
-
+      \
+       &nbsp;
 - [ ] This change requires a documentation update
 
 **Have you checked yourself twice?**
