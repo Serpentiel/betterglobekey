@@ -20,4 +20,4 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'auto approve') || github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v2
+      - uses: hmarr/auto-approve-action@v3
