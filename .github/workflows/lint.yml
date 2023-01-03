@@ -30,7 +30,7 @@ jobs:
     if: (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v3
-      - uses: DavidAnson/markdownlint-cli2-action@v8
+      - uses: DavidAnson/markdownlint-cli2-action@v9
         with:
           globs: |
             **/*.md
