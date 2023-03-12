@@ -2,7 +2,7 @@
 package eventlistener
 
 import (
-	"github.com/Serpentiel/betterglobekey/internal/pkg/eventhandler"
+	"github.com/Serpentiel/betterglobekey/internal/eventhandler"
 	hook "github.com/robotn/gohook"
 	"go.uber.org/zap"
 )
