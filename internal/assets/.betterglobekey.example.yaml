@@ -1,0 +1,13 @@
+# double_press defines double press configuration options.
+double_press:
+  # maximum_delay is the maximum time in milliseconds between the first and second press of the Globe key to be
+  # considered a double press.
+  maximum_delay: 250
+
+# input_sources defines the input sources to be used when the Globe key is pressed.
+input_sources:
+  # primary defines the primary input sources. This is used when the Globe key has not been double pressed.
+  primary: []
+
+  # additional defines the additional input sources. This is used when the Globe key has been double pressed.
+  additional: []

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Serpentiel/betterglobekey/internal/pkg/assets"
-	"github.com/Serpentiel/betterglobekey/internal/pkg/eventlistener"
+	"github.com/Serpentiel/betterglobekey/internal/assets"
+	"github.com/Serpentiel/betterglobekey/internal/eventlistener"
 	"github.com/Serpentiel/betterglobekey/pkg/inputsource"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -80,6 +80,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 			}
 
 			viper.Set("input_sources.primary", inputsource.All())
+
 			if err = viper.WriteConfig(); err != nil {
 				logger.Fatalw("failed to write config", zap.Error(err))
 			}
