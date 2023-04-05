@@ -1,6 +1,11 @@
+# Fill the question form below and remove this heading
+
 **About this change—what it does?**
 
-<!-- Please include a summary of the change and which issue is fixed, relevant motivation and context. Don't forget to list any dependencies that are required for this change. -->
+<!--
+      Please include a summary of the change and which issue is fixed, relevant motivation and context.
+      Don't forget to list any dependencies that are required for this change.
+-->
 
 **What type of change is it?**
 
@@ -11,8 +16,7 @@
 - [ ] Dependencies bump, i.e. upgrade of dependencies this project uses
 - [ ] Documentation update, i.e. documentation-only change
 - [ ] New feature, i.e. non-breaking change which adds functionality
-      \
-       &nbsp;
+
 - [ ] This change requires a documentation update
 
 **Have you checked yourself twice?**

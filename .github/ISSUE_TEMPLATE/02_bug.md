@@ -4,9 +4,14 @@ about: Spotted a problem? Let us know!
 labels: bug
 ---
 
+# Fill the question form below and remove this heading
+
 **What happened?**
 
-<!-- Try to be as precise as possible. Please provide all the required information for others to be able to reproduce it. -->
+<!--
+    Try to be as precise as possible.
+    Please provide all the required information for others to be able to reproduce it.
+-->
 
 **What did you expect to happen?**
 

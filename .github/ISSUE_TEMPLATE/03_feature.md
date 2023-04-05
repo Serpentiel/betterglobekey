@@ -4,6 +4,8 @@ about: What would make this project even better?
 labels: enhancement
 ---
 
+# Fill the question form below and remove this heading
+
 **What is currently missing?**
 
 <!-- Please, describe what is currently missing and why should it be present in the project. -->
@@ -14,4 +16,4 @@ labels: enhancement
 
 **Is this a feature you would work on yourself?**
 
-* [ ] I plan to open a pull request for this feature.
+- [ ] I plan to open a pull request for this feature.

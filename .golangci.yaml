@@ -49,6 +49,3 @@ linters-settings:
 
 issues:
   exclude-use-default: false
-
-run:
-  go: "1.17" # See https://github.com/golangci/golangci-lint/issues/2649.
