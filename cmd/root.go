@@ -47,7 +47,7 @@ func setup() {
 }
 
 // runRootCmd is the work function for the root command.
-func runRootCmd(cmd *cobra.Command, args []string) {
+func runRootCmd(cmd *cobra.Command, _ []string) {
 	{
 		configFile, err := cmd.PersistentFlags().GetString("config")
 
