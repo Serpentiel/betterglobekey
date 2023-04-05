@@ -2,6 +2,8 @@ version: 0.1
 cli:
   version: 1.7.0
 lint:
+  disabled:
+    - golangci-lint # This currently fails to lint files that use cgo.
   enabled:
     - actionlint@1.6.24
     - markdownlint@0.33.0
@@ -9,7 +11,6 @@ lint:
     - git-diff-check@SYSTEM
     - gitleaks@8.16.2
     - gofmt@1.19.3
-    # - golangci-lint@1.52.2 # This currently fails to lint files that use cgo.
     - prettier@2.8.7
   ignore:
     - linters:

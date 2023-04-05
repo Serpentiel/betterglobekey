@@ -1,9 +1,11 @@
-// Package main is the main package of the application.
+// Package main is the package that contains the entry point for the application.
 package main
 
-import "github.com/Serpentiel/betterglobekey/cmd"
+import (
+	"github.com/Serpentiel/betterglobekey/cmd"
+)
 
-// main is the entrypoint for the application.
+// main is the entry point for the application.
 func main() {
 	cmd.Execute()
 }
