@@ -19,6 +19,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- ### Security -->
 
+## [2.1.1] - 2023-04-05
+
+### Changed
+
+- 6e2fd9d785533c7d9bd5ddd8c6d49f493a48a2ae: build(deps): bump DavidAnson/markdownlint-cli2-action from 7 to 8 (#16) (@dependabot[bot])
+- c76661d9370267eca0f5bcdb19f879bb3a80c751: build(deps): bump DavidAnson/markdownlint-cli2-action from 8 to 9 (#19) (@dependabot[bot])
+- 984f89e3b6491fa19c0d524c25d97facdb03b170: build(deps): bump actions/dependency-review-action from 2 to 3 (#14) (@dependabot[bot])
+- 449ecd69eca0908c5daaeef292186c82a8f39f49: build(deps): bump actions/setup-go from 3 to 4 (#22) (@dependabot[bot])
+- 983c0482102948e7479faf0fd5ff93b130d80823: build(deps): bump github.com/spf13/cobra from 1.6.1 to 1.7.0 (#23) (@dependabot[bot])
+- 5e7763c1080e45a0533dcedc803d8c3f804041a8: build(deps): bump github.com/spf13/viper from 1.14.0 to 1.15.0 (#20) (@dependabot[bot])
+- cf7032a1a8477bf25a9a600be74b5809c6573b9c: build(deps): bump go.uber.org/zap from 1.23.0 to 1.24.0 (#17) (@dependabot[bot])
+- f4b276b4296a95b4275d9eaa2d57dfa390a98b9d: build(deps): bump goreleaser/goreleaser-action from 3 to 4 (#18) (@dependabot[bot])
+- 932a6e7f9bdcc8dde90403025412a80559db7460: build(deps): bump hmarr/auto-approve-action from 2 to 3 (#15) (@dependabot[bot])
+- c24ecf28b69ba5383ecab1518ea0776bf2a72b28: chore: migrate to Serpentiel/go-cli template (#25) (@Serpentiel)
+- ddccc39e4717dc59000f1230028ec9536c667cea: ci(lint): upgrade trunk (#24) (@Serpentiel)
+- 3f75a5476a8d03cf02c0872e84ab916fc68b35cd: docs(changelog): add v2.1.0 entries (#12) (@Serpentiel)
+- 584e66060b64bc980b3aad513457d7de68d9f96b: docs(gh): fix PULL_REQUEST_TEMPLATE.md (#13) (@Serpentiel)
+- 807170319fe6486cc3ca9a5e91b818d54ee4e584: refactor: internal/pkg (#21) (@Serpentiel)
+
 ## [2.1.0] - 2022-11-10
 
 ### Added
@@ -94,7 +113,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - initial release
 
-[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.1.0...HEAD
+[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.1
 [2.1.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.0
 [2.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.0
