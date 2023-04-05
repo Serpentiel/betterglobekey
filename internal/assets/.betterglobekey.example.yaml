@@ -1,3 +1,16 @@
+# logger defines the parameters for the logger.
+logger:
+  # path is the path to the log file.
+  path: betterglobekey.log
+
+  # retain defines the parameters for log file retention.
+  retain:
+    # days is the number of days to retain log files.
+    days: 30
+
+    # copies is the number of log files to retain.
+    copies: 3
+
 # double_press defines double press configuration options.
 double_press:
   # maximum_delay is the maximum time in milliseconds between the first and second press of the Globe key to be

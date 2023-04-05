@@ -12,18 +12,15 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all available input sources",
-	Run:   runListCmd,
+	Run: func(_ *cobra.Command, _ []string) {
+		for _, v := range inputsource.All() {
+			// nolint:forbidigo
+			fmt.Println(v)
+		}
+	},
 }
 
 // init is the function that is called when the package is initialized. This should be avoided if possible.
 func init() {
 	rootCmd.AddCommand(listCmd)
-}
-
-// runListCmd is the work function for the list command.
-func runListCmd(_ *cobra.Command, _ []string) {
-	for _, v := range inputsource.All() {
-		// nolint:forbidigo
-		fmt.Println(v)
-	}
 }
