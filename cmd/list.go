@@ -21,7 +21,7 @@ func init() {
 }
 
 // runListCmd is the work function for the list command.
-func runListCmd(cmd *cobra.Command, args []string) {
+func runListCmd(_ *cobra.Command, _ []string) {
 	for _, v := range inputsource.All() {
 		// nolint:forbidigo
 		fmt.Println(v)
