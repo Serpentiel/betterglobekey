@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/robotn/gohook v0.41.0
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	go.uber.org/fx v1.20.1
 	go.uber.org/zap v1.26.0
