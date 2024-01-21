@@ -97,7 +97,7 @@ from the currently active input source:
        - com.apple.keylayout.Russian
      bar:
        - com.apple.keylayout.Finnish
-       - com.apple.keylayout.Ukrainian
+       - com.apple.keylayout.Ukrainian-PC
        - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
    ```
 
