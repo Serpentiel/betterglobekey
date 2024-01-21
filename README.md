@@ -77,32 +77,45 @@ experience, and I sincerely hope that one day Apple is going to make it this way
 
 ## Getting Started
 
-The utility replaces the default behavior of the Globe key and adds two new modes to it:
+The utility enhances the functionality of the Globe key by introducing two distinct modes of operation and starting
+from the currently active input source:
 
 1. **Single Press Mode**
 
-   Single press mode is the mode that is activated when the Globe key is pressed once.
+   Single press mode is activated when the Globe key is pressed once.
 
-   Single press mode cycles between your primary input sources—I believe most of the users out there will not even need
-   the other available mode as it is probably only useful if you have more than average amount of input sources.
+   In this mode, the utility cycles through a collection of input sources. Each press of the Globe key switches to the
+   next input source within the current collection.
 
-   Single press mode uses the input sources defined in the config's `input_sources.primary` array.
+   The collections of input sources are defined in the configuration under `input_sources`. Each key-value pair within
+   this map represents a named collection of input sources. For example:
+
+   ```yaml
+   input_sources:
+     foo:
+       - com.apple.keylayout.US
+       - com.apple.keylayout.Russian
+     bar:
+       - com.apple.keylayout.Finnish
+       - com.apple.keylayout.Ukrainian
+       - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
+   ```
+
+   Upon initialization, the utility determines the current active input source and starts from that particular source
+   within its respective collection.
 
 2. **Double Press Mode**
 
-   Double press mode is the mode that is activated when the Globe key is double pressed.
+   Double press mode is activated when the Globe key is double-pressed.
 
-   Double press mode cycles between your additional input sources. If you use multiple input sources, you
-   probably use only several input sources frequently—you might consider putting those that you use the least under
-   additional input sources.
+   In this mode, the utility switches between different collections of input sources. Each double press of the Globe
+   key cycles to the next collection in the configuration.
 
-   Double press mode uses the input sources defined in the config's `input_sources.additional` array.
+   The maximum time interval between the first and second press that is considered a double press can be configured
+   in the `double_press.maximum_delay` property. This delay is specified in milliseconds.
 
-   Double press maximum delay is also configurable in the config's `double_press.maximum_delay` property.
-
-   > **N.B.** This is not working as designed at the moment—this is supposed to open the original input source popup, but
-   > implementing it requires some reverse engineering. There is probably a function in macOS private API that can be used
-   > to open the popup.
+These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
+especially for users who frequently switch between different languages or keyboard layouts.
 
 ### Prerequisites
 
@@ -115,7 +128,7 @@ The utility replaces the default behavior of the Globe key and adds two new mode
 - Install the utility via [Homebrew](https://brew.sh):
 
   ```bash
-  brew tap Serpentiel/betterglobekey https://github.com/Serpentiel/betterglobekey.git
+  brew tap Serpentiel/tools
   brew install betterglobekey
   ```
 

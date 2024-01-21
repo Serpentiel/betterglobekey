@@ -5,7 +5,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/Serpentiel/betterglobekey/internal/eventhandler"
+	"github.com/Serpentiel/betterglobekey/internal/pkg/eventhandler"
 	"github.com/Serpentiel/betterglobekey/internal/provide"
 	"github.com/Serpentiel/betterglobekey/pkg/logger"
 	hook "github.com/robotn/gohook"

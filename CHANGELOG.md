@@ -19,6 +19,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- ### Security -->
 
+## [3.0.0] - 2024-01-21
+
+### Added
+
+- add support for input source collections, allowing users to group and cycle through different sets of input sources
+- introduce dynamic starting behavior, enabling the utility to begin with the currently active input source upon initialization
+
+### Changed
+
+- update the configuration structure to accommodate collections of input sources, replacing the previous primary and additional input sources configuration
+- modify the Double Press Mode to switch between different input source collections
+- adjust the Single Press Mode to cycle through input sources within the current collection
+- move Homebrew tap and `betterglobekey.rb` formula to `Serpentiel/homebrew-tools`
+
+### Removed
+
+- remove the distinction between primary and additional input sources in the configuration, in favor of the new collection-based approach
+
+### Fixed
+
+- fix an issue where the utility would not start from the currently active input source
+
 ## [2.1.1] - 2023-04-05
 
 ### Changed
@@ -113,7 +135,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - initial release
 
-[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v2.1.1...HEAD
+[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v3.0.0
 [2.1.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.1
 [2.1.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.0
 [2.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.1
