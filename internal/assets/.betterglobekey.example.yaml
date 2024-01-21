@@ -1,26 +1,32 @@
-# logger defines the parameters for the logger.
+# Logger settings
 logger:
-  # path is the path to the log file.
+  # Path to the log file
   path: betterglobekey.log
-
-  # retain defines the parameters for log file retention.
+  # Log file retention settings
   retain:
-    # days is the number of days to retain log files.
+    # Number of days to retain log files
     days: 30
-
-    # copies is the number of log files to retain.
+    # Number of log files to retain
     copies: 3
 
-# double_press defines double press configuration options.
+# Configuration options for double press of the Globe key
 double_press:
-  # maximum_delay is the maximum time in milliseconds between the first and second press of the Globe key to be
-  # considered a double press.
+  # Maximum time (in milliseconds) between first and second press to consider as a double press
   maximum_delay: 250
 
-# input_sources defines the input sources to be used when the Globe key is pressed.
-input_sources:
-  # primary defines the primary input sources. This is used when the Globe key has not been double pressed.
-  primary: []
-
-  # additional defines the additional input sources. This is used when the Globe key has been double pressed.
-  additional: []
+# Input sources configuration
+#
+# Each key-value pair within the 'input_sources' map represents a named collection of input sources.
+# Single press of the Globe key cycles through input sources within the current collection.
+# Double press of the Globe key switches between these collections.
+#
+# Example configuration:
+# input_sources:
+#   foo:
+#     - com.apple.keylayout.US
+#     - com.apple.keylayout.Russian
+#   bar:
+#     - com.apple.keylayout.Finnish
+#     - com.apple.keylayout.Ukrainian
+#     - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
+input_sources: {}
