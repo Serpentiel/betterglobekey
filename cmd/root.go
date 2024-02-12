@@ -31,7 +31,7 @@ var rootCmd = &cobra.Command{
 
 			fx.WithLogger(provide.FxeventLogger),
 
-			fx.Invoke(func(lc fx.Lifecycle, v *viper.Viper, l logger.Logger, e *eventhandler.EventHandler) {
+			fx.Invoke(func(lc fx.Lifecycle, _ *viper.Viper, l logger.Logger, e *eventhandler.EventHandler) {
 				lc.Append(fx.Hook{
 					OnStart: func(_ context.Context) error {
 						go func() {
