@@ -1,0 +1,28 @@
+name: Upgrade Trunk
+
+on:
+  schedule:
+    - cron: 0 8 * * 1-5
+  workflow_dispatch: {}
+
+permissions: read-all
+
+jobs:
+  trunk-upgrade:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: trunk-io/trunk-action/upgrade@v1
+        with:
+          prefix: "ci(deps): "
+          lowercase-title: true

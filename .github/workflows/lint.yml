@@ -30,20 +30,11 @@ jobs:
       (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) ||
       github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - uses: trunk-io/trunk-action@v1
-  golangci-lint:
-    if: >
-      (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) ||
-      github.event_name == 'push'
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - uses: golangci/golangci-lint-action@v4

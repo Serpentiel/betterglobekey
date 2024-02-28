@@ -1,3 +1,4 @@
+// Package eventhandler encapsulates logic to handle keyboard events.
 package eventhandler
 
 import (
