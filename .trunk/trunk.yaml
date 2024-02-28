@@ -1,33 +1,59 @@
+# This file controls the behavior of Trunk: https://docs.trunk.io/cli
+# To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-  version: 1.7.0
-lint:
-  disabled:
-    - golangci-lint # This currently fails to lint files that use cgo.
+  version: 1.20.1
+# Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
+plugins:
+  sources:
+    - id: trunk
+      ref: v1.4.3
+      uri: https://github.com/trunk-io/plugins
+# Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
+runtimes:
   enabled:
-    - actionlint@1.6.24
-    - markdownlint@0.33.0
-    - yamllint@1.30.0
-    - git-diff-check@SYSTEM
-    - gitleaks@8.16.2
-    - gofmt@1.19.3
-    - prettier@2.8.7
+    - go@1.21.0
+    - node@18.12.1
+    - python@3.10.8
+# This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
+lint:
+  definitions:
+    # We only add CGO_ENABLED=1, everything else is inherited from the default linter configuration.
+    - name: golangci-lint
+      environment:
+        - name: GOLANGCI_LINT_CACHE
+          value: ${cachedir}
+        - name: PATH
+          list:
+            - ${env.PATH}
+        - name: GO111MODULE
+          value: auto
+        - name: SSH_AUTH_SOCK
+          optional: true
+          value: ${env.SSH_AUTH_SOCK}
+        - name: CGO_ENABLED
+          value: "1"
+  enabled:
+    - actionlint@1.6.27
+    - checkov@3.2.26
+    - git-diff-check
+    - gofmt@1.20.4
+    - golangci-lint@1.56.2
+    - markdownlint@0.39.0
+    - osv-scanner@1.6.2
+    - prettier@3.2.5
+    - trivy@0.49.1
+    - trufflehog@3.68.2
+    - yamllint@1.35.1
   ignore:
     - linters:
         - markdownlint
       paths:
-        - LICENSE.md
         - CHANGELOG.md
+        - LICENSE.md
 actions:
   enabled:
+    - trunk-announce
+    - trunk-check-pre-push
+    - trunk-fmt-pre-commit
     - trunk-upgrade-available
-plugins:
-  sources:
-    - id: trunk
-      ref: v0.0.14
-      uri: https://github.com/trunk-io/plugins
-runtimes:
-  enabled:
-    - python@3.10.8
-    - go@1.19.5
-    - node@18.12.1
