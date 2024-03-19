@@ -7,7 +7,7 @@ cli:
 plugins:
   sources:
     - id: trunk
-      ref: v1.4.4
+      ref: v1.4.5
       uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
@@ -35,7 +35,7 @@ lint:
           value: "1"
   enabled:
     - actionlint@1.6.27
-    - checkov@3.2.38
+    - checkov@3.2.39
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.56.2
@@ -43,7 +43,7 @@ lint:
     - osv-scanner@1.6.2
     - prettier@3.2.5
     - trivy@0.49.1
-    - trufflehog@3.69.0
+    - trufflehog@3.70.1
     - yamllint@1.35.1
   ignore:
     - linters:
