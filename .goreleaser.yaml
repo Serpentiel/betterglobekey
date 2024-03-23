@@ -8,8 +8,5 @@ builds:
       - CGO_ENABLED=1
     goos:
       - darwin
-changelog:
-  use: github
-  sort: asc
 universal_binaries:
   - replace: false

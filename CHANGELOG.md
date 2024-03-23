@@ -25,6 +25,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - add support for input source collections, allowing users to group and cycle through different sets of input sources
 - introduce dynamic starting behavior, enabling the utility to begin with the currently active input source upon initialization
+- Changelog Enforcer GitHub Actions workflow
 
 ### Changed
 
@@ -32,6 +33,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - modify the Double Press Mode to switch between different input source collections
 - adjust the Single Press Mode to cycle through input sources within the current collection
 - move Homebrew tap and `betterglobekey.rb` formula to `Serpentiel/homebrew-tools`
+- remove automatic changelog generation via `goreleaser`
 
 ### Removed
 
