@@ -117,29 +117,8 @@ from the currently active input source:
 These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
 especially for users who frequently switch between different languages or keyboard layouts.
 
-### Prerequisites
-
-- A macOS-powered computer
-- A keyboard that features the Globe key, e.g. MacBook's builtin keyboard
-- A will to use this utility and some effort
-
-### Setting It Up
-
-- Install the utility via [Homebrew](https://brew.sh):
-
-  ```bash
-  brew tap Serpentiel/tools
-  brew install betterglobekey
-  ```
-
-- Start the service:
-
-  ```bash
-  brew services start betterglobekey
-  ```
-
-> **P.S.** The utility's config file has been automatically generated for you at `~/.betterglobekey.yaml`.
-> Do not forget to disable the default Globe key behavior under _System Preferences > Keyboard_.
+See our wiki for more information on
+[how to set up and configure the utility](https://github.com/Serpentiel/betterglobekey/wiki).
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
