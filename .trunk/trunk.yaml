@@ -39,7 +39,7 @@ lint:
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.57.2
-    - markdownlint@0.39.0
+    - markdownlint@0.40.0
     - osv-scanner@1.7.2
     - prettier@3.2.5
     - trivy@0.50.4
