@@ -35,7 +35,7 @@ lint:
           value: "1"
   enabled:
     - actionlint@1.7.1
-    - checkov@3.2.141
+    - checkov@3.2.144
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.59.1
