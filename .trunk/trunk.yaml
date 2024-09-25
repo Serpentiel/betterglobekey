@@ -34,12 +34,12 @@ lint:
         - name: CGO_ENABLED
           value: "1"
   enabled:
-    - actionlint@1.7.1
+    - actionlint@1.7.2
     - checkov@3.2.255
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.61.0
-    - markdownlint@0.41.0
+    - markdownlint@0.42.0
     - osv-scanner@1.8.5
     - prettier@3.3.3
     - trivy@0.55.2
