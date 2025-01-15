@@ -42,7 +42,7 @@ lint:
     - markdownlint@0.43.0
     - osv-scanner@1.9.2
     - prettier@3.4.2
-    - trivy@0.58.1
+    - trivy@0.58.2
     - trufflehog@3.88.2
     - yamllint@1.35.1
   ignore:
