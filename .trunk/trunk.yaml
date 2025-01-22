@@ -34,7 +34,7 @@ lint:
         - name: CGO_ENABLED
           value: "1"
   enabled:
-    - actionlint@1.7.6
+    - actionlint@1.7.7
     - checkov@3.2.353
     - git-diff-check
     - gofmt@1.20.4
