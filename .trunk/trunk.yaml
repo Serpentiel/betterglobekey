@@ -43,7 +43,7 @@ lint:
     - osv-scanner@1.9.2
     - prettier@3.5.0
     - trivy@0.59.1
-    - trufflehog@3.88.5
+    - trufflehog@3.88.7
     - yamllint@1.35.1
   ignore:
     - linters:
