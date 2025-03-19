@@ -40,11 +40,11 @@ lint:
     - gofmt@1.20.4
     - golangci-lint@1.64.7
     - markdownlint@0.44.0
-    - osv-scanner@1.9.2
+    - osv-scanner@2.0.0
     - prettier@3.5.3
     - trivy@0.60.0
     - trufflehog@3.88.17
-    - yamllint@1.36.0
+    - yamllint@1.36.2
   ignore:
     - linters:
         - markdownlint
