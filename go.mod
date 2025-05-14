@@ -1,13 +1,14 @@
 module github.com/Serpentiel/betterglobekey
 
-go 1.21
+go 1.22
+
 toolchain go1.24.1
 
 require (
 	github.com/robotn/gohook v0.42.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	go.uber.org/fx v1.23.0
+	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -25,7 +26,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/vcaesar/keycode v0.10.1 // indirect
-	go.uber.org/dig v1.18.0 // indirect
+	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
