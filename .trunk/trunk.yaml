@@ -35,15 +35,15 @@ lint:
           value: "1"
   enabled:
     - actionlint@1.7.7
-    - checkov@3.2.424
+    - checkov@3.2.425
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.64.8
-    - markdownlint@0.44.0
+    - markdownlint@0.45.0
     - osv-scanner@2.0.2
     - prettier@3.5.3
     - trivy@0.62.1
-    - trufflehog@3.88.29
+    - trufflehog@3.88.30
     - yamllint@1.37.1
   ignore:
     - linters:
