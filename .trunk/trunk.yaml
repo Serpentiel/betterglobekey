@@ -40,7 +40,7 @@ lint:
     - gofmt@1.20.4
     - golangci-lint@1.64.8
     - markdownlint@0.45.0
-    - osv-scanner@2.2.2
+    - osv-scanner@2.2.3
     - prettier@3.6.2
     - trivy@0.67.0
     - trufflehog@3.90.8
