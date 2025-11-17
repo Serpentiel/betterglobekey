@@ -38,7 +38,7 @@ lint:
     - checkov@3.2.493
     - git-diff-check
     - gofmt@1.20.4
-    - golangci-lint@2.6.1
+    - golangci-lint@2.6.2
     - markdownlint@0.45.0
     - osv-scanner@2.2.4
     - prettier@3.6.2
