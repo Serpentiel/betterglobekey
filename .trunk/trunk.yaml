@@ -38,12 +38,12 @@ lint:
     - checkov@3.2.495
     - git-diff-check
     - gofmt@1.20.4
-    - golangci-lint@2.6.2
+    - golangci-lint@2.7.1
     - markdownlint@0.46.0
     - osv-scanner@2.3.0
-    - prettier@3.7.1
-    - trivy@0.67.2
-    - trufflehog@3.91.1
+    - prettier@3.7.4
+    - trivy@0.68.1
+    - trufflehog@3.91.2
     - yamllint@1.37.1
   ignore:
     - linters:
