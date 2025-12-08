@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/robotn/gohook v0.42.2
+	github.com/robotn/gohook v0.42.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	go.uber.org/fx v1.24.0
