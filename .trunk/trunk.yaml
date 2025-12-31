@@ -34,8 +34,8 @@ lint:
         - name: CGO_ENABLED
           value: "1"
   enabled:
-    - actionlint@1.7.9
-    - checkov@3.2.495
+    - actionlint@1.7.10
+    - checkov@3.2.497
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@2.7.2
@@ -43,7 +43,7 @@ lint:
     - osv-scanner@2.3.1
     - prettier@3.7.4
     - trivy@0.68.2
-    - trufflehog@3.92.3
+    - trufflehog@3.92.4
     - yamllint@1.37.1
   ignore:
     - linters:
