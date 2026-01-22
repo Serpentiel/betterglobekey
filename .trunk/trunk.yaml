@@ -41,7 +41,7 @@ lint:
     - golangci-lint@2.8.0
     - markdownlint@0.47.0
     - osv-scanner@2.3.2
-    - prettier@3.8.0
+    - prettier@3.8.1
     - trivy@0.68.2
     - trufflehog@3.92.5
     - yamllint@1.38.0
