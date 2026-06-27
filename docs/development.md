@@ -5,14 +5,25 @@ application and the [companion app](companion.md). Run `task` with no arguments 
 
 ## Prerequisites
 
+The toolchain is pinned in [`mise.toml`](../mise.toml). The recommended setup uses [mise](https://mise.jdx.dev/), which
+installs the exact pinned versions of every tool:
+
+```bash
+mise trust    # approve this project's mise.toml
+mise install  # install the pinned Go, Node.js, Task, buf, and changie
+task install   # download Go modules and companion dependencies
+```
+
+From there, every workflow runs through `task` (run `task` with no arguments to list them all).
+
+Prefer to manage tools yourself? You will need:
+
 - [Go](https://go.dev/) (see the version in `go.mod`), with `CGO_ENABLED=1` — the application links against macOS
   frameworks.
 - [Node.js](https://nodejs.org/) for the companion app.
 - [Task](https://taskfile.dev/installation/).
 - [buf](https://buf.build/) and the Go protobuf plugins (`protoc-gen-go`, `protoc-gen-go-grpc`) — only needed to
   regenerate code from the protobuf contract.
-
-If you use [mise](https://mise.jdx.dev/), the pinned toolchain versions are declared in `mise.toml`.
 
 ## Common Tasks
 
