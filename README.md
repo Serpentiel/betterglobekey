@@ -120,7 +120,7 @@ Hold **Shift** while pressing the Globe key to go back: a single press returns t
 (toggling between the two most recent), and a double press switches to the previous collection.
 
 On each change, an on-screen HUD briefly shows the new input source with its collection name. It is enabled by default;
-set `hud: false` in the configuration to turn it off. The configuration is reloaded automatically when the file changes,
+set `hud.enabled: false` in the configuration to turn it off. The configuration is reloaded automatically when the file changes,
 so edits take effect without restarting the service.
 
 betterglobekey requires macOS Accessibility permission to observe the Globe key, and works best with the Globe key set

@@ -27,7 +27,7 @@ Holding **Shift** and double-pressing switches to the **previous collection**.
 ## On-screen HUD
 
 On every change, a brief overlay appears in the center of the screen showing the new input source, with the collection
-name as a subtitle. It is enabled by default and can be turned off with `hud: false` in the
+name as a subtitle. It is enabled by default and can be tuned or turned off under `hud` in the
 [configuration](configuration.md).
 
 ## Example
