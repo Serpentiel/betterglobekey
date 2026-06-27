@@ -1,11 +1,16 @@
-// Package main is the package that contains the entry point for the application.
+// Package main is the entry point for the betterglobekey application.
 package main
 
 import (
-	"github.com/Serpentiel/betterglobekey/cmd"
+	"fmt"
+	"os"
+
+	"github.com/Serpentiel/betterglobekey/internal/cli"
 )
 
-// main is the entry point for the application.
 func main() {
-	cmd.Execute()
+	if err := cli.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
 }
