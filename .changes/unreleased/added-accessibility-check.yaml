@@ -1,0 +1,2 @@
+kind: Added
+body: Warn (and prompt) when Accessibility permission is not granted, instead of silently doing nothing.

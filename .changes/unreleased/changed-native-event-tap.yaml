@@ -1,0 +1,2 @@
+kind: Changed
+body: Replace the gohook dependency with a native CoreGraphics event tap that re-arms itself across sleep.

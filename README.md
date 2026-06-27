@@ -116,10 +116,15 @@ from the currently active input source:
    The maximum time interval between the first and second press that is considered a double press can be configured
    in the `double_press.maximum_delay` property. This delay is specified as a Go duration, e.g. `250ms`.
 
+Hold **Shift** while pressing the Globe key to cycle backward (through sources on a single press, or collections on a
+double press). Set `notify: true` in the configuration to show a system notification whenever the input source changes.
+
 These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
 especially for users who frequently switch between different languages or keyboard layouts.
 
-See our wiki for more information on
+The utility also provides helper commands: `betterglobekey list` (available input sources, with names),
+`betterglobekey current`, `betterglobekey doctor` (diagnose configuration and permissions), and
+`betterglobekey edit` (open the configuration file). See our wiki for more information on
 [how to set up and configure the utility](https://github.com/Serpentiel/betterglobekey/wiki).
 
 <!-- markdownlint-disable -->
