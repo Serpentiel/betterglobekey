@@ -116,16 +116,24 @@ from the currently active input source:
    The maximum time interval between the first and second press that is considered a double press can be configured
    in the `double_press.maximum_delay` property. This delay is specified as a Go duration, e.g. `250ms`.
 
-Hold **Shift** while pressing the Globe key to cycle backward (through sources on a single press, or collections on a
-double press). Set `notify: true` in the configuration to show a system notification whenever the input source changes.
+Hold **Shift** while pressing the Globe key to go back: a single press returns to the previously used input source
+(toggling between the two most recent), and a double press switches to the previous collection.
+
+On each change, an on-screen HUD briefly shows the new input source with its collection name. It is enabled by default;
+set `hud: false` in the configuration to turn it off. The configuration is reloaded automatically when the file changes,
+so edits take effect without restarting the service.
+
+betterglobekey requires macOS Accessibility permission to observe the Globe key, and works best with the Globe key set
+to **"No Action"** (System Settings › Keyboard) so macOS does not switch the input source as well. Run
+`betterglobekey doctor` to check your setup.
 
 These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
 especially for users who frequently switch between different languages or keyboard layouts.
 
 The utility also provides helper commands: `betterglobekey list` (available input sources, with names),
 `betterglobekey current`, `betterglobekey doctor` (diagnose configuration and permissions), and
-`betterglobekey edit` (open the configuration file). See our wiki for more information on
-[how to set up and configure the utility](https://github.com/Serpentiel/betterglobekey/wiki).
+`betterglobekey edit` (open the configuration file). See the [documentation](docs/) for more information on how to set
+up and configure the utility.
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
