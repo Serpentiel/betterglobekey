@@ -2,7 +2,7 @@ name: Upgrade Trunk
 
 on:
   schedule:
-    - cron: 0 8 * * 1-5
+    - cron: 0 8 * * 1
   workflow_dispatch: {}
 
 permissions: read-all
@@ -10,19 +10,20 @@ permissions: read-all
 jobs:
   trunk-upgrade:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: go.mod
-      - uses: trunk-io/trunk-action/upgrade@v1
+      - uses: trunk-io/trunk-action/upgrade@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           prefix: "ci(deps): "
           lowercase-title: true

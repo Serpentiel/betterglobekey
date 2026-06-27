@@ -1,5 +1,7 @@
+version: 2
 archives:
-  - format: binary
+  - formats:
+      - binary
 before:
   hooks:
     - go mod tidy

@@ -15,9 +15,14 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: auto-approve-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: contains(github.event.pull_request.labels.*.name, 'auto approve') || github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: hmarr/auto-approve-action@f0939ea97e9205ef24d872e76833fa908a770363 # v4.0.0

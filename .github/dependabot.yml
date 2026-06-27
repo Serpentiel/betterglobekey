@@ -3,8 +3,14 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+    # Delay proposing newly published releases to reduce exposure to
+    # supply chain attacks that are caught/yanked shortly after release.
+    cooldown:
+      default-days: 14
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+    cooldown:
+      default-days: 14
