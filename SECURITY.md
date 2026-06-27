@@ -62,7 +62,7 @@ contact method available to you to inform our team.
 > **N.B.** Do not file public issues on GitHub for security vulnerabilities.
 
 To report a vulnerability or a security-related issue, please contact us via any contact method available to you with
-the details of the vulnerability. The message will be fielded by the our team, which is made up of betterglobekey
+the details of the vulnerability. The message will be fielded by our team, which is made up of betterglobekey
 maintainers who have committer and release permissions. Messages will be addressed within 3 business days, including a
 detailed plan to investigate the issue and any potential workarounds to perform in the meantime. Do not report
 non-security-impacting bugs through this channel.

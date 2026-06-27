@@ -49,6 +49,7 @@ lint:
     - linters:
         - markdownlint
       paths:
+        - .github/**
         - CHANGELOG.md
         - LICENSE.md
         - .changes/**

@@ -1,11 +1,6 @@
-# Fill the question form below and remove this heading
-
 **About this change—what it does?**
 
-<!--
-      Please include a summary of the change and which issue is fixed, relevant motivation and context.
-      Don't forget to list any dependencies that are required for this change.
--->
+<!-- Please include a summary of the change and which issue is fixed, relevant motivation and context. Don't forget to list any dependencies that are required for this change. -->
 
 **What type of change is it?**
 
