@@ -51,6 +51,7 @@ lint:
       paths:
         - CHANGELOG.md
         - LICENSE.md
+        - .changes/**
 actions:
   enabled:
     - trunk-announce

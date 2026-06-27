@@ -2,24 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
-to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), this project adheres
+to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
+with [Changie](https://github.com/miniscruff/changie).
 
-## [Unreleased]
-
-<!-- ### Added -->
-
-<!-- ### Changed -->
-
-<!-- ### Deprecated -->
-
-<!-- ### Removed -->
-
-<!-- ### Fixed -->
-
-<!-- ### Security -->
-
-## [3.0.0] - 2024-01-21
+## [3.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v3.0.0) - 2024-01-21
 
 ### Added
 
@@ -43,7 +30,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - fix an issue where the utility would not start from the currently active input source
 
-## [2.1.1] - 2023-04-05
+## [2.1.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.1) - 2023-04-05
 
 ### Changed
 
@@ -62,7 +49,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 584e66060b64bc980b3aad513457d7de68d9f96b: docs(gh): fix PULL_REQUEST_TEMPLATE.md (#13) (@Serpentiel)
 - 807170319fe6486cc3ca9a5e91b818d54ee4e584: refactor: internal/pkg (#21) (@Serpentiel)
 
-## [2.1.0] - 2022-11-10
+## [2.1.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.0) - 2022-11-10
 
 ### Added
 
@@ -82,7 +69,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - b0d241b2f01142d495e158db85e74d51411791ee: ci(lint): fix block should not start with a whitespace (wsl) (@GTANAdam)
 
-## [2.0.1] - 2022-09-29
+## [2.0.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.1) - 2022-09-29
 
 ### Added
 
@@ -99,7 +86,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - 57f1f61925cbd13a876ad494033e2a83ab27a51b: fix: CJK input sources (@Serpentiel)
 
-## [2.0.0] - 2022-08-30
+## [2.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.0) - 2022-08-30
 
 ### Changed
 
@@ -110,7 +97,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - 1df393: ci: drop Changelog Enforcer workflow (@Serpentiel)
 
-## [1.0.1] - 2022-08-30
+## [1.0.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.1) - 2022-08-30
 
 ### Added
 
@@ -131,17 +118,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - 9f4a7d: fix: make config to be read properly (@Serpentiel)
 
-## [1.0.0] - 2022-08-30
+## [1.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.0) - 2022-08-30
 
 ### Added
 
 - initial release
-
-[unreleased]: https://github.com/Serpentiel/betterglobekey/compare/v3.0.0...HEAD
-[3.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v3.0.0
-[2.1.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.1
-[2.1.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.1.0
-[2.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.1
-[2.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v2.0.0
-[1.0.1]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.1
-[1.0.0]: https://github.com/Serpentiel/betterglobekey/releases/tag/v1.0.0

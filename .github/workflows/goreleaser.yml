@@ -26,7 +26,14 @@ jobs:
         with:
           fetch-depth: 0
       - run: git fetch -f -t
-      - id: tag
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+      - name: Install changie
+        run: |
+          go install github.com/miniscruff/changie@v1.24.2
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - id: release
         env:
           TAG_INPUT: ${{ inputs.tag }}
         run: |
@@ -39,17 +46,25 @@ jobs:
             echo "::error::tag $tag already exists" >&2
             exit 1
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+      - name: Build changelog and tag release
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          changie batch "$VERSION"
+          changie merge
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "$tag"
-          git push origin "$tag"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-        with:
-          go-version-file: go.mod
+          git add -A .changes CHANGELOG.md
+          git commit -m "chore(release): $TAG"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
       - uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
         with:
           version: ~> v2
-          args: release --clean
+          args: release --clean --release-notes=.changes/${{ steps.release.outputs.version }}.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
