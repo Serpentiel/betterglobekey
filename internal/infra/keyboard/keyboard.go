@@ -18,6 +18,11 @@ static CFRunLoopSourceRef bgkSource = NULL;
 // bgkFnKeyCode is kVK_Function, the Globe/fn key.
 static const int64_t bgkFnKeyCode = 63;
 
+// fn key state, tracked for edge detection so we fire exactly once per press.
+static bool bgkFnDown = false;
+// bgkFnReverse latches whether Shift was held at the moment fn was pressed.
+static int bgkFnReverse = 0;
+
 static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
 	// The system disables the tap on timeout or heavy input (e.g. across sleep);
 	// re-enable it so the daemon keeps working.
@@ -31,10 +36,18 @@ static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRe
 	if (type == kCGEventFlagsChanged &&
 	    CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == bgkFnKeyCode) {
 		CGEventFlags flags = CGEventGetFlags(event);
-		// Fire on release: the fn flag is no longer set.
-		if ((flags & kCGEventFlagMaskSecondaryFn) == 0) {
-			goHandleFnRelease((flags & kCGEventFlagMaskShift) != 0 ? 1 : 0);
+		bool down = (flags & kCGEventFlagMaskSecondaryFn) != 0;
+
+		if (down && !bgkFnDown) {
+			// Press: latch the Shift state now (the natural "hold Shift, then tap").
+			bgkFnDown = true;
+			bgkFnReverse = (flags & kCGEventFlagMaskShift) != 0 ? 1 : 0;
+		} else if (!down && bgkFnDown) {
+			// Release: fire once with the latched reverse flag.
+			bgkFnDown = false;
+			goHandleFnRelease(bgkFnReverse);
 		}
+		// Any other flags-changed event for this key code is a duplicate/no-op.
 	}
 
 	return event;
