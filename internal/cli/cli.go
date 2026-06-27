@@ -22,6 +22,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
 	"github.com/Serpentiel/betterglobekey/internal/infra/accessibility"
 	"github.com/Serpentiel/betterglobekey/internal/infra/config"
+	"github.com/Serpentiel/betterglobekey/internal/infra/control"
 	"github.com/Serpentiel/betterglobekey/internal/infra/feedback"
 	"github.com/Serpentiel/betterglobekey/internal/infra/hud"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
@@ -32,6 +33,9 @@ import (
 
 // configFileName is the default config file name, looked up in the user's home directory.
 const configFileName = ".betterglobekey.yaml"
+
+// socketFileName is the control socket name, created in the user's home directory.
+const socketFileName = ".betterglobekey.sock"
 
 // listColumnPadding is the gap between columns in the `list` output.
 const listColumnPadding = 2
@@ -158,6 +162,10 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 
 	go watchConfig(ctx, path, logger, daemon, build)
 
+	if err = startControlServer(ctx, path, controller, logger); err != nil {
+		return err
+	}
+
 	// The HUD owns the main thread's AppKit run loop; the daemon runs the event
 	// tap on its own goroutine. Stop the run loop when a signal arrives.
 	daemon.Start()
@@ -195,6 +203,42 @@ func watchConfig(
 	if err != nil {
 		logger.Error("config watcher stopped", "error", err)
 	}
+}
+
+// startControlServer launches the local gRPC control server on a background
+// goroutine and arranges for it to stop when ctx is cancelled. It returns an
+// error only if the socket path cannot be resolved.
+func startControlServer(
+	ctx context.Context,
+	path string,
+	sources control.Sources,
+	logger *logging.Logger,
+) error {
+	socketPath, err := resolveSocketPath()
+	if err != nil {
+		return err
+	}
+
+	server := control.NewServer(path, sources)
+
+	go func() {
+		if err := server.Serve(socketPath); err != nil {
+			logger.Error("control server stopped", "error", err)
+		}
+	}()
+
+	go func() {
+		<-ctx.Done()
+		server.Stop()
+
+		if err := os.Remove(socketPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			logger.Error("removing control socket failed", "error", err)
+		}
+	}()
+
+	logger.Info("control server listening", "socket", socketPath)
+
+	return nil
 }
 
 // runDoctor reports on configuration validity, permissions, and the current source.
@@ -294,6 +338,17 @@ func resolveConfigPath(cmd *cobra.Command) (string, error) {
 	}
 
 	return filepath.Join(home, configFileName), nil
+}
+
+// resolveSocketPath returns the path to the control socket in the user's home
+// directory.
+func resolveSocketPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(home, socketFileName), nil
 }
 
 // realClock is the production Clock backed by the wall clock.
