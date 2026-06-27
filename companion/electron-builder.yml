@@ -1,5 +1,5 @@
 appId: com.serpentiel.betterglobekey.companion
-productName: betterglobekey companion
+productName: betterglobekey-companion
 directories:
   output: dist
   buildResources: build
