@@ -1,12 +1,9 @@
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 
 import { app, BrowserWindow, ipcMain } from 'electron'
 
 import type { Config } from '../shared/types'
 import { applyConfig, getConfig, getCurrentSource, listInputSources } from './grpc'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -18,7 +15,7 @@ function createWindow(): void {
     title: 'betterglobekey companion',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
     },
   })

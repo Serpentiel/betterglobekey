@@ -1,15 +1,12 @@
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 
 import { credentials, loadPackageDefinition, type ServiceClientConstructor } from '@grpc/grpc-js'
 import { loadSync } from '@grpc/proto-loader'
 import { app } from 'electron'
 
 import type { Config, InputSource } from '../shared/types'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // protoPath resolves the control.proto contract both in development (read from
 // the synced copy next to the build output) and when packaged (from resources).
