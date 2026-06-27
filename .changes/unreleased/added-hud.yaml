@@ -1,0 +1,2 @@
+kind: Added
+body: "Show an on-screen HUD naming the new input source and its collection on each change (enabled by default; set `hud: false` to disable)."

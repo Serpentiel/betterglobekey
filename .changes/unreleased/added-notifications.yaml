@@ -1,2 +1,0 @@
-kind: Added
-body: Add an opt-in `notify` setting that posts a notification when the input source changes.
