@@ -60,9 +60,10 @@ func newTestClient(t *testing.T, path string, sources Sources) controlv1.ConfigS
 
 func sampleProtoConfig() *controlv1.Config {
 	return &controlv1.Config{
-		Logger:              &controlv1.Logger{Path: "x.log", RetentionDays: 7, RetentionFiles: 2},
-		DoublePressMaxDelay: "300ms",
-		Hud:                 true,
+		Logger:      &controlv1.Logger{Path: "x.log", Level: "info", RetentionDays: 7, RetentionFiles: 2},
+		DoublePress: &controlv1.DoublePress{Enabled: true, MaximumDelay: "300ms"},
+		Reverse:     &controlv1.Reverse{Enabled: true, Modifier: "shift"},
+		Hud:         &controlv1.Hud{Enabled: true, Duration: "900ms", ShowCollection: true},
 		Collections: []*controlv1.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -87,12 +88,16 @@ func TestApplyThenGetConfig(t *testing.T) {
 	}
 
 	cfg := got.GetConfig()
-	if cfg.GetDoublePressMaxDelay() != "300ms" {
-		t.Errorf("delay = %q, want 300ms", cfg.GetDoublePressMaxDelay())
+	if cfg.GetDoublePress().GetMaximumDelay() != "300ms" {
+		t.Errorf("delay = %q, want 300ms", cfg.GetDoublePress().GetMaximumDelay())
 	}
 
-	if !cfg.GetHud() {
-		t.Error("hud = false, want true")
+	if !cfg.GetHud().GetEnabled() {
+		t.Error("hud.enabled = false, want true")
+	}
+
+	if cfg.GetReverse().GetModifier() != "shift" {
+		t.Errorf("reverse.modifier = %q, want shift", cfg.GetReverse().GetModifier())
 	}
 
 	if len(cfg.GetCollections()) != 2 {
@@ -109,7 +114,7 @@ func TestApplyConfigRejectsInvalid(t *testing.T) {
 	client := newTestClient(t, path, fakeSources{})
 
 	invalid := sampleProtoConfig()
-	invalid.DoublePressMaxDelay = "not-a-duration"
+	invalid.DoublePress.MaximumDelay = "not-a-duration"
 
 	if _, err := client.ApplyConfig(
 		context.Background(),

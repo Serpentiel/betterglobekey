@@ -21,27 +21,44 @@ func toProto(cfg domainconfig.Config) *controlv1.Config {
 	return &controlv1.Config{
 		Logger: &controlv1.Logger{
 			Path:           cfg.Logger.Path,
+			Level:          cfg.Logger.Level,
 			RetentionDays:  int32(cfg.Logger.RetentionDays),  //nolint:gosec // retention values are small, non-negative
 			RetentionFiles: int32(cfg.Logger.RetentionFiles), //nolint:gosec // retention values are small, non-negative
 		},
-		DoublePressMaxDelay: cfg.DoublePressMaxDelay.String(),
-		Hud:                 cfg.HUD,
-		Collections:         collections,
+		DoublePress: &controlv1.DoublePress{
+			Enabled:      cfg.DoublePress.Enabled,
+			MaximumDelay: cfg.DoublePress.MaxDelay.String(),
+		},
+		Reverse: &controlv1.Reverse{
+			Enabled:  cfg.Reverse.Enabled,
+			Modifier: cfg.Reverse.Modifier,
+		},
+		Hud: &controlv1.Hud{
+			Enabled:        cfg.HUD.Enabled,
+			Duration:       cfg.HUD.Duration.String(),
+			ShowCollection: cfg.HUD.ShowCollection,
+		},
+		Collections: collections,
 	}
 }
 
 // fromProto converts a protobuf configuration into the domain model, parsing the
-// double-press delay. Validation of the resulting model is left to the caller.
+// duration fields. Validation of the resulting model is left to the caller.
 func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 	if proto == nil {
 		return domainconfig.Config{}, fmt.Errorf("config is required")
 	}
 
-	delay, err := time.ParseDuration(proto.GetDoublePressMaxDelay())
+	delay, err := time.ParseDuration(proto.GetDoublePress().GetMaximumDelay())
 	if err != nil {
 		return domainconfig.Config{}, fmt.Errorf(
-			"invalid double_press_max_delay %q: %w", proto.GetDoublePressMaxDelay(), err,
+			"invalid double_press.maximum_delay %q: %w", proto.GetDoublePress().GetMaximumDelay(), err,
 		)
+	}
+
+	duration, err := time.ParseDuration(proto.GetHud().GetDuration())
+	if err != nil {
+		return domainconfig.Config{}, fmt.Errorf("invalid hud.duration %q: %w", proto.GetHud().GetDuration(), err)
 	}
 
 	collections := make([]domainconfig.Collection, 0, len(proto.GetCollections()))
@@ -55,11 +72,20 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 	return domainconfig.Config{
 		Logger: domainconfig.Logger{
 			Path:           proto.GetLogger().GetPath(),
+			Level:          proto.GetLogger().GetLevel(),
 			RetentionDays:  int(proto.GetLogger().GetRetentionDays()),
 			RetentionFiles: int(proto.GetLogger().GetRetentionFiles()),
 		},
-		DoublePressMaxDelay: delay,
-		HUD:                 proto.GetHud(),
-		Collections:         collections,
+		DoublePress: domainconfig.DoublePress{Enabled: proto.GetDoublePress().GetEnabled(), MaxDelay: delay},
+		Reverse: domainconfig.Reverse{
+			Enabled:  proto.GetReverse().GetEnabled(),
+			Modifier: proto.GetReverse().GetModifier(),
+		},
+		HUD: domainconfig.HUD{
+			Enabled:        proto.GetHud().GetEnabled(),
+			Duration:       duration,
+			ShowCollection: proto.GetHud().GetShowCollection(),
+		},
+		Collections: collections,
 	}, nil
 }

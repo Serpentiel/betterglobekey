@@ -29,16 +29,18 @@ message Config {
   // logger holds the logging configuration.
   Logger logger = 1;
 
-  // double_press_max_delay is the maximum interval between two Globe key presses
-  // for them to count as a double press, as a Go duration string (e.g. "250ms").
-  string double_press_max_delay = 2;
+  // double_press configures collection switching.
+  DoublePress double_press = 2;
 
-  // hud enables the on-screen overlay that names the input source when it changes.
-  bool hud = 3;
+  // reverse configures the modifier that inverts a press.
+  Reverse reverse = 3;
+
+  // hud configures the on-screen overlay.
+  Hud hud = 4;
 
   // collections are the ordered input source collections the Globe key cycles
   // through.
-  repeated Collection collections = 4;
+  repeated Collection collections = 5;
 }
 
 // Logger holds the logging configuration.
@@ -46,11 +48,46 @@ message Logger {
   // path is the path to the log file.
   string path = 1;
 
+  // level is the minimum level to log: debug, info, warn, or error.
+  string level = 2;
+
   // retention_days is the number of days to retain rotated log files.
-  int32 retention_days = 2;
+  int32 retention_days = 3;
 
   // retention_files is the number of rotated log files to retain.
-  int32 retention_files = 3;
+  int32 retention_files = 4;
+}
+
+// DoublePress configures the double-press (collection switching) gesture.
+message DoublePress {
+  // enabled turns collection switching on or off.
+  bool enabled = 1;
+
+  // maximum_delay is the longest gap between two presses still counted as a
+  // double press, as a Go duration string (e.g. "250ms").
+  string maximum_delay = 2;
+}
+
+// Reverse configures the modifier that inverts a press.
+message Reverse {
+  // enabled turns the reverse modifier on or off.
+  bool enabled = 1;
+
+  // modifier is the key held to reverse a press: shift, option, control, or
+  // command.
+  string modifier = 2;
+}
+
+// Hud configures the on-screen overlay.
+message Hud {
+  // enabled shows or hides the overlay.
+  bool enabled = 1;
+
+  // duration is how long the overlay stays visible, as a Go duration string.
+  string duration = 2;
+
+  // show_collection includes the collection name as a subtitle.
+  bool show_collection = 3;
 }
 
 // Collection is a named, ordered set of input source identifiers.
