@@ -36,7 +36,7 @@ func newTestClient(t *testing.T, path string, sources Sources) controlv1.ConfigS
 	t.Helper()
 
 	listener := bufconn.Listen(1 << 20)
-	server := NewServer(path, sources)
+	server := NewServer(path, sources, func(fn func()) { fn() })
 
 	go func() { _ = server.grpc.Serve(listener) }()
 

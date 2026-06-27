@@ -28,6 +28,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
+	"github.com/Serpentiel/betterglobekey/internal/infra/mainthread"
 	"github.com/spf13/cobra"
 )
 
@@ -219,7 +220,7 @@ func startControlServer(
 		return err
 	}
 
-	server := control.NewServer(path, sources)
+	server := control.NewServer(path, sources, mainthread.Run)
 
 	go func() {
 		if err := server.Serve(socketPath); err != nil {

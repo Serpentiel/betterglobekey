@@ -30,19 +30,26 @@ type Sources interface {
 	Name(id string) string
 }
 
+// OnMain runs fn on the main thread, blocking until it returns. Input-source
+// queries must run there, as the underlying macOS APIs require a thread with a
+// running run loop.
+type OnMain func(fn func())
+
 // Server hosts the ConfigService over a Unix domain socket.
 type Server struct {
 	controlv1.UnimplementedConfigServiceServer
 
 	path    string
 	sources Sources
+	onMain  OnMain
 	grpc    *grpc.Server
 }
 
 // NewServer builds a control server that reads and writes the configuration at
-// path and reports input sources via sources.
-func NewServer(path string, sources Sources) *Server {
-	srv := &Server{path: path, sources: sources, grpc: grpc.NewServer()}
+// path and reports input sources via sources. Input-source queries are run via
+// onMain.
+func NewServer(path string, sources Sources, onMain OnMain) *Server {
+	srv := &Server{path: path, sources: sources, onMain: onMain, grpc: grpc.NewServer()}
 	controlv1.RegisterConfigServiceServer(srv.grpc, srv)
 
 	return srv
@@ -108,12 +115,16 @@ func (s *Server) ListInputSources(
 	_ context.Context,
 	_ *controlv1.ListInputSourcesRequest,
 ) (*controlv1.ListInputSourcesResponse, error) {
-	ids := s.sources.All()
+	var sources []*controlv1.InputSource
 
-	sources := make([]*controlv1.InputSource, 0, len(ids))
-	for _, id := range ids {
-		sources = append(sources, &controlv1.InputSource{Id: id, Name: s.sources.Name(id)})
-	}
+	s.onMain(func() {
+		ids := s.sources.All()
+
+		sources = make([]*controlv1.InputSource, 0, len(ids))
+		for _, id := range ids {
+			sources = append(sources, &controlv1.InputSource{Id: id, Name: s.sources.Name(id)})
+		}
+	})
 
 	return &controlv1.ListInputSourcesResponse{Sources: sources}, nil
 }
@@ -123,9 +134,14 @@ func (s *Server) GetCurrentSource(
 	_ context.Context,
 	_ *controlv1.GetCurrentSourceRequest,
 ) (*controlv1.GetCurrentSourceResponse, error) {
-	id := s.sources.Current()
+	var id, name string
+
+	s.onMain(func() {
+		id = s.sources.Current()
+		name = s.sources.Name(id)
+	})
 
 	return &controlv1.GetCurrentSourceResponse{
-		Source: &controlv1.InputSource{Id: id, Name: s.sources.Name(id)},
+		Source: &controlv1.InputSource{Id: id, Name: name},
 	}, nil
 }
