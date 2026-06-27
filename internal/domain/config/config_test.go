@@ -9,8 +9,10 @@ import (
 
 func validConfig() config.Config {
 	return config.Config{
-		Logger:              config.Logger{Path: "betterglobekey.log", RetentionDays: 30, RetentionFiles: 3},
-		DoublePressMaxDelay: 250 * time.Millisecond,
+		Logger:      config.Logger{Path: "betterglobekey.log", Level: "info", RetentionDays: 30, RetentionFiles: 3},
+		DoublePress: config.DoublePress{Enabled: true, MaxDelay: 250 * time.Millisecond},
+		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
+		HUD:         config.HUD{Enabled: true, Duration: 900 * time.Millisecond, ShowCollection: true},
 		Collections: []config.Collection{
 			{Name: "primary", Sources: []string{"com.apple.keylayout.US"}},
 		},
@@ -34,7 +36,10 @@ func TestValidateAllowsNoCollections(t *testing.T) {
 
 func TestValidateRejectsInvalidConfigs(t *testing.T) {
 	tests := map[string]func(*config.Config){
-		"non-positive delay":    func(c *config.Config) { c.DoublePressMaxDelay = 0 },
+		"non-positive delay":    func(c *config.Config) { c.DoublePress.MaxDelay = 0 },
+		"non-positive duration": func(c *config.Config) { c.HUD.Duration = 0 },
+		"invalid level":         func(c *config.Config) { c.Logger.Level = "trace" },
+		"invalid modifier":      func(c *config.Config) { c.Reverse.Modifier = "fn" },
 		"empty logger path":     func(c *config.Config) { c.Logger.Path = "" },
 		"negative retention":    func(c *config.Config) { c.Logger.RetentionFiles = -1 },
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },

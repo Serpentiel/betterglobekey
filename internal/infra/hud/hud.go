@@ -13,10 +13,14 @@ package hud
 void hudRun(void);
 void hudStop(void);
 void hudShow(const char *text, const char *subtitle);
+void hudSetDuration(double seconds);
 */
 import "C"
 
-import "unsafe"
+import (
+	"time"
+	"unsafe"
+)
 
 // Run starts the AppKit run loop and blocks until Stop is called. It must be
 // invoked on the main thread (see runtime.LockOSThread in main).
@@ -27,6 +31,11 @@ func Run() {
 // Stop ends the AppKit run loop, unblocking Run.
 func Stop() {
 	C.hudStop()
+}
+
+// SetDuration sets how long the HUD stays fully visible before fading out.
+func SetDuration(d time.Duration) {
+	C.hudSetDuration(C.double(d.Seconds()))
 }
 
 // Show displays the given text and subtitle in the HUD, fading it out shortly

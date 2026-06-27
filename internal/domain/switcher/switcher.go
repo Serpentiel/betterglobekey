@@ -64,6 +64,8 @@ type Switcher struct {
 	log      Logger
 	notifier Notifier
 
+	doublePressEnabled  bool
+	reverseEnabled      bool
 	maxDoublePressDelay time.Duration
 	collections         []config.Collection
 
@@ -84,7 +86,9 @@ func New(cfg config.Config, sources InputSources, clock Clock, log Logger, notif
 		clock:                  clock,
 		log:                    log,
 		notifier:               notifier,
-		maxDoublePressDelay:    cfg.DoublePressMaxDelay,
+		doublePressEnabled:     cfg.DoublePress.Enabled,
+		reverseEnabled:         cfg.Reverse.Enabled,
+		maxDoublePressDelay:    cfg.DoublePress.MaxDelay,
 		collections:            cfg.Collections,
 		lastSourceByCollection: make(map[string]string, len(cfg.Collections)),
 		currentCollection:      -1,
@@ -111,11 +115,15 @@ func New(cfg config.Config, sources InputSources, clock Clock, log Logger, notif
 // based on the time elapsed since the previous press. When reverse is true the
 // press jumps to the previous source (single) or previous collection (double).
 func (s *Switcher) Press(reverse bool) {
+	if reverse && !s.reverseEnabled {
+		reverse = false
+	}
+
 	now := s.clock.Now()
 	elapsed := now.Sub(s.lastPress)
 	s.lastPress = now
 
-	if elapsed <= s.maxDoublePressDelay {
+	if s.doublePressEnabled && elapsed <= s.maxDoublePressDelay {
 		s.doublePress(reverse)
 
 		return

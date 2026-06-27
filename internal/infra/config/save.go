@@ -31,16 +31,20 @@ func Save(path string, cfg config.Config) error {
 
 // fromDomain converts the domain configuration model into the current on-disk schema.
 func fromDomain(cfg config.Config) schemaV2 {
-	hud := cfg.HUD
-
 	var schema schemaV2
 
 	schema.Version = currentVersion
 	schema.Logger.Path = cfg.Logger.Path
+	schema.Logger.Level = cfg.Logger.Level
 	schema.Logger.Retention.Days = cfg.Logger.RetentionDays
 	schema.Logger.Retention.Files = cfg.Logger.RetentionFiles
-	schema.DoublePress.MaximumDelay = cfg.DoublePressMaxDelay.String()
-	schema.HUD = &hud
+	schema.DoublePress.Enabled = boolPtr(cfg.DoublePress.Enabled)
+	schema.DoublePress.MaximumDelay = cfg.DoublePress.MaxDelay.String()
+	schema.Reverse.Enabled = boolPtr(cfg.Reverse.Enabled)
+	schema.Reverse.Modifier = cfg.Reverse.Modifier
+	schema.HUD.Enabled = boolPtr(cfg.HUD.Enabled)
+	schema.HUD.Duration = cfg.HUD.Duration.String()
+	schema.HUD.ShowCollection = boolPtr(cfg.HUD.ShowCollection)
 	schema.Collections = make([]collectionV2, 0, len(cfg.Collections))
 
 	for _, collection := range cfg.Collections {

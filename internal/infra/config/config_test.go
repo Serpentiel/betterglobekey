@@ -63,11 +63,11 @@ func TestMigrateV1ToV2(t *testing.T) {
 		t.Fatalf("toDomain: %v", err)
 	}
 
-	if cfg.DoublePressMaxDelay != 200*time.Millisecond {
-		t.Errorf("delay = %s, want 200ms", cfg.DoublePressMaxDelay)
+	if cfg.DoublePress.MaxDelay != 200*time.Millisecond {
+		t.Errorf("delay = %s, want 200ms", cfg.DoublePress.MaxDelay)
 	}
 
-	if cfg.Logger != (domainconfig.Logger{Path: "y.log", RetentionDays: 10, RetentionFiles: 5}) {
+	if cfg.Logger != (domainconfig.Logger{Path: "y.log", Level: "info", RetentionDays: 10, RetentionFiles: 5}) {
 		t.Errorf("logger = %+v", cfg.Logger)
 	}
 
@@ -107,8 +107,8 @@ func TestLoadV2(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	if cfg.DoublePressMaxDelay != 300*time.Millisecond {
-		t.Errorf("delay = %s, want 300ms", cfg.DoublePressMaxDelay)
+	if cfg.DoublePress.MaxDelay != 300*time.Millisecond {
+		t.Errorf("delay = %s, want 300ms", cfg.DoublePress.MaxDelay)
 	}
 
 	if len(cfg.Collections) != 2 || cfg.Collections[1].Name != "coding" {
@@ -124,8 +124,8 @@ func TestLoadMigratesV1AndWritesBackup(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	if cfg.DoublePressMaxDelay != 200*time.Millisecond {
-		t.Errorf("delay = %s, want 200ms", cfg.DoublePressMaxDelay)
+	if cfg.DoublePress.MaxDelay != 200*time.Millisecond {
+		t.Errorf("delay = %s, want 200ms", cfg.DoublePress.MaxDelay)
 	}
 
 	// The on-disk file must have been upgraded to the current version.
@@ -186,8 +186,8 @@ func TestWriteDefaultRoundTrip(t *testing.T) {
 		t.Errorf("sources = %v", cfg.Collections[0].Sources)
 	}
 
-	if cfg.DoublePressMaxDelay != 250*time.Millisecond {
-		t.Errorf("delay = %s, want 250ms", cfg.DoublePressMaxDelay)
+	if cfg.DoublePress.MaxDelay != 250*time.Millisecond {
+		t.Errorf("delay = %s, want 250ms", cfg.DoublePress.MaxDelay)
 	}
 }
 

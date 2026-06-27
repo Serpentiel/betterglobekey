@@ -148,9 +148,12 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	}
 
 	build := func(c domainconfig.Config) *switcher.Switcher {
+		keyboard.SetReverseModifier(c.Reverse.Modifier)
+		hud.SetDuration(c.HUD.Duration)
+
 		var notifier switcher.Notifier
-		if c.HUD {
-			notifier = feedback.NewHUD(controller)
+		if c.HUD.Enabled {
+			notifier = feedback.NewHUD(controller, c.HUD.ShowCollection)
 		}
 
 		return switcher.New(c, controller, realClock{}, logger, notifier)

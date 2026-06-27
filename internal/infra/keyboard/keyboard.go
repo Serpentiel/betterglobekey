@@ -20,8 +20,15 @@ static const int64_t bgkFnKeyCode = 63;
 
 // fn key state, tracked for edge detection so we fire exactly once per press.
 static bool bgkFnDown = false;
-// bgkFnReverse latches whether Shift was held at the moment fn was pressed.
+// bgkFnReverse latches whether the reverse modifier was held when fn was pressed.
 static int bgkFnReverse = 0;
+// bgkReverseMask is the modifier flag that marks a press as reverse (default Shift).
+static CGEventFlags bgkReverseMask = kCGEventFlagMaskShift;
+
+// bgkSetReverseMask sets the modifier flag used to detect a reverse press.
+static void bgkSetReverseMask(CGEventFlags mask) {
+	bgkReverseMask = mask;
+}
 
 static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
 	// The system disables the tap on timeout or heavy input (e.g. across sleep);
@@ -41,7 +48,7 @@ static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRe
 		if (down && !bgkFnDown) {
 			// Press: latch the Shift state now (the natural "hold Shift, then tap").
 			bgkFnDown = true;
-			bgkFnReverse = (flags & kCGEventFlagMaskShift) != 0 ? 1 : 0;
+			bgkFnReverse = (flags & bgkReverseMask) != 0 ? 1 : 0;
 		} else if (!down && bgkFnDown) {
 			// Release: fire once with the latched reverse flag.
 			bgkFnDown = false;
@@ -88,6 +95,26 @@ import "runtime"
 
 // onPress is the active press handler. Only one Listener runs at a time.
 var onPress func(reverse bool)
+
+// modifierMasks maps configuration modifier names to CoreGraphics event flags.
+var modifierMasks = map[string]C.CGEventFlags{
+	"shift":   C.kCGEventFlagMaskShift,
+	"option":  C.kCGEventFlagMaskAlternate,
+	"control": C.kCGEventFlagMaskControl,
+	"command": C.kCGEventFlagMaskCommand,
+}
+
+// SetReverseModifier sets which modifier key marks a press as reverse. Unknown
+// names fall back to Shift. It is safe to call while listening; the event tap
+// reads the value live.
+func SetReverseModifier(modifier string) {
+	mask, ok := modifierMasks[modifier]
+	if !ok {
+		mask = C.kCGEventFlagMaskShift
+	}
+
+	C.bgkSetReverseMask(mask)
+}
 
 // Listener delivers Globe (fn) key releases via a CoreGraphics event tap.
 type Listener struct{}

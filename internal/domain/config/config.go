@@ -7,18 +7,26 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"time"
 )
+
+// LogLevels are the accepted logger levels, from most to least verbose.
+var LogLevels = []string{"debug", "info", "warn", "error"}
+
+// ReverseModifiers are the accepted modifier keys for a reverse press.
+var ReverseModifiers = []string{"shift", "option", "control", "command"}
 
 // Config is the fully-resolved application configuration.
 type Config struct {
 	// Logger holds the logging configuration.
 	Logger Logger
-	// DoublePressMaxDelay is the maximum interval between two Globe key presses
-	// for them to be treated as a double press.
-	DoublePressMaxDelay time.Duration
-	// HUD enables an on-screen overlay naming the input source when it changes.
-	HUD bool
+	// DoublePress configures the double-press (collection switching) behavior.
+	DoublePress DoublePress
+	// Reverse configures the modifier that inverts a press.
+	Reverse Reverse
+	// HUD configures the on-screen overlay shown when the input source changes.
+	HUD HUD
 	// Collections are the ordered input source collections the Globe key cycles through.
 	Collections []Collection
 }
@@ -27,10 +35,39 @@ type Config struct {
 type Logger struct {
 	// Path is the path to the log file.
 	Path string
+	// Level is the minimum level to log (see LogLevels).
+	Level string
 	// RetentionDays is the number of days to retain rotated log files.
 	RetentionDays int
 	// RetentionFiles is the number of rotated log files to retain.
 	RetentionFiles int
+}
+
+// DoublePress configures the double-press gesture.
+type DoublePress struct {
+	// Enabled turns collection switching (double press) on or off.
+	Enabled bool
+	// MaxDelay is the maximum interval between two presses for them to be treated
+	// as a double press.
+	MaxDelay time.Duration
+}
+
+// Reverse configures the modifier that inverts a press (go back instead of forward).
+type Reverse struct {
+	// Enabled turns the reverse modifier on or off.
+	Enabled bool
+	// Modifier is the key held to reverse a press (see ReverseModifiers).
+	Modifier string
+}
+
+// HUD configures the on-screen overlay.
+type HUD struct {
+	// Enabled shows or hides the overlay.
+	Enabled bool
+	// Duration is how long the overlay stays fully visible before fading.
+	Duration time.Duration
+	// ShowCollection includes the collection name as a subtitle.
+	ShowCollection bool
 }
 
 // Collection is a named, ordered set of input source IDs.
@@ -43,8 +80,20 @@ type Collection struct {
 
 // Validate reports whether the configuration is internally consistent.
 func (c Config) Validate() error {
-	if c.DoublePressMaxDelay <= 0 {
-		return fmt.Errorf("double press max delay must be positive, got %s", c.DoublePressMaxDelay)
+	if c.DoublePress.MaxDelay <= 0 {
+		return fmt.Errorf("double press max delay must be positive, got %s", c.DoublePress.MaxDelay)
+	}
+
+	if c.HUD.Duration <= 0 {
+		return fmt.Errorf("hud duration must be positive, got %s", c.HUD.Duration)
+	}
+
+	if !slices.Contains(LogLevels, c.Logger.Level) {
+		return fmt.Errorf("logger level must be one of %v, got %q", LogLevels, c.Logger.Level)
+	}
+
+	if !slices.Contains(ReverseModifiers, c.Reverse.Modifier) {
+		return fmt.Errorf("reverse modifier must be one of %v, got %q", ReverseModifiers, c.Reverse.Modifier)
 	}
 
 	if c.Logger.Path == "" {
@@ -55,6 +104,12 @@ func (c Config) Validate() error {
 		return fmt.Errorf("logger retention values must not be negative")
 	}
 
+	return c.validateCollections()
+}
+
+// validateCollections checks that collection names are present and unique and that
+// each collection holds non-empty, non-duplicate input sources.
+func (c Config) validateCollections() error {
 	seen := make(map[string]struct{}, len(c.Collections))
 
 	for _, collection := range c.Collections {

@@ -12,9 +12,10 @@ import (
 
 func sampleConfig() domainconfig.Config {
 	return domainconfig.Config{
-		Logger:              domainconfig.Logger{Path: "x.log", RetentionDays: 7, RetentionFiles: 2},
-		DoublePressMaxDelay: 300 * time.Millisecond,
-		HUD:                 true,
+		Logger:      domainconfig.Logger{Path: "x.log", Level: "debug", RetentionDays: 7, RetentionFiles: 2},
+		DoublePress: domainconfig.DoublePress{Enabled: true, MaxDelay: 300 * time.Millisecond},
+		Reverse:     domainconfig.Reverse{Enabled: false, Modifier: "option"},
+		HUD:         domainconfig.HUD{Enabled: true, Duration: 1200 * time.Millisecond, ShowCollection: false},
 		Collections: []domainconfig.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -35,8 +36,12 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got.DoublePressMaxDelay != want.DoublePressMaxDelay {
-		t.Errorf("delay = %s, want %s", got.DoublePressMaxDelay, want.DoublePressMaxDelay)
+	if got.DoublePress != want.DoublePress {
+		t.Errorf("double_press = %+v, want %+v", got.DoublePress, want.DoublePress)
+	}
+
+	if got.Reverse != want.Reverse {
+		t.Errorf("reverse = %+v, want %+v", got.Reverse, want.Reverse)
 	}
 
 	if got.HUD != want.HUD || got.Logger != want.Logger {
@@ -79,7 +84,7 @@ func TestSaveRejectsInvalidConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 
 	invalid := sampleConfig()
-	invalid.DoublePressMaxDelay = 0
+	invalid.DoublePress.MaxDelay = 0
 
 	if err := Save(path, invalid); err == nil {
 		t.Fatal("Save accepted an invalid config")

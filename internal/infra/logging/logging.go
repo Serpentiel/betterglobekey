@@ -16,12 +16,15 @@ type Logger struct {
 	sugar *zap.SugaredLogger
 }
 
-// New builds a Logger that tees console (debug) and rotating-file (info) output.
+// New builds a Logger that tees human-readable console output and structured
+// JSON to a rotating file, both filtered at the configured level.
 func New(cfg config.Logger) *Logger {
+	level := parseLevel(cfg.Level)
+
 	console := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 		zapcore.AddSync(os.Stdout),
-		zapcore.DebugLevel,
+		level,
 	)
 
 	file := zapcore.NewCore(
@@ -32,12 +35,26 @@ func New(cfg config.Logger) *Logger {
 			MaxBackups: cfg.RetentionFiles,
 			Compress:   true,
 		}),
-		zapcore.InfoLevel,
+		level,
 	)
 
 	logger := zap.New(zapcore.NewTee(console, file), zap.AddStacktrace(zapcore.ErrorLevel))
 
 	return &Logger{sugar: logger.Sugar()}
+}
+
+// parseLevel maps a configured level name to a zap level, defaulting to info.
+func parseLevel(level string) zapcore.Level {
+	switch level {
+	case "debug":
+		return zapcore.DebugLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
 }
 
 // Info logs an informational message with optional key-value context.

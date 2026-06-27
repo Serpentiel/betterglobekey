@@ -59,14 +59,18 @@ func Load(path string) (config.Config, error) {
 func WriteDefault(path string, sources []string) error {
 	var schema schemaV2
 
-	enabled := true
-
 	schema.Version = currentVersion
 	schema.Logger.Path = defaultLogPath()
+	schema.Logger.Level = defaultLogLevel
 	schema.Logger.Retention.Days = defaultRetentionDays
 	schema.Logger.Retention.Files = defaultRetentionFiles
+	schema.DoublePress.Enabled = boolPtr(true)
 	schema.DoublePress.MaximumDelay = defaultDoublePressDelay
-	schema.HUD = &enabled
+	schema.Reverse.Enabled = boolPtr(true)
+	schema.Reverse.Modifier = defaultReverseModifier
+	schema.HUD.Enabled = boolPtr(true)
+	schema.HUD.Duration = defaultHUDDuration
+	schema.HUD.ShowCollection = boolPtr(true)
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -103,8 +107,11 @@ func writeWithBackup(path string, original, migrated []byte, from int) error {
 	return nil
 }
 
-// toDomain converts a parsed v2 schema into the domain configuration model.
+// toDomain converts a parsed v2 schema into the domain configuration model,
+// applying defaults for absent optional values.
 func toDomain(schema schemaV2) (config.Config, error) {
+	applySchemaDefaults(&schema)
+
 	delay, err := time.ParseDuration(schema.DoublePress.MaximumDelay)
 	if err != nil {
 		return config.Config{}, fmt.Errorf(
@@ -112,15 +119,26 @@ func toDomain(schema schemaV2) (config.Config, error) {
 		)
 	}
 
+	duration, err := time.ParseDuration(schema.HUD.Duration)
+	if err != nil {
+		return config.Config{}, fmt.Errorf("invalid hud.duration %q: %w", schema.HUD.Duration, err)
+	}
+
 	cfg := config.Config{
 		Logger: config.Logger{
 			Path:           schema.Logger.Path,
+			Level:          schema.Logger.Level,
 			RetentionDays:  schema.Logger.Retention.Days,
 			RetentionFiles: schema.Logger.Retention.Files,
 		},
-		DoublePressMaxDelay: delay,
-		HUD:                 schema.HUD == nil || *schema.HUD,
-		Collections:         make([]config.Collection, 0, len(schema.Collections)),
+		DoublePress: config.DoublePress{Enabled: boolOr(schema.DoublePress.Enabled, true), MaxDelay: delay},
+		Reverse:     config.Reverse{Enabled: boolOr(schema.Reverse.Enabled, true), Modifier: schema.Reverse.Modifier},
+		HUD: config.HUD{
+			Enabled:        boolOr(schema.HUD.Enabled, true),
+			Duration:       duration,
+			ShowCollection: boolOr(schema.HUD.ShowCollection, true),
+		},
+		Collections: make([]config.Collection, 0, len(schema.Collections)),
 	}
 
 	for _, collection := range schema.Collections {
@@ -128,6 +146,26 @@ func toDomain(schema schemaV2) (config.Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// applySchemaDefaults fills empty string fields with their defaults so a
+// partially-specified file still loads.
+func applySchemaDefaults(schema *schemaV2) {
+	if schema.Logger.Level == "" {
+		schema.Logger.Level = defaultLogLevel
+	}
+
+	if schema.DoublePress.MaximumDelay == "" {
+		schema.DoublePress.MaximumDelay = defaultDoublePressDelay
+	}
+
+	if schema.Reverse.Modifier == "" {
+		schema.Reverse.Modifier = defaultReverseModifier
+	}
+
+	if schema.HUD.Duration == "" {
+		schema.HUD.Duration = defaultHUDDuration
+	}
 }
 
 // defaultLogPath returns the conventional macOS log location, falling back to a

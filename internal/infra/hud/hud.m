@@ -13,8 +13,15 @@ static NSInteger hudShowToken = 0;
 static const CGFloat hudWidth = 280.0;
 static const CGFloat hudHeight = 104.0;
 static const CGFloat hudCornerRadius = 18.0;
-static const double hudVisibleSeconds = 0.9;
+static double hudVisibleSeconds = 0.9;
 static const double hudFadeSeconds = 0.35;
+
+// hudSetDuration sets how long the HUD stays fully visible before fading.
+void hudSetDuration(double seconds) {
+	if (seconds > 0) {
+		hudVisibleSeconds = seconds;
+	}
+}
 
 static void hudEnsureWindow(void) {
 	NSRect frame = NSMakeRect(0, 0, hudWidth, hudHeight);

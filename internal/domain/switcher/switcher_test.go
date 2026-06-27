@@ -43,7 +43,11 @@ func newTestSwitcher(
 
 	sources := &fakeSources{current: current, all: all}
 	clock := &fakeClock{now: time.Unix(1000, 0)}
-	cfg := config.Config{DoublePressMaxDelay: testDelay, Collections: collections}
+	cfg := config.Config{
+		DoublePress: config.DoublePress{Enabled: true, MaxDelay: testDelay},
+		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
+		Collections: collections,
+	}
 
 	return New(cfg, sources, clock, noopLogger{}, nil), sources, clock
 }
@@ -224,5 +228,44 @@ func TestReverseDoublePressSwitchesToPreviousCollection(t *testing.T) {
 
 	if got := src.selected[len(src.selected)-1]; got != "c1" {
 		t.Fatalf("reverse double press selected %q, want c1 (previous collection)", got)
+	}
+}
+
+func TestDoublePressDisabledTreatsQuickPressesAsSingles(t *testing.T) {
+	sources := &fakeSources{current: "a1", all: []string{"a1", "a2", "b1"}}
+	clock := &fakeClock{now: time.Unix(1000, 0)}
+	cfg := config.Config{
+		DoublePress: config.DoublePress{Enabled: false, MaxDelay: testDelay},
+		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
+		Collections: []config.Collection{
+			{Name: "a", Sources: []string{"a1", "a2"}},
+			{Name: "b", Sources: []string{"b1"}},
+		},
+	}
+	s := New(cfg, sources, clock, noopLogger{}, nil)
+
+	single(s, clock) // a1 -> a2
+	clock.advance(testDelay)
+	s.Press(false) // quick: would switch collections if double press were enabled
+
+	if sources.current != "a1" {
+		t.Fatalf("current = %q, want a1 (double press disabled: cycled within collection)", sources.current)
+	}
+}
+
+func TestReverseDisabledPressesForward(t *testing.T) {
+	sources := &fakeSources{current: "s1", all: []string{"s1", "s2", "s3"}}
+	clock := &fakeClock{now: time.Unix(1000, 0)}
+	cfg := config.Config{
+		DoublePress: config.DoublePress{Enabled: true, MaxDelay: testDelay},
+		Reverse:     config.Reverse{Enabled: false, Modifier: "shift"},
+		Collections: []config.Collection{{Name: "a", Sources: []string{"s1", "s2", "s3"}}},
+	}
+	s := New(cfg, sources, clock, noopLogger{}, nil)
+
+	pressOnce(s, clock, true) // reverse requested but disabled -> forward s1 -> s2
+
+	if sources.current != "s2" {
+		t.Fatalf("current = %q, want s2 (reverse disabled falls back to forward)", sources.current)
 	}
 }

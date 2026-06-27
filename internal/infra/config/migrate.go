@@ -79,14 +79,18 @@ func migrateV1ToV2(data []byte) ([]byte, error) {
 
 	var v2 schemaV2
 
-	enabled := true
-
 	v2.Version = versionV2
-	v2.HUD = &enabled
 	v2.Logger.Path = v1.Logger.Path
+	v2.Logger.Level = defaultLogLevel
 	v2.Logger.Retention.Days = v1.Logger.Retain.Days
 	v2.Logger.Retention.Files = v1.Logger.Retain.Copies
+	v2.DoublePress.Enabled = boolPtr(true)
 	v2.DoublePress.MaximumDelay = fmt.Sprintf("%dms", v1.DoublePress.MaximumDelay)
+	v2.Reverse.Enabled = boolPtr(true)
+	v2.Reverse.Modifier = defaultReverseModifier
+	v2.HUD.Enabled = boolPtr(true)
+	v2.HUD.Duration = defaultHUDDuration
+	v2.HUD.ShowCollection = boolPtr(true)
 
 	for _, name := range slices.Sorted(maps.Keys(v1.InputSources)) {
 		v2.Collections = append(v2.Collections, collectionV2{Name: name, Sources: v1.InputSources[name]})
