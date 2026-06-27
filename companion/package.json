@@ -20,7 +20,10 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "1.12.5",
-    "@grpc/proto-loader": "0.7.13"
+    "@grpc/proto-loader": "0.7.13",
+    "clsx": "2.1.1",
+    "lucide-react": "0.469.0",
+    "zod": "3.24.1"
   },
   "devDependencies": {
     "@eslint/js": "9.17.0",
