@@ -23,6 +23,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/accessibility"
 	"github.com/Serpentiel/betterglobekey/internal/infra/config"
 	"github.com/Serpentiel/betterglobekey/internal/infra/feedback"
+	"github.com/Serpentiel/betterglobekey/internal/infra/hud"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
@@ -142,12 +143,12 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	}
 
 	build := func(c domainconfig.Config) *switcher.Switcher {
-		var sources switcher.InputSources = controller
-		if c.Notify {
-			sources = feedback.Wrap(controller)
+		var notifier switcher.Notifier
+		if c.HUD {
+			notifier = feedback.NewHUD(controller)
 		}
 
-		return switcher.New(c, sources, realClock{}, logger)
+		return switcher.New(c, controller, realClock{}, logger, notifier)
 	}
 
 	daemon := app.NewDaemon(build(cfg), keyboard.New(), logger)
@@ -157,7 +158,19 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 
 	go watchConfig(ctx, path, logger, daemon, build)
 
-	return daemon.Run(ctx)
+	// The HUD owns the main thread's AppKit run loop; the daemon runs the event
+	// tap on its own goroutine. Stop the run loop when a signal arrives.
+	daemon.Start()
+	defer daemon.Stop()
+
+	go func() {
+		<-ctx.Done()
+		hud.Stop()
+	}()
+
+	hud.Run()
+
+	return nil
 }
 
 // watchConfig reloads the daemon's switcher whenever the config file changes.

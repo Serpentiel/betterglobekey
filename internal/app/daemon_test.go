@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"sync"
 	"testing"
 	"time"
@@ -47,15 +46,12 @@ func (l *fakeLogger) Close() error {
 	return nil
 }
 
-func TestDaemonRunStartsListenerAndShutsDownCleanly(t *testing.T) {
+func TestDaemonStartsListenerAndStopsCleanly(t *testing.T) {
 	keyboard := &fakeKeyboard{started: make(chan struct{}), stop: make(chan struct{})}
 	logger := &fakeLogger{}
 	daemon := NewDaemon(fakePresser{}, keyboard, logger)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	done := make(chan error, 1)
-	go func() { done <- daemon.Run(ctx) }()
+	daemon.Start()
 
 	select {
 	case <-keyboard.started:
@@ -63,16 +59,7 @@ func TestDaemonRunStartsListenerAndShutsDownCleanly(t *testing.T) {
 		t.Fatal("listener was not started")
 	}
 
-	cancel()
-
-	select {
-	case err := <-done:
-		if err != nil {
-			t.Fatalf("Run returned error: %v", err)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("Run did not return after context cancellation")
-	}
+	daemon.Stop()
 
 	keyboard.mu.Lock()
 	stopped := keyboard.stopped

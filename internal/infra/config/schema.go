@@ -48,7 +48,8 @@ type schemaV2 struct {
 	DoublePress struct {
 		MaximumDelay string `yaml:"maximum_delay"`
 	} `yaml:"double_press"`
-	Notify      bool           `yaml:"notify"`
+	// HUD is a pointer so an absent value can default to enabled.
+	HUD         *bool          `yaml:"hud"`
 	Collections []collectionV2 `yaml:"collections"`
 }
 

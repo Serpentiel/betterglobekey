@@ -17,8 +17,8 @@ type Config struct {
 	// DoublePressMaxDelay is the maximum interval between two Globe key presses
 	// for them to be treated as a double press.
 	DoublePressMaxDelay time.Duration
-	// Notify enables a system notification when the input source changes.
-	Notify bool
+	// HUD enables an on-screen overlay naming the input source when it changes.
+	HUD bool
 	// Collections are the ordered input source collections the Globe key cycles through.
 	Collections []Collection
 }

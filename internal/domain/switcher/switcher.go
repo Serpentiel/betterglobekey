@@ -36,13 +36,33 @@ type Logger interface {
 	Error(msg string, keysAndValues ...any)
 }
 
+// Notifier is an optional port notified whenever the input source changes,
+// receiving the source ID and the name of its collection.
+type Notifier interface {
+	// Notify reports that source (in the given collection) has been activated.
+	Notify(source, collection string)
+}
+
+// state is a snapshot of the mutable switcher state. A double press restores the
+// snapshot taken before the single press that necessarily precedes it, so the
+// collection switch starts from a clean slate regardless of what that single
+// press did.
+type state struct {
+	collection       int
+	current          string
+	previous         string
+	lastByCollection map[string]string
+}
+
 // Switcher cycles between input sources on a single Globe key press and between
-// collections on a double press. It is not safe for concurrent use; presses are
-// expected to arrive sequentially from a single event loop.
+// collections on a double press; a reverse press jumps to the previously-used
+// source (single) or the previous collection (double). It is not safe for
+// concurrent use; presses arrive sequentially from a single event loop.
 type Switcher struct {
-	sources InputSources
-	clock   Clock
-	log     Logger
+	sources  InputSources
+	clock    Clock
+	log      Logger
+	notifier Notifier
 
 	maxDoublePressDelay time.Duration
 	collections         []config.Collection
@@ -50,17 +70,20 @@ type Switcher struct {
 	lastSourceByCollection map[string]string
 	currentCollection      int // index into collections, or -1 when there are none
 	currentSource          string
+	previousSource         string // the input source used before the current one
 	lastPress              time.Time
+	saved                  state // state captured before the most recent single press
 }
 
 // New builds a Switcher and seeds its state from the current input source. The
 // active collection is the one containing the current source, falling back to
 // the first configured collection.
-func New(cfg config.Config, sources InputSources, clock Clock, log Logger) *Switcher {
+func New(cfg config.Config, sources InputSources, clock Clock, log Logger, notifier Notifier) *Switcher {
 	s := &Switcher{
 		sources:                sources,
 		clock:                  clock,
 		log:                    log,
+		notifier:               notifier,
 		maxDoublePressDelay:    cfg.DoublePressMaxDelay,
 		collections:            cfg.Collections,
 		lastSourceByCollection: make(map[string]string, len(cfg.Collections)),
@@ -85,7 +108,8 @@ func New(cfg config.Config, sources InputSources, clock Clock, log Logger) *Swit
 }
 
 // Press handles a Globe key release, classifying it as a single or double press
-// based on the time elapsed since the previous press.
+// based on the time elapsed since the previous press. When reverse is true the
+// press jumps to the previous source (single) or previous collection (double).
 func (s *Switcher) Press(reverse bool) {
 	now := s.clock.Now()
 	elapsed := now.Sub(s.lastPress)
@@ -93,13 +117,16 @@ func (s *Switcher) Press(reverse bool) {
 
 	if elapsed <= s.maxDoublePressDelay {
 		s.doublePress(reverse)
-	} else {
-		s.singlePress(reverse)
+
+		return
 	}
+
+	s.saved = s.snapshot()
+	s.singlePress(reverse)
 }
 
-// singlePress moves to the next (or previous, when reverse) input source within
-// the current collection.
+// singlePress advances to the next input source within the current collection,
+// or jumps to the previously-used source when reverse is true.
 func (s *Switcher) singlePress(reverse bool) {
 	s.log.Info("globe key pressed")
 
@@ -107,30 +134,36 @@ func (s *Switcher) singlePress(reverse bool) {
 		return
 	}
 
+	if reverse {
+		if s.previousSource != "" && s.previousSource != s.currentSource {
+			s.moveTo(s.previousSource)
+		}
+
+		return
+	}
+
 	collection := s.collections[s.currentCollection]
 
-	next := step(collection.Sources, s.currentSource, !reverse)
+	next := step(collection.Sources, s.currentSource, true)
 	if next == "" {
 		s.log.Error("no input source available", "collection", collection.Name)
 
 		return
 	}
 
-	s.lastSourceByCollection[collection.Name] = next
-	s.selectSource(next)
+	s.moveTo(next)
 }
 
-// doublePress switches to the next (or previous, when reverse) collection. The
-// first release of a double press has already been handled as a single press,
-// advancing the current collection, so that advance is reverted before switching.
+// doublePress switches to the next collection, or the previous collection when
+// reverse is true. The single press that opened the double is first undone.
 func (s *Switcher) doublePress(reverse bool) {
 	s.log.Info("globe key double pressed")
+
+	s.restore(s.saved)
 
 	if s.currentCollection < 0 {
 		return
 	}
-
-	s.revertLastSource(s.collections[s.currentCollection], reverse)
 
 	count := len(s.collections)
 	if reverse {
@@ -146,16 +179,40 @@ func (s *Switcher) doublePress(reverse bool) {
 		next = collection.Sources[0]
 	}
 
-	s.selectSource(next)
+	s.moveTo(next)
 }
 
-// selectSource records and activates the given input source if it is available.
-func (s *Switcher) selectSource(id string) {
+// moveTo records the prior source, aligns the current collection with the chosen
+// source, remembers the per-collection position, and activates the source if it
+// is available.
+func (s *Switcher) moveTo(id string) {
+	if id != s.currentSource {
+		s.previousSource = s.currentSource
+	}
+
 	s.currentSource = id
+
+	if s.currentCollection < 0 || !slices.Contains(s.collections[s.currentCollection].Sources, id) {
+		for i, collection := range s.collections {
+			if slices.Contains(collection.Sources, id) {
+				s.currentCollection = i
+
+				break
+			}
+		}
+	}
+
+	if s.currentCollection >= 0 {
+		s.lastSourceByCollection[s.collections[s.currentCollection].Name] = id
+	}
 
 	if slices.Contains(s.sources.All(), id) {
 		s.sources.Select(id)
 		s.log.Info("input source set", "source", id)
+
+		if s.notifier != nil {
+			s.notifier.Notify(id, s.collectionName())
+		}
 
 		return
 	}
@@ -163,22 +220,40 @@ func (s *Switcher) selectSource(id string) {
 	s.log.Info("input source not found", "source", id)
 }
 
-// revertLastSource undoes the advance applied by the single press that precedes
-// a double press by stepping the remembered source in the opposite direction.
-// The single press moved it in the !reverse direction, so the revert steps in
-// the reverse direction.
-func (s *Switcher) revertLastSource(collection config.Collection, reverse bool) {
-	index := slices.Index(collection.Sources, s.lastSourceByCollection[collection.Name])
-	if index < 0 {
+// collectionName returns the name of the current collection, or "" if there is none.
+func (s *Switcher) collectionName() string {
+	if s.currentCollection < 0 {
+		return ""
+	}
+
+	return s.collections[s.currentCollection].Name
+}
+
+// snapshot copies the current mutable state.
+func (s *Switcher) snapshot() state {
+	last := make(map[string]string, len(s.lastSourceByCollection))
+	for name, id := range s.lastSourceByCollection {
+		last[name] = id
+	}
+
+	return state{
+		collection:       s.currentCollection,
+		current:          s.currentSource,
+		previous:         s.previousSource,
+		lastByCollection: last,
+	}
+}
+
+// restore reinstates a previously captured state.
+func (s *Switcher) restore(snap state) {
+	if snap.lastByCollection == nil {
 		return
 	}
 
-	count := len(collection.Sources)
-	if reverse {
-		s.lastSourceByCollection[collection.Name] = collection.Sources[(index+1)%count]
-	} else {
-		s.lastSourceByCollection[collection.Name] = collection.Sources[(index-1+count)%count]
-	}
+	s.currentCollection = snap.collection
+	s.currentSource = snap.current
+	s.previousSource = snap.previous
+	s.lastSourceByCollection = snap.lastByCollection
 }
 
 // step returns the source after current (forward) or before it (when forward is

@@ -15,7 +15,7 @@ const configFileMode os.FileMode = 0o600
 
 // defaultHeader is prepended to freshly generated configuration files.
 const defaultHeader = "# betterglobekey configuration.\n" +
-	"# Documentation: https://github.com/Serpentiel/betterglobekey/wiki\n\n"
+	"# Documentation: https://github.com/Serpentiel/betterglobekey/tree/main/docs\n\n"
 
 // Load reads, migrates if necessary, and validates the configuration at path.
 // When the on-disk schema is outdated it is upgraded in place, with the original
@@ -59,11 +59,14 @@ func Load(path string) (config.Config, error) {
 func WriteDefault(path string, sources []string) error {
 	var schema schemaV2
 
+	enabled := true
+
 	schema.Version = currentVersion
 	schema.Logger.Path = defaultLogPath()
 	schema.Logger.Retention.Days = defaultRetentionDays
 	schema.Logger.Retention.Files = defaultRetentionFiles
 	schema.DoublePress.MaximumDelay = defaultDoublePressDelay
+	schema.HUD = &enabled
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -116,7 +119,7 @@ func toDomain(schema schemaV2) (config.Config, error) {
 			RetentionFiles: schema.Logger.Retention.Files,
 		},
 		DoublePressMaxDelay: delay,
-		Notify:              schema.Notify,
+		HUD:                 schema.HUD == nil || *schema.HUD,
 		Collections:         make([]config.Collection, 0, len(schema.Collections)),
 	}
 

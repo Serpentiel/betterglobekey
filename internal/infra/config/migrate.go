@@ -79,7 +79,10 @@ func migrateV1ToV2(data []byte) ([]byte, error) {
 
 	var v2 schemaV2
 
+	enabled := true
+
 	v2.Version = versionV2
+	v2.HUD = &enabled
 	v2.Logger.Path = v1.Logger.Path
 	v2.Logger.Retention.Days = v1.Logger.Retain.Days
 	v2.Logger.Retention.Files = v1.Logger.Retain.Copies

@@ -45,7 +45,7 @@ func newTestSwitcher(
 	clock := &fakeClock{now: time.Unix(1000, 0)}
 	cfg := config.Config{DoublePressMaxDelay: testDelay, Collections: collections}
 
-	return New(cfg, sources, clock, noopLogger{}), sources, clock
+	return New(cfg, sources, clock, noopLogger{}, nil), sources, clock
 }
 
 // single simulates a single press: enough time elapses to not be a double press.
@@ -189,16 +189,28 @@ func TestNoCollectionsIsNoOp(t *testing.T) {
 	}
 }
 
-func TestReverseSinglePressCyclesBackward(t *testing.T) {
+func TestReverseSinglePressTogglesToPreviousSource(t *testing.T) {
 	col := config.Collection{Name: "a", Sources: []string{"s1", "s2", "s3"}}
 	s, src, clock := newTestSwitcher(t, "s1", []string{"s1", "s2", "s3"}, col)
 
-	pressOnce(s, clock, true) // s1 -> s3 (wrap backward)
-	pressOnce(s, clock, true) // s3 -> s2
+	single(s, clock)          // forward s1 -> s2 (previous becomes s1)
+	pressOnce(s, clock, true) // reverse -> previous source s1
+	pressOnce(s, clock, true) // reverse -> previous source s2 (toggles s1 <-> s2)
 
-	want := []string{"s3", "s2"}
+	want := []string{"s2", "s1", "s2"}
 	if !slices.Equal(src.selected, want) {
 		t.Fatalf("selected = %v, want %v", src.selected, want)
+	}
+}
+
+func TestReverseSinglePressIsNoOpWithoutHistory(t *testing.T) {
+	col := config.Collection{Name: "a", Sources: []string{"s1", "s2"}}
+	s, src, clock := newTestSwitcher(t, "s1", []string{"s1", "s2"}, col)
+
+	pressOnce(s, clock, true) // no previous source yet -> nothing happens
+
+	if len(src.selected) != 0 {
+		t.Fatalf("selected = %v, want none", src.selected)
 	}
 }
 
@@ -209,12 +221,8 @@ func TestReverseDoublePressSwitchesToPreviousCollection(t *testing.T) {
 	s, src, clock := newTestSwitcher(t, "a1", []string{"a1", "b1", "c1"}, a, b, c)
 
 	doubleReverse(s, clock) // a -> c (wrap backward)
-	doubleReverse(s, clock) // c -> b
 
-	switched := []string{src.selected[1], src.selected[3]}
-	want := []string{"c1", "b1"}
-
-	if !slices.Equal(switched, want) {
-		t.Fatalf("reverse collection order = %v, want %v", switched, want)
+	if got := src.selected[len(src.selected)-1]; got != "c1" {
+		t.Fatalf("reverse double press selected %q, want c1 (previous collection)", got)
 	}
 }

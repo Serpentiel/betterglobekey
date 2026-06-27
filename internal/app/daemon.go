@@ -2,7 +2,6 @@
 package app
 
 import (
-	"context"
 	"sync"
 
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
@@ -61,19 +60,18 @@ func (d *Daemon) press(reverse bool) {
 	switcher.Press(reverse)
 }
 
-// Run starts the keyboard listener and blocks until ctx is cancelled, then shuts
-// down cleanly.
-func (d *Daemon) Run(ctx context.Context) error {
-	defer func() { _ = d.logger.Close() }()
-
+// Start begins listening for Globe key presses on a background goroutine. It does
+// not block, leaving the caller's (main) thread free for the AppKit run loop.
+func (d *Daemon) Start() {
 	go d.keyboard.Listen(d.press)
 
 	d.logger.Info("event handler has been initialized")
+}
 
-	<-ctx.Done()
-
+// Stop tears down the keyboard listener and flushes the logs.
+func (d *Daemon) Stop() {
 	d.keyboard.Stop()
 	d.logger.Info("shutting down")
 
-	return nil
+	_ = d.logger.Close()
 }
