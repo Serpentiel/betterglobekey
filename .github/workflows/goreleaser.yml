@@ -1,5 +1,6 @@
 name: goreleaser
 
+# checkov:skip=CKV_GHA_7:release tag input is required to drive the release flow
 on:
   workflow_dispatch:
     inputs:
