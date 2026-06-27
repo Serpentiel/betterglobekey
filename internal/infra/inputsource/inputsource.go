@@ -22,6 +22,11 @@ func (Controller) All() []string {
 	return source.All()
 }
 
+// Name returns the localized display name for the input source with the given ID.
+func (Controller) Name(id string) string {
+	return source.Name(id)
+}
+
 // Select activates the input source with the given ID.
 func (Controller) Select(id string) {
 	source.Select(id)

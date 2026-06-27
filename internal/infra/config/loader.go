@@ -116,6 +116,7 @@ func toDomain(schema schemaV2) (config.Config, error) {
 			RetentionFiles: schema.Logger.Retention.Files,
 		},
 		DoublePressMaxDelay: delay,
+		Notify:              schema.Notify,
 		Collections:         make([]config.Collection, 0, len(schema.Collections)),
 	}
 

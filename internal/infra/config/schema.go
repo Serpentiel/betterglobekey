@@ -48,6 +48,7 @@ type schemaV2 struct {
 	DoublePress struct {
 		MaximumDelay string `yaml:"maximum_delay"`
 	} `yaml:"double_press"`
+	Notify      bool           `yaml:"notify"`
 	Collections []collectionV2 `yaml:"collections"`
 }
 

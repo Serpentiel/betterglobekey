@@ -60,6 +60,40 @@ func Current() string {
 	return cfStringToString(C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceID)))
 }
 
+// Name returns the localized display name for the input source with the given
+// ID, or an empty string if it is not available.
+func Name(id string) string {
+	cID := C.CString(id)
+
+	defer C.free(unsafe.Pointer(cID))
+
+	cfID := C.CFStringCreateWithBytes(0, (*C.uchar)(unsafe.Pointer(cID)), C.long(len(id)), C.kCFStringEncodingUTF8, 0)
+
+	defer C.CFRelease(C.CFTypeRef(cfID))
+
+	filter := newFilter()
+
+	// nolint:govet
+	C.CFDictionarySetValue(filter, unsafe.Pointer(C.kTISPropertyInputSourceID), unsafe.Pointer(cfID))
+
+	var name string
+
+	withInputSources(filter, func(list C.CFArrayRef) {
+		if C.CFArrayGetCount(list) == 0 {
+			return
+		}
+
+		inputSource := C.TISInputSourceRef(C.CFArrayGetValueAtIndex(list, 0))
+
+		localized := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyLocalizedName))
+		if localized != 0 {
+			name = cfStringToString(localized)
+		}
+	})
+
+	return name
+}
+
 // Select selects input source with specified ID.
 func Select(id string) {
 	cID := C.CString(id)

@@ -33,6 +33,11 @@ linters:
     - whitespace
     - wsl_v5
   settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     gocognit:
       min-complexity: 25
     goconst:

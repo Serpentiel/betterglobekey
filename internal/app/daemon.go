@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
 )
@@ -30,8 +31,10 @@ type Logger interface {
 	Close() error
 }
 
-// Daemon listens for Globe key presses and drives the switcher in response.
+// Daemon listens for Globe key presses and drives the switcher in response. The
+// switcher can be swapped at runtime via Reload (used for live config reload).
 type Daemon struct {
+	mu       sync.RWMutex
 	switcher Presser
 	keyboard Keyboard
 	logger   Logger
@@ -42,12 +45,28 @@ func NewDaemon(s Presser, keyboard Keyboard, logger Logger) *Daemon {
 	return &Daemon{switcher: s, keyboard: keyboard, logger: logger}
 }
 
+// Reload atomically swaps the active switcher, e.g. after the configuration changes.
+func (d *Daemon) Reload(s Presser) {
+	d.mu.Lock()
+	d.switcher = s
+	d.mu.Unlock()
+}
+
+// press dispatches a key press to the current switcher.
+func (d *Daemon) press(reverse bool) {
+	d.mu.RLock()
+	switcher := d.switcher
+	d.mu.RUnlock()
+
+	switcher.Press(reverse)
+}
+
 // Run starts the keyboard listener and blocks until ctx is cancelled, then shuts
 // down cleanly.
 func (d *Daemon) Run(ctx context.Context) error {
 	defer func() { _ = d.logger.Close() }()
 
-	go d.keyboard.Listen(d.switcher.Press)
+	go d.keyboard.Listen(d.press)
 
 	d.logger.Info("event handler has been initialized")
 
