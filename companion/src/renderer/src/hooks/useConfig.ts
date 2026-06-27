@@ -22,7 +22,10 @@ export interface ConfigController {
   reload: () => Promise<void>
 }
 
-const emptyValidation: ValidationResult = { valid: false, errors: { logger: {}, collections: {} } }
+const emptyValidation: ValidationResult = {
+  valid: false,
+  errors: { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} },
+}
 
 /** useConfig owns loading, editing, validating, and saving the configuration. */
 export function useConfig(): ConfigController {

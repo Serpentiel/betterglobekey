@@ -1,8 +1,9 @@
 import { ScrollText } from 'lucide-react'
 
 import type { Config } from '../../../../shared/types'
-import type { ConfigErrors } from '../../lib/config-schema'
-import { Field, Input, Section, Stack } from '../../ui'
+import { LOG_LEVELS, type ConfigErrors } from '../../lib/config-schema'
+import { capitalize } from '../../lib/text'
+import { Field, Input, Section, Select, Stack } from '../../ui'
 
 interface Props {
   config: Config
@@ -24,6 +25,16 @@ export function LoggingSection({ config, errors, onChange }: Props): JSX.Element
             value={config.logger.path}
             placeholder="~/Library/Logs/betterglobekey.log"
             onChange={(event) => setLogger({ path: event.target.value })}
+          />
+        )}
+      </Field>
+      <Field label="Level" error={errors.logger.level}>
+        {({ id }) => (
+          <Select
+            id={id}
+            value={config.logger.level}
+            options={LOG_LEVELS.map((level) => ({ value: level, label: capitalize(level) }))}
+            onChange={(event) => setLogger({ level: event.target.value })}
           />
         )}
       </Field>

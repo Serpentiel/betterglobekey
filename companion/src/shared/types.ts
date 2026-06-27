@@ -3,8 +3,25 @@
 
 export interface Logger {
   path: string
+  level: string
   retentionDays: number
   retentionFiles: number
+}
+
+export interface DoublePress {
+  enabled: boolean
+  maximumDelay: string
+}
+
+export interface Reverse {
+  enabled: boolean
+  modifier: string
+}
+
+export interface Hud {
+  enabled: boolean
+  duration: string
+  showCollection: boolean
 }
 
 export interface Collection {
@@ -14,8 +31,9 @@ export interface Collection {
 
 export interface Config {
   logger: Logger
-  doublePressMaxDelay: string
-  hud: boolean
+  doublePress: DoublePress
+  reverse: Reverse
+  hud: Hud
   collections: Collection[]
 }
 

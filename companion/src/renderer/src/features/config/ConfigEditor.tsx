@@ -5,6 +5,7 @@ import type { ConfigController } from '../../hooks/useConfig'
 import { Banner, Button, Stack, Titlebar } from '../../ui'
 import { BehaviorSection } from './BehaviorSection'
 import { CollectionsSection } from './CollectionsSection'
+import { HudSection } from './HudSection'
 import { LoggingSection } from './LoggingSection'
 import styles from './ConfigEditor.module.css'
 
@@ -52,6 +53,7 @@ export function ConfigEditor({ controller }: Props): JSX.Element | null {
           {dirty && !validation.valid ? <Banner tone="info">Fix the highlighted fields to save.</Banner> : null}
 
           <BehaviorSection config={config} errors={validation.errors} onChange={update} />
+          <HudSection config={config} errors={validation.errors} onChange={update} />
           <CollectionsSection
             config={config}
             sources={sources}

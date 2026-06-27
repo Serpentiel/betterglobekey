@@ -15,6 +15,9 @@ const UNIT_MS: Record<string, number> = {
   h: 3_600_000,
 }
 
+export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const
+export const REVERSE_MODIFIERS = ['shift', 'option', 'control', 'command'] as const
+
 /** parseGoDuration returns the duration in milliseconds, or null if malformed. */
 export function parseGoDuration(input: string): number | null {
   const value = input.trim()
@@ -31,6 +34,13 @@ export function parseGoDuration(input: string): number | null {
 
   return total
 }
+
+const positiveDuration = (message: string) =>
+  z.string().refine((value) => {
+    const milliseconds = parseGoDuration(value)
+
+    return milliseconds !== null && milliseconds > 0
+  }, message)
 
 const collectionSchema = z
   .object({
@@ -55,16 +65,24 @@ const collectionSchema = z
 // what the service would reject.
 export const configSchema = z
   .object({
-    hud: z.boolean(),
-    doublePressMaxDelay: z.string().refine((value) => {
-      const milliseconds = parseGoDuration(value)
-
-      return milliseconds !== null && milliseconds > 0
-    }, 'Enter a positive Go duration, e.g. 250ms'),
     logger: z.object({
       path: z.string().trim().min(1, 'A log file path is required'),
+      level: z.enum(LOG_LEVELS),
       retentionDays: z.number().int('Must be a whole number').min(0, 'Cannot be negative'),
       retentionFiles: z.number().int('Must be a whole number').min(0, 'Cannot be negative'),
+    }),
+    doublePress: z.object({
+      enabled: z.boolean(),
+      maximumDelay: positiveDuration('Enter a positive Go duration, e.g. 250ms'),
+    }),
+    reverse: z.object({
+      enabled: z.boolean(),
+      modifier: z.enum(REVERSE_MODIFIERS),
+    }),
+    hud: z.object({
+      enabled: z.boolean(),
+      duration: positiveDuration('Enter a positive Go duration, e.g. 900ms'),
+      showCollection: z.boolean(),
     }),
     collections: z.array(collectionSchema),
   })
@@ -87,8 +105,10 @@ export const configSchema = z
   })
 
 export interface ConfigErrors {
-  doublePressMaxDelay?: string
-  logger: { path?: string; retentionDays?: string; retentionFiles?: string }
+  logger: { path?: string; level?: string; retentionDays?: string; retentionFiles?: string }
+  doublePress: { maximumDelay?: string }
+  reverse: { modifier?: string }
+  hud: { duration?: string }
   collections: Record<number, { name?: string; sources?: string }>
 }
 
@@ -97,9 +117,13 @@ export interface ValidationResult {
   errors: ConfigErrors
 }
 
+function emptyErrors(): ConfigErrors {
+  return { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} }
+}
+
 /** validateConfig runs the schema and maps issues to a per-field error tree. */
 export function validateConfig(config: Config): ValidationResult {
-  const errors: ConfigErrors = { logger: {}, collections: {} }
+  const errors = emptyErrors()
   const result = configSchema.safeParse(config)
 
   if (result.success) {
@@ -109,11 +133,15 @@ export function validateConfig(config: Config): ValidationResult {
   for (const issue of result.error.issues) {
     const [head, second, third] = issue.path
 
-    if (head === 'doublePressMaxDelay') {
-      errors.doublePressMaxDelay ??= issue.message
-    } else if (head === 'logger' && typeof second === 'string') {
+    if (head === 'logger' && typeof second === 'string') {
       const key = second as keyof ConfigErrors['logger']
       errors.logger[key] ??= issue.message
+    } else if (head === 'doublePress' && second === 'maximumDelay') {
+      errors.doublePress.maximumDelay ??= issue.message
+    } else if (head === 'reverse' && second === 'modifier') {
+      errors.reverse.modifier ??= issue.message
+    } else if (head === 'hud' && second === 'duration') {
+      errors.hud.duration ??= issue.message
     } else if (head === 'collections' && typeof second === 'number') {
       const field = third as 'name' | 'sources'
       errors.collections[second] ??= {}
