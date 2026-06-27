@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "dist": "electron-vite build && electron-builder --mac"
+    "dist": "electron-vite build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "@grpc/grpc-js": "1.12.5",

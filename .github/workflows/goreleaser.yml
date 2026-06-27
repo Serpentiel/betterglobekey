@@ -53,6 +53,15 @@ jobs:
         run: |
           task changelog:batch
           task release:publish
+      - name: Build companion
+        working-directory: companion
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm ci
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npm run dist
       - uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89
         with:
           version: ~> v2

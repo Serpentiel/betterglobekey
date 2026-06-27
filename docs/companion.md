@@ -29,7 +29,10 @@ service, so building collections is a matter of picking from a list rather than 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing
 configuration is left untouched.
 
-## Building It
+## Installing It
 
-The companion is not distributed as a Homebrew formula. To build it from source, see the
-[development guide](development.md).
+The companion is bundled with every release and installed by the same Homebrew formula as the command-line tool, so no
+separate install step is required. After installing or upgrading **betterglobekey**, the formula prints where the
+companion app lives and how to open it (you can also copy it to your Applications folder).
+
+To build it from source instead, see the [development guide](development.md).

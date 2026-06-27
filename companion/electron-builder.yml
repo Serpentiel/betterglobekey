@@ -12,5 +12,8 @@ extraResources:
 mac:
   category: public.app-category.utilities
   target:
-    - dmg
-    - zip
+    - target: zip
+      arch: universal
+    - target: dmg
+      arch: universal
+artifactName: ${name}-${version}-${arch}.${ext}
