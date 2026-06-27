@@ -1,0 +1,2 @@
+kind: Changed
+body: Default the log file location to `~/Library/Logs/betterglobekey.log`.

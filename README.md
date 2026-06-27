@@ -87,18 +87,20 @@ from the currently active input source:
    In this mode, the utility cycles through a collection of input sources. Each press of the Globe key switches to the
    next input source within the current collection.
 
-   The collections of input sources are defined in the configuration under `input_sources`. Each key-value pair within
-   this map represents a named collection of input sources. For example:
+   The collections of input sources are defined in the configuration under `collections`, an ordered list of named
+   collections. For example:
 
    ```yaml
-   input_sources:
-     foo:
-       - com.apple.keylayout.US
-       - com.apple.keylayout.Russian
-     bar:
-       - com.apple.keylayout.Finnish
-       - com.apple.keylayout.Ukrainian-PC
-       - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
+   collections:
+     - name: foo
+       sources:
+         - com.apple.keylayout.US
+         - com.apple.keylayout.Russian
+     - name: bar
+       sources:
+         - com.apple.keylayout.Finnish
+         - com.apple.keylayout.Ukrainian-PC
+         - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
    ```
 
    Upon initialization, the utility determines the current active input source and starts from that particular source
@@ -112,7 +114,7 @@ from the currently active input source:
    key cycles to the next collection in the configuration.
 
    The maximum time interval between the first and second press that is considered a double press can be configured
-   in the `double_press.maximum_delay` property. This delay is specified in milliseconds.
+   in the `double_press.maximum_delay` property. This delay is specified as a Go duration, e.g. `250ms`.
 
 These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
 especially for users who frequently switch between different languages or keyboard layouts.
