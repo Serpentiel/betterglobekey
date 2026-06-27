@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package betterglobekey.control.v1;
+
+option go_package = "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1";
+
+// ConfigService lets a local companion application read and update the daemon's
+// configuration and inspect the system's input sources. It is served over a
+// Unix domain socket in the user's home directory and is intended for local,
+// single-user use only.
+service ConfigService {
+  // GetConfig returns the daemon's current configuration.
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+
+  // ApplyConfig validates and persists a new configuration. The daemon reloads
+  // it automatically once it is written.
+  rpc ApplyConfig(ApplyConfigRequest) returns (ApplyConfigResponse);
+
+  // ListInputSources returns every selectable input source with its localized
+  // name.
+  rpc ListInputSources(ListInputSourcesRequest) returns (ListInputSourcesResponse);
+
+  // GetCurrentSource returns the currently active input source.
+  rpc GetCurrentSource(GetCurrentSourceRequest) returns (GetCurrentSourceResponse);
+}
+
+// Config mirrors the daemon's resolved configuration.
+message Config {
+  // logger holds the logging configuration.
+  Logger logger = 1;
+
+  // double_press_max_delay is the maximum interval between two Globe key presses
+  // for them to count as a double press, as a Go duration string (e.g. "250ms").
+  string double_press_max_delay = 2;
+
+  // hud enables the on-screen overlay that names the input source when it changes.
+  bool hud = 3;
+
+  // collections are the ordered input source collections the Globe key cycles
+  // through.
+  repeated Collection collections = 4;
+}
+
+// Logger holds the logging configuration.
+message Logger {
+  // path is the path to the log file.
+  string path = 1;
+
+  // retention_days is the number of days to retain rotated log files.
+  int32 retention_days = 2;
+
+  // retention_files is the number of rotated log files to retain.
+  int32 retention_files = 3;
+}
+
+// Collection is a named, ordered set of input source identifiers.
+message Collection {
+  // name uniquely identifies the collection.
+  string name = 1;
+
+  // sources are the input source identifiers, in cycling order.
+  repeated string sources = 2;
+}
+
+// InputSource is a selectable input source and its localized display name.
+message InputSource {
+  // id is the input source identifier (e.g. "com.apple.keylayout.US").
+  string id = 1;
+
+  // name is the localized display name.
+  string name = 2;
+}
+
+message GetConfigRequest {}
+
+message GetConfigResponse {
+  Config config = 1;
+}
+
+message ApplyConfigRequest {
+  Config config = 1;
+}
+
+message ApplyConfigResponse {}
+
+message ListInputSourcesRequest {}
+
+message ListInputSourcesResponse {
+  repeated InputSource sources = 1;
+}
+
+message GetCurrentSourceRequest {}
+
+message GetCurrentSourceResponse {
+  InputSource source = 1;
+}

@@ -1,0 +1,46 @@
+{
+  "name": "betterglobekey-companion",
+  "version": "0.0.0",
+  "description": "Desktop companion app for editing the betterglobekey configuration.",
+  "license": "MIT",
+  "author": "Aleksandr Zaruchevskii",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "dist": "electron-vite build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "1.12.5",
+    "@grpc/proto-loader": "0.7.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.17.0",
+    "@types/node": "22.10.2",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "@vitejs/plugin-react": "4.3.4",
+    "electron": "33.3.1",
+    "electron-builder": "25.1.8",
+    "electron-vite": "2.3.0",
+    "eslint": "9.17.0",
+    "eslint-plugin-react-hooks": "5.1.0",
+    "eslint-plugin-react-refresh": "0.4.16",
+    "globals": "15.14.0",
+    "prettier": "3.4.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.7.2",
+    "typescript-eslint": "8.18.1",
+    "vite": "5.4.11"
+  }
+}
