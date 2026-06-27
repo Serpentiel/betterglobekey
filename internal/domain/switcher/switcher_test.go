@@ -50,8 +50,7 @@ func newTestSwitcher(
 
 // single simulates a single press: enough time elapses to not be a double press.
 func single(s *Switcher, c *fakeClock) {
-	c.advance(testDelay + time.Millisecond)
-	s.Press()
+	pressOnce(s, c, false)
 }
 
 // double simulates a user double press, which the system sees as a single press
@@ -59,7 +58,20 @@ func single(s *Switcher, c *fakeClock) {
 func double(s *Switcher, c *fakeClock) {
 	single(s, c)
 	c.advance(testDelay)
-	s.Press()
+	s.Press(false)
+}
+
+// pressOnce simulates a single press in the given direction.
+func pressOnce(s *Switcher, c *fakeClock, reverse bool) {
+	c.advance(testDelay + time.Millisecond)
+	s.Press(reverse)
+}
+
+// doubleReverse simulates a reverse double press (e.g. Shift held for both releases).
+func doubleReverse(s *Switcher, c *fakeClock) {
+	pressOnce(s, c, true)
+	c.advance(testDelay)
+	s.Press(true)
 }
 
 func TestSinglePressCyclesWithinCollectionWithWraparound(t *testing.T) {
@@ -144,9 +156,9 @@ func TestDoublePressDetectionRespectsDelayBoundary(t *testing.T) {
 	s, src, clock := newTestSwitcher(t, "a1", []string{"a1", "a2", "b1"}, a, b)
 
 	clock.advance(testDelay + time.Millisecond) // > delay -> single
-	s.Press()
+	s.Press(false)
 	clock.advance(testDelay) // exactly == delay -> still a double press
-	s.Press()
+	s.Press(false)
 
 	want := []string{"a2", "b1"}
 	if !slices.Equal(src.selected, want) {
@@ -174,5 +186,34 @@ func TestNoCollectionsIsNoOp(t *testing.T) {
 
 	if len(src.selected) != 0 {
 		t.Fatalf("selected = %v, want none", src.selected)
+	}
+}
+
+func TestReverseSinglePressCyclesBackward(t *testing.T) {
+	col := config.Collection{Name: "a", Sources: []string{"s1", "s2", "s3"}}
+	s, src, clock := newTestSwitcher(t, "s1", []string{"s1", "s2", "s3"}, col)
+
+	pressOnce(s, clock, true) // s1 -> s3 (wrap backward)
+	pressOnce(s, clock, true) // s3 -> s2
+
+	want := []string{"s3", "s2"}
+	if !slices.Equal(src.selected, want) {
+		t.Fatalf("selected = %v, want %v", src.selected, want)
+	}
+}
+
+func TestReverseDoublePressSwitchesToPreviousCollection(t *testing.T) {
+	a := config.Collection{Name: "a", Sources: []string{"a1"}}
+	b := config.Collection{Name: "b", Sources: []string{"b1"}}
+	c := config.Collection{Name: "c", Sources: []string{"c1"}}
+	s, src, clock := newTestSwitcher(t, "a1", []string{"a1", "b1", "c1"}, a, b, c)
+
+	doubleReverse(s, clock) // a -> c (wrap backward)
+	doubleReverse(s, clock) // c -> b
+
+	switched := []string{src.selected[1], src.selected[3]}
+	want := []string{"c1", "b1"}
+	if !slices.Equal(switched, want) {
+		t.Fatalf("reverse collection order = %v, want %v", switched, want)
 	}
 }

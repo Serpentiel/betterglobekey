@@ -86,20 +86,21 @@ func New(cfg config.Config, sources InputSources, clock Clock, log Logger) *Swit
 
 // Press handles a Globe key release, classifying it as a single or double press
 // based on the time elapsed since the previous press.
-func (s *Switcher) Press() {
+func (s *Switcher) Press(reverse bool) {
 	now := s.clock.Now()
 	elapsed := now.Sub(s.lastPress)
 	s.lastPress = now
 
 	if elapsed <= s.maxDoublePressDelay {
-		s.doublePress()
+		s.doublePress(reverse)
 	} else {
-		s.singlePress()
+		s.singlePress(reverse)
 	}
 }
 
-// singlePress advances to the next input source within the current collection.
-func (s *Switcher) singlePress() {
+// singlePress moves to the next (or previous, when reverse) input source within
+// the current collection.
+func (s *Switcher) singlePress(reverse bool) {
 	s.log.Info("globe key pressed")
 
 	if s.currentCollection < 0 {
@@ -108,7 +109,7 @@ func (s *Switcher) singlePress() {
 
 	collection := s.collections[s.currentCollection]
 
-	next := nextInCycle(collection.Sources, s.currentSource)
+	next := step(collection.Sources, s.currentSource, !reverse)
 	if next == "" {
 		s.log.Error("no input source available", "collection", collection.Name)
 
@@ -119,19 +120,24 @@ func (s *Switcher) singlePress() {
 	s.selectSource(next)
 }
 
-// doublePress switches to the next collection. The first release of a double
-// press has already been handled as a single press, advancing the current
-// collection, so that advance is reverted before switching.
-func (s *Switcher) doublePress() {
+// doublePress switches to the next (or previous, when reverse) collection. The
+// first release of a double press has already been handled as a single press,
+// advancing the current collection, so that advance is reverted before switching.
+func (s *Switcher) doublePress(reverse bool) {
 	s.log.Info("globe key double pressed")
 
 	if s.currentCollection < 0 {
 		return
 	}
 
-	s.revertLastSource(s.collections[s.currentCollection])
+	s.revertLastSource(s.collections[s.currentCollection], reverse)
 
-	s.currentCollection = (s.currentCollection + 1) % len(s.collections)
+	count := len(s.collections)
+	if reverse {
+		s.currentCollection = (s.currentCollection - 1 + count) % count
+	} else {
+		s.currentCollection = (s.currentCollection + 1) % count
+	}
 
 	collection := s.collections[s.currentCollection]
 
@@ -157,22 +163,28 @@ func (s *Switcher) selectSource(id string) {
 	s.log.Info("input source not found", "source", id)
 }
 
-// revertLastSource moves the remembered source for a collection one step back,
-// undoing the advance applied by the single press that precedes a double press.
-func (s *Switcher) revertLastSource(collection config.Collection) {
+// revertLastSource undoes the advance applied by the single press that precedes
+// a double press by stepping the remembered source in the opposite direction.
+// The single press moved it in the !reverse direction, so the revert steps in
+// the reverse direction.
+func (s *Switcher) revertLastSource(collection config.Collection, reverse bool) {
 	index := slices.Index(collection.Sources, s.lastSourceByCollection[collection.Name])
+	if index < 0 {
+		return
+	}
 
-	switch {
-	case index > 0:
-		s.lastSourceByCollection[collection.Name] = collection.Sources[index-1]
-	case index == 0:
-		s.lastSourceByCollection[collection.Name] = collection.Sources[len(collection.Sources)-1]
+	count := len(collection.Sources)
+	if reverse {
+		s.lastSourceByCollection[collection.Name] = collection.Sources[(index+1)%count]
+	} else {
+		s.lastSourceByCollection[collection.Name] = collection.Sources[(index-1+count)%count]
 	}
 }
 
-// nextInCycle returns the source after current, wrapping around. If current is
-// not present, the first source is returned. An empty slice yields "".
-func nextInCycle(sources []string, current string) string {
+// step returns the source after current (forward) or before it (when forward is
+// false), wrapping around. If current is not present, the first source is
+// returned. An empty slice yields "".
+func step(sources []string, current string, forward bool) string {
 	if len(sources) == 0 {
 		return ""
 	}
@@ -182,5 +194,10 @@ func nextInCycle(sources []string, current string) string {
 		return sources[0]
 	}
 
-	return sources[(index+1)%len(sources)]
+	count := len(sources)
+	if forward {
+		return sources[(index+1)%count]
+	}
+
+	return sources[(index-1+count)%count]
 }

@@ -9,7 +9,7 @@ import (
 
 type fakePresser struct{}
 
-func (fakePresser) Press() {}
+func (fakePresser) Press(bool) {}
 
 type fakeKeyboard struct {
 	started chan struct{}
@@ -19,7 +19,7 @@ type fakeKeyboard struct {
 	stopped bool
 }
 
-func (k *fakeKeyboard) Listen(func()) {
+func (k *fakeKeyboard) Listen(func(reverse bool)) {
 	close(k.started)
 	<-k.stop
 }

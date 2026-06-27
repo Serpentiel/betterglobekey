@@ -7,16 +7,18 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
 )
 
-// Presser handles a single Globe key press.
+// Presser handles a single Globe key press. The reverse flag inverts the
+// cycling direction (e.g. when a modifier is held).
 type Presser interface {
 	// Press reacts to a Globe key release.
-	Press()
+	Press(reverse bool)
 }
 
 // Keyboard is the port that delivers Globe key releases.
 type Keyboard interface {
-	// Listen blocks, invoking onKeyUp for each Globe key release, until Stop is called.
-	Listen(onKeyUp func())
+	// Listen blocks, invoking onPress for each Globe key release (with reverse set
+	// when a modifier is held), until Stop is called.
+	Listen(onPress func(reverse bool))
 	// Stop unblocks Listen and releases the keyboard hook.
 	Stop()
 }
