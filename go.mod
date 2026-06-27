@@ -6,7 +6,6 @@ require (
 	github.com/robotn/gohook v0.42.3
 	github.com/spf13/cobra v1.10.2
 	go.uber.org/zap v1.28.0
-	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )

@@ -1,5 +1,5 @@
 // Package inputsource provides access to macOS input sources.
-// nolint:nlreturn // nlreturn does not seems to work properly with this package.
+// nolint:nlreturn // nlreturn does not seem to work properly with this cgo package.
 package inputsource
 
 /*
@@ -10,14 +10,13 @@ package inputsource
 */
 import "C"
 import (
+	"slices"
 	"unsafe"
-
-	"golang.org/x/exp/slices"
 )
 
 // All returns a slice of all available input sources' IDs.
 func All() []string {
-	filter := C.CFDictionaryCreateMutable(C.CFAllocatorRef(0), 0, nil, nil)
+	filter := newFilter()
 
 	// nolint:govet
 	C.CFDictionarySetValue(
@@ -29,27 +28,23 @@ func All() []string {
 		filter, unsafe.Pointer(C.kTISPropertyInputSourceIsSelectCapable), unsafe.Pointer(C.kCFBooleanTrue),
 	)
 
-	defer C.CFRelease(C.CFTypeRef(filter))
-
-	sourceList := C.TISCreateInputSourceList(C.CFDictionaryRef(filter), 0)
-
-	defer C.CFRelease(C.CFTypeRef(sourceList))
-
 	var result []string
 
-	for i := C.CFIndex(0); i < C.CFArrayGetCount(sourceList); i++ {
-		inputSource := C.TISInputSourceRef(C.CFArrayGetValueAtIndex(sourceList, i))
+	withInputSources(filter, func(list C.CFArrayRef) {
+		for i := C.CFIndex(0); i < C.CFArrayGetCount(list); i++ {
+			inputSource := C.TISInputSourceRef(C.CFArrayGetValueAtIndex(list, i))
 
-		t := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceType))
-		if C.CFStringCompare(t, C.kTISTypeKeyboardLayout, 0) != C.kCFCompareEqualTo &&
-			C.CFStringCompare(t, C.kTISTypeKeyboardInputMode, 0) != C.kCFCompareEqualTo {
-			continue
+			t := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceType))
+			if C.CFStringCompare(t, C.kTISTypeKeyboardLayout, 0) != C.kCFCompareEqualTo &&
+				C.CFStringCompare(t, C.kTISTypeKeyboardInputMode, 0) != C.kCFCompareEqualTo {
+				continue
+			}
+
+			id := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceID))
+
+			result = append(result, cfStringToString(id))
 		}
-
-		id := C.CFStringRef(C.TISGetInputSourceProperty(inputSource, C.kTISPropertyInputSourceID))
-
-		result = append(result, cfStringToString(id))
-	}
+	})
 
 	slices.Sort(result)
 
@@ -75,18 +70,48 @@ func Select(id string) {
 
 	defer C.CFRelease(C.CFTypeRef(cfID))
 
-	filter := C.CFDictionaryCreateMutable(C.CFAllocatorRef(0), 0, nil, nil)
+	filter := newFilter()
 
 	// nolint:govet
 	C.CFDictionarySetValue(filter, unsafe.Pointer(C.kTISPropertyInputSourceID), unsafe.Pointer(cfID))
 
+	withInputSources(filter, func(list C.CFArrayRef) {
+		if C.CFArrayGetCount(list) == 0 {
+			return
+		}
+
+		C.TISSelectInputSource(C.TISInputSourceRef(C.CFArrayGetValueAtIndex(list, 0)))
+	})
+}
+
+// newFilter creates an empty mutable CFDictionary used to filter input sources.
+func newFilter() C.CFMutableDictionaryRef {
+	return C.CFDictionaryCreateMutable(C.CFAllocatorRef(0), 0, nil, nil)
+}
+
+// withInputSources invokes fn with the input sources matching filter, releasing
+// both the filter and the resulting list afterwards.
+func withInputSources(filter C.CFMutableDictionaryRef, fn func(C.CFArrayRef)) {
 	defer C.CFRelease(C.CFTypeRef(filter))
 
-	sourceList := C.TISCreateInputSourceList(C.CFDictionaryRef(filter), 0)
+	list := C.TISCreateInputSourceList(C.CFDictionaryRef(filter), 0)
 
-	defer C.CFRelease(C.CFTypeRef(sourceList))
+	defer C.CFRelease(C.CFTypeRef(list))
 
-	inputSource := C.TISInputSourceRef(C.CFArrayGetValueAtIndex(sourceList, 0))
+	fn(list)
+}
 
-	C.TISSelectInputSource(inputSource)
+// cfStringToString converts a CFString to a Go string.
+func cfStringToString(cfString C.CFStringRef) string {
+	length := C.CFStringGetLength(cfString)
+
+	maxSize := C.CFStringGetMaximumSizeForEncoding(length, C.kCFStringEncodingUTF8)
+
+	buffer := make([]byte, maxSize)
+
+	bufferPtr := (*C.char)(unsafe.Pointer(&buffer[0]))
+
+	C.CFStringGetCString(cfString, bufferPtr, maxSize, C.kCFStringEncodingUTF8)
+
+	return C.GoString(bufferPtr)
 }
