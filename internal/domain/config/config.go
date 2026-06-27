@@ -71,6 +71,30 @@ func (c Config) Validate() error {
 		if len(collection.Sources) == 0 {
 			return fmt.Errorf("collection %q must have at least one input source", collection.Name)
 		}
+
+		if err := validateSources(collection); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateSources reports whether a collection's input sources are non-empty and
+// free of duplicates.
+func validateSources(collection Collection) error {
+	seen := make(map[string]struct{}, len(collection.Sources))
+
+	for _, id := range collection.Sources {
+		if id == "" {
+			return fmt.Errorf("collection %q has an empty input source", collection.Name)
+		}
+
+		if _, ok := seen[id]; ok {
+			return fmt.Errorf("collection %q lists input source %q more than once", collection.Name, id)
+		}
+
+		seen[id] = struct{}{}
 	}
 
 	return nil

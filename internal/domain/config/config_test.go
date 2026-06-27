@@ -40,6 +40,8 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },
 		"collection no sources": func(c *config.Config) { c.Collections[0].Sources = nil },
 		"duplicate collections": func(c *config.Config) { c.Collections = append(c.Collections, c.Collections[0]) },
+		"empty source":          func(c *config.Config) { c.Collections[0].Sources = []string{""} },
+		"duplicate sources":     func(c *config.Config) { c.Collections[0].Sources = []string{"a", "a"} },
 	}
 
 	for name, mutate := range tests {
