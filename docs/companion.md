@@ -31,8 +31,14 @@ configuration is left untouched.
 
 ## Installing It
 
-The companion is bundled with every release and installed by the same Homebrew formula as the command-line tool, so no
-separate install step is required. After installing or upgrading **betterglobekey**, the formula prints where the
-companion app lives and how to open it (you can also copy it to your Applications folder).
+The companion is distributed as a Homebrew cask. Installing it also pulls in the **betterglobekey** formula (the
+command-line tool and its background service):
+
+```bash
+brew install --cask serpentiel/tools/betterglobekey-companion
+```
+
+The app is placed in your Applications folder. Start the service with `brew services start betterglobekey`, then open
+the companion.
 
 To build it from source instead, see the [development guide](development.md).
