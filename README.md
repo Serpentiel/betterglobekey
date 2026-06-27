@@ -135,6 +135,9 @@ The utility also provides helper commands: `betterglobekey list` (available inpu
 `betterglobekey edit` (open the configuration file). See the [documentation](docs/) for more information on how to set
 up and configure the utility.
 
+Prefer a graphical interface? An optional [companion app](docs/companion.md) lets you edit your configuration—behavior,
+collections, and logging—without touching the YAML file, applying changes to the running service instantly.
+
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
 <!-- markdownlint-restore -->

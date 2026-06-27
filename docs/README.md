@@ -7,3 +7,5 @@ sources.
 - [Configuration](configuration.md) — the configuration file format and every option.
 - [Usage](usage.md) — how the Globe key behaves, including the Shift modifier and the on-screen HUD.
 - [Commands](commands.md) — the command-line reference.
+- [Companion App](companion.md) — the optional graphical configuration editor.
+- [Development](development.md) — building, testing, and the task-based workflow.
