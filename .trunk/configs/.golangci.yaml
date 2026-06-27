@@ -1,5 +1,7 @@
+version: "2"
+
 linters:
-  disable-all: true
+  default: none
   enable:
     - durationcheck
     - errcheck
@@ -11,17 +13,14 @@ linters:
     - gocognit
     - goconst
     - gocyclo
-    - gofmt
-    - goimports
-    - gomnd
     - gosec
-    - gosimple
     - govet
     - importas
     - ineffassign
     - lll
     - makezero
     - misspell
+    - mnd
     - nakedret
     - nestif
     - nilerr
@@ -29,23 +28,34 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - typecheck
     - unconvert
     - unused
     - whitespace
-    - wsl
+    - wsl_v5
+  settings:
+    gocognit:
+      min-complexity: 25
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    govet:
+      enable:
+        - shadow
+    lll:
+      line-length: 120
+      tab-width: 4
+  exclusions:
+    rules:
+      # Tests favour readability over strict magic-number, length, and complexity rules.
+      - path: _test\.go
+        linters:
+          - funlen
+          - goconst
+          - gocognit
+          - gosec
+          - mnd
 
-linters-settings:
-  gocognit:
-    min-complexity: 25
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  govet:
-    check-shadowing: true
-  lll:
-    line-length: 120
-    tab-width: 4
-
-issues:
-  exclude-use-default: false
+formatters:
+  enable:
+    - gofmt
+    - goimports
