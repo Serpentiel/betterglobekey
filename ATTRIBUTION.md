@@ -13,9 +13,6 @@ A special thank you to the people and projects that helped make betterglobekey p
     <li>
       <a href="#people">1. People</a>
     </li>
-    <li>
-      <a href="#projects">2. Projects</a>
-    </li>
   </ul>
 </details>
 <!-- markdownlint-restore -->
@@ -29,14 +26,6 @@ A special thank you to the people and projects that helped make betterglobekey p
   </a>
 </div>
 <!-- markdownlint-restore -->
-
-<!-- markdownlint-disable -->
-<p align="right"><a href="#top">(back to top)</a></p>
-<!-- markdownlint-restore -->
-
-## Projects
-
-Projects listed below are ordered alphabetically.
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
