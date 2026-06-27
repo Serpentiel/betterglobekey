@@ -213,6 +213,7 @@ func TestReverseDoublePressSwitchesToPreviousCollection(t *testing.T) {
 
 	switched := []string{src.selected[1], src.selected[3]}
 	want := []string{"c1", "b1"}
+
 	if !slices.Equal(switched, want) {
 		t.Fatalf("reverse collection order = %v, want %v", switched, want)
 	}
