@@ -1,4 +1,4 @@
-# betterglobekey companion
+# betterglobekey-companion
 
 A desktop companion application for editing the [betterglobekey](https://github.com/Serpentiel/betterglobekey)
 configuration through a graphical interface. It is built with [Electron](https://www.electronjs.org/),
