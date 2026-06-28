@@ -17,6 +17,12 @@ runtimes:
     - python@3.14.4
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
+  # Teach trunk that .m/.mm are Objective-C so clang-format lints them.
+  files:
+    - name: objective-c
+      extensions:
+        - m
+        - mm
   definitions:
     # We only add CGO_ENABLED=1, everything else is inherited from the default linter configuration.
     - name: golangci-lint2
@@ -33,7 +39,14 @@ lint:
           value: ${env.SSH_AUTH_SOCK}
         - name: CGO_ENABLED
           value: "1"
+    # Scope clang-format to Objective-C/C; protobuf formatting is handled by buf.
+    - name: clang-format
+      files:
+        - objective-c
+        - c
+        - c++
   enabled:
+    - clang-format@16.0.3
     - actionlint@1.7.12
     - checkov@3.3.3
     - git-diff-check
