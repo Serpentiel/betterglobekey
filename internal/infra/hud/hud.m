@@ -23,6 +23,26 @@ void hudSetDuration(double seconds) {
 	}
 }
 
+// hudMaskImage builds a resizable rounded-rectangle mask. Masking the visual
+// effect view (rather than rounding its layer) clips the vibrancy material
+// cleanly, leaving the corners fully transparent instead of opaque.
+static NSImage *hudMaskImage(CGFloat radius) {
+	CGFloat edge = radius * 2.0 + 1.0;
+
+	NSImage *image = [NSImage imageWithSize:NSMakeSize(edge, edge)
+	                                flipped:NO
+	                         drawingHandler:^BOOL(NSRect rect) {
+		[[NSColor blackColor] setFill];
+		[[NSBezierPath bezierPathWithRoundedRect:rect xRadius:radius yRadius:radius] fill];
+		return YES;
+	}];
+
+	image.capInsets = NSEdgeInsetsMake(radius, radius, radius, radius);
+	image.resizingMode = NSImageResizingModeStretch;
+
+	return image;
+}
+
 static void hudEnsureWindow(void) {
 	NSRect frame = NSMakeRect(0, 0, hudWidth, hudHeight);
 
@@ -43,9 +63,7 @@ static void hudEnsureWindow(void) {
 	blur.material = NSVisualEffectMaterialHUDWindow;
 	blur.state = NSVisualEffectStateActive;
 	blur.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-	blur.wantsLayer = YES;
-	blur.layer.cornerRadius = hudCornerRadius;
-	blur.layer.masksToBounds = YES;
+	blur.maskImage = hudMaskImage(hudCornerRadius);
 	[hudWindow setContentView:blur];
 
 	hudLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(16, 48, hudWidth - 32, 34)];
