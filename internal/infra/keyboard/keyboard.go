@@ -22,8 +22,15 @@ static const int64_t bgkFnKeyCode = 63;
 static bool bgkFnDown = false;
 // bgkFnReverse latches whether the reverse modifier was held when fn was pressed.
 static int bgkFnReverse = 0;
+// bgkFnUsed records whether another key was pressed while fn was held, so a
+// modifier combo (e.g. fn+F1 for brightness) is not treated as a standalone tap.
+static int bgkFnUsed = 0;
 // bgkReverseMask is the modifier flag that marks a press as reverse (default Shift).
 static CGEventFlags bgkReverseMask = kCGEventFlagMaskShift;
+
+// bgkSystemDefined is NSEventTypeSystemDefined, the type of media keys such as
+// brightness and volume (fn + F1-F20 on a standard-function-keys keyboard).
+static const CGEventType bgkSystemDefined = 14;
 
 // bgkSetReverseMask sets the modifier flag used to detect a reverse press.
 static void bgkSetReverseMask(CGEventFlags mask) {
@@ -46,15 +53,27 @@ static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRe
 		bool down = (flags & kCGEventFlagMaskSecondaryFn) != 0;
 
 		if (down && !bgkFnDown) {
-			// Press: latch the Shift state now (the natural "hold Shift, then tap").
+			// Press: latch the reverse modifier now (the natural "hold it, then tap").
 			bgkFnDown = true;
 			bgkFnReverse = (flags & bgkReverseMask) != 0 ? 1 : 0;
+			bgkFnUsed = 0;
 		} else if (!down && bgkFnDown) {
-			// Release: fire once with the latched reverse flag.
+			// Release: fire only for a clean tap. If another key was pressed while
+			// fn was held, it was used as a modifier (e.g. fn+F1) — do nothing.
 			bgkFnDown = false;
-			goHandleFnRelease(bgkFnReverse);
+			if (!bgkFnUsed) {
+				goHandleFnRelease(bgkFnReverse);
+			}
 		}
 		// Any other flags-changed event for this key code is a duplicate/no-op.
+		return event;
+	}
+
+	// A key or media key pressed while fn is held means fn is acting as a
+	// modifier, not a standalone tap. Plain modifiers (Shift, etc.) arrive as
+	// flags-changed events and are intentionally ignored here.
+	if (bgkFnDown && (type == kCGEventKeyDown || type == bgkSystemDefined)) {
+		bgkFnUsed = 1;
 	}
 
 	return event;
@@ -63,7 +82,9 @@ static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRe
 // bgkStart creates and enables the event tap on the current run loop. It returns
 // 0 on failure, which typically means Accessibility permission is not granted.
 static int bgkStart(void) {
-	CGEventMask mask = CGEventMaskBit(kCGEventFlagsChanged);
+	CGEventMask mask = CGEventMaskBit(kCGEventFlagsChanged) |
+	                   CGEventMaskBit(kCGEventKeyDown) |
+	                   CGEventMaskBit(bgkSystemDefined);
 
 	bgkTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap,
 	                          kCGEventTapOptionListenOnly, mask, bgkCallback, NULL);
