@@ -36,7 +36,7 @@ func newTestClient(t *testing.T, path string, sources Sources) controlv1.ConfigS
 	t.Helper()
 
 	listener := bufconn.Listen(1 << 20)
-	server := NewServer(path, sources, func(fn func()) { fn() })
+	server := NewServer(path, sources, func(fn func()) { fn() }, "1.2.3", "abc1234")
 
 	go func() { _ = server.grpc.Serve(listener) }()
 
@@ -163,5 +163,18 @@ func TestGetCurrentSource(t *testing.T) {
 
 	if resp.GetSource().GetName() != "U.S." {
 		t.Errorf("name = %q, want U.S.", resp.GetSource().GetName())
+	}
+}
+
+func TestGetVersion(t *testing.T) {
+	client := newTestClient(t, "", fakeSources{})
+
+	resp, err := client.GetVersion(context.Background(), &controlv1.GetVersionRequest{})
+	if err != nil {
+		t.Fatalf("GetVersion: %v", err)
+	}
+
+	if resp.GetVersion() != "1.2.3" || resp.GetCommit() != "abc1234" {
+		t.Errorf("version/commit = %q/%q, want 1.2.3/abc1234", resp.GetVersion(), resp.GetCommit())
 	}
 }

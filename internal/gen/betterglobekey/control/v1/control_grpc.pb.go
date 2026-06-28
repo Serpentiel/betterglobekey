@@ -23,6 +23,7 @@ const (
 	ConfigService_ApplyConfig_FullMethodName      = "/betterglobekey.control.v1.ConfigService/ApplyConfig"
 	ConfigService_ListInputSources_FullMethodName = "/betterglobekey.control.v1.ConfigService/ListInputSources"
 	ConfigService_GetCurrentSource_FullMethodName = "/betterglobekey.control.v1.ConfigService/GetCurrentSource"
+	ConfigService_GetVersion_FullMethodName       = "/betterglobekey.control.v1.ConfigService/GetVersion"
 )
 
 // ConfigServiceClient is the client API for ConfigService service.
@@ -44,6 +45,8 @@ type ConfigServiceClient interface {
 	ListInputSources(ctx context.Context, in *ListInputSourcesRequest, opts ...grpc.CallOption) (*ListInputSourcesResponse, error)
 	// GetCurrentSource returns the currently active input source.
 	GetCurrentSource(ctx context.Context, in *GetCurrentSourceRequest, opts ...grpc.CallOption) (*GetCurrentSourceResponse, error)
+	// GetVersion returns the running daemon's version and build commit.
+	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 }
 
 type configServiceClient struct {
@@ -94,6 +97,16 @@ func (c *configServiceClient) GetCurrentSource(ctx context.Context, in *GetCurre
 	return out, nil
 }
 
+func (c *configServiceClient) GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetVersionResponse)
+	err := c.cc.Invoke(ctx, ConfigService_GetVersion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigServiceServer is the server API for ConfigService service.
 // All implementations must embed UnimplementedConfigServiceServer
 // for forward compatibility.
@@ -113,6 +126,8 @@ type ConfigServiceServer interface {
 	ListInputSources(context.Context, *ListInputSourcesRequest) (*ListInputSourcesResponse, error)
 	// GetCurrentSource returns the currently active input source.
 	GetCurrentSource(context.Context, *GetCurrentSourceRequest) (*GetCurrentSourceResponse, error)
+	// GetVersion returns the running daemon's version and build commit.
+	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()
 }
 
@@ -134,6 +149,9 @@ func (UnimplementedConfigServiceServer) ListInputSources(context.Context, *ListI
 }
 func (UnimplementedConfigServiceServer) GetCurrentSource(context.Context, *GetCurrentSourceRequest) (*GetCurrentSourceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetCurrentSource not implemented")
+}
+func (UnimplementedConfigServiceServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVersion not implemented")
 }
 func (UnimplementedConfigServiceServer) mustEmbedUnimplementedConfigServiceServer() {}
 func (UnimplementedConfigServiceServer) testEmbeddedByValue()                       {}
@@ -228,6 +246,24 @@ func _ConfigService_GetCurrentSource_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigService_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigServiceServer).GetVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigService_GetVersion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigServiceServer).GetVersion(ctx, req.(*GetVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigService_ServiceDesc is the grpc.ServiceDesc for ConfigService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +286,10 @@ var ConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCurrentSource",
 			Handler:    _ConfigService_GetCurrentSource_Handler,
+		},
+		{
+			MethodName: "GetVersion",
+			Handler:    _ConfigService_GetVersion_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

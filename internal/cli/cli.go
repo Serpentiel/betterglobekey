@@ -42,16 +42,18 @@ const socketFileName = ".betterglobekey.sock"
 const listColumnPadding = 2
 
 // Execute builds the root command and runs it.
-func Execute(version string) error {
-	return newRootCmd(version).Execute()
+func Execute(version, commit string) error {
+	return newRootCmd(version, commit).Execute()
 }
 
-// newRootCmd builds the root command, which runs the daemon.
-func newRootCmd(version string) *cobra.Command {
+// newRootCmd builds the root command, which runs the daemon. The build commit is
+// stored in the command's annotations so the daemon can report it.
+func newRootCmd(version, commit string) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "betterglobekey",
 		Short:         "Make the Globe key great again!",
 		Version:       version,
+		Annotations:   map[string]string{"commit": commit},
 		RunE:          runDaemon,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -166,7 +168,8 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 
 	go watchConfig(ctx, path, logger, daemon, build)
 
-	if err = startControlServer(ctx, path, controller, logger); err != nil {
+	root := cmd.Root()
+	if err = startControlServer(ctx, path, controller, logger, root.Version, root.Annotations["commit"]); err != nil {
 		return err
 	}
 
@@ -217,13 +220,15 @@ func startControlServer(
 	path string,
 	sources control.Sources,
 	logger *logging.Logger,
+	version string,
+	commit string,
 ) error {
 	socketPath, err := resolveSocketPath()
 	if err != nil {
 		return err
 	}
 
-	server := control.NewServer(path, sources, mainthread.Run)
+	server := control.NewServer(path, sources, mainthread.Run, version, commit)
 
 	go func() {
 		if err := server.Serve(socketPath); err != nil {

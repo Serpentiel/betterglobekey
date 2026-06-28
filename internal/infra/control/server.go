@@ -42,14 +42,23 @@ type Server struct {
 	path    string
 	sources Sources
 	onMain  OnMain
+	version string
+	commit  string
 	grpc    *grpc.Server
 }
 
 // NewServer builds a control server that reads and writes the configuration at
 // path and reports input sources via sources. Input-source queries are run via
-// onMain.
-func NewServer(path string, sources Sources, onMain OnMain) *Server {
-	srv := &Server{path: path, sources: sources, onMain: onMain, grpc: grpc.NewServer()}
+// onMain. version and commit identify the running build.
+func NewServer(path string, sources Sources, onMain OnMain, version, commit string) *Server {
+	srv := &Server{
+		path:    path,
+		sources: sources,
+		onMain:  onMain,
+		version: version,
+		commit:  commit,
+		grpc:    grpc.NewServer(),
+	}
 	controlv1.RegisterConfigServiceServer(srv.grpc, srv)
 
 	return srv
@@ -144,4 +153,12 @@ func (s *Server) GetCurrentSource(
 	return &controlv1.GetCurrentSourceResponse{
 		Source: &controlv1.InputSource{Id: id, Name: name},
 	}, nil
+}
+
+// GetVersion returns the running daemon's version and build commit.
+func (s *Server) GetVersion(
+	_ context.Context,
+	_ *controlv1.GetVersionRequest,
+) (*controlv1.GetVersionResponse, error) {
+	return &controlv1.GetVersionResponse{Version: s.version, Commit: s.commit}, nil
 }

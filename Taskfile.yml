@@ -29,8 +29,11 @@ tasks:
 
   build:
     desc: Build the betterglobekey binary into ./bin
+    vars:
+      COMMIT:
+        sh: git rev-parse --short HEAD
     cmds:
-      - go build -o bin/betterglobekey .
+      - go build -ldflags "-X main.commit={{.COMMIT}}" -o bin/betterglobekey .
 
   test:
     desc: Run the Go test suite

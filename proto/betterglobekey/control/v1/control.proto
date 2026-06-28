@@ -22,6 +22,9 @@ service ConfigService {
 
   // GetCurrentSource returns the currently active input source.
   rpc GetCurrentSource(GetCurrentSourceRequest) returns (GetCurrentSourceResponse);
+
+  // GetVersion returns the running daemon's version and build commit.
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
 }
 
 // Config mirrors the daemon's resolved configuration.
@@ -130,4 +133,14 @@ message GetCurrentSourceRequest {}
 
 message GetCurrentSourceResponse {
   InputSource source = 1;
+}
+
+message GetVersionRequest {}
+
+message GetVersionResponse {
+  // version is the release version, or "dev" for unversioned builds.
+  string version = 1;
+
+  // commit is the build's git commit, when embedded.
+  string commit = 2;
 }
