@@ -1,2 +1,2 @@
 kind: Changed
-body: Replace the gohook dependency with a native CoreGraphics event tap that re-arms itself across sleep.
+body: Replace the gohook dependency with a native CoreGraphics event tap that re-arms across sleep and ignores the Globe key when it is held as a modifier (e.g. fn+F1).
