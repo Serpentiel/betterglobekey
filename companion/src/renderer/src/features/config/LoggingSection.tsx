@@ -4,7 +4,7 @@ import { ScrollText } from 'lucide-react'
 import type { Config } from '../../../../shared/types'
 import { LOG_LEVELS, type ConfigErrors } from '../../lib/config-schema'
 import { capitalize } from '../../lib/text'
-import { Field, Input, Section, Select, Stack } from '../../ui'
+import { Field, Input, NumberField, Section, Select, Stack } from '../../ui'
 
 interface Props {
   config: Config
@@ -35,32 +35,30 @@ export function LoggingSection({ config, errors, onChange }: Props): ReactElemen
             id={id}
             value={config.logger.level}
             options={LOG_LEVELS.map((level) => ({ value: level, label: capitalize(level) }))}
-            onChange={(event) => setLogger({ level: event.target.value })}
+            onChange={(level) => setLogger({ level })}
           />
         )}
       </Field>
       <Stack direction="row" gap={16}>
         <Field label="Retention (days)" error={errors.logger.retentionDays}>
           {({ id, invalid }) => (
-            <Input
+            <NumberField
               id={id}
               invalid={invalid}
-              type="number"
               min={0}
               value={config.logger.retentionDays}
-              onChange={(event) => setLogger({ retentionDays: Number(event.target.value) })}
+              onChange={(retentionDays) => setLogger({ retentionDays })}
             />
           )}
         </Field>
         <Field label="Retention (files)" error={errors.logger.retentionFiles}>
           {({ id, invalid }) => (
-            <Input
+            <NumberField
               id={id}
               invalid={invalid}
-              type="number"
               min={0}
               value={config.logger.retentionFiles}
-              onChange={(event) => setLogger({ retentionFiles: Number(event.target.value) })}
+              onChange={(retentionFiles) => setLogger({ retentionFiles })}
             />
           )}
         </Field>

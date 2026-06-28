@@ -16,6 +16,7 @@
   --surface-hover: rgba(255, 255, 255, 0.07);
   --surface-active: rgba(255, 255, 255, 0.1);
   --surface-inset: rgba(255, 255, 255, 0.06);
+  --surface-elevated: #26262b;
 
   /* Hairline separators and borders. */
   --border: rgba(255, 255, 255, 0.1);

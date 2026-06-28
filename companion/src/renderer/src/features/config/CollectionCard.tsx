@@ -118,7 +118,7 @@ export function CollectionCard({
             placeholder={available.length ? 'Add an input source…' : 'All input sources added'}
             options={available.map((source) => ({ value: source.id, label: `${source.name} — ${source.id}` }))}
             disabled={available.length === 0}
-            onChange={(event) => setToAdd(event.target.value)}
+            onChange={setToAdd}
           />
           <IconButton icon={Plus} label="Add input source" disabled={!toAdd} onClick={addSource} />
         </Stack>

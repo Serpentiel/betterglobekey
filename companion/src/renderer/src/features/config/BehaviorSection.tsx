@@ -66,7 +66,7 @@ export function BehaviorSection({ config, errors, onChange }: Props): ReactEleme
             value={config.reverse.modifier}
             disabled={!config.reverse.enabled}
             options={REVERSE_MODIFIERS.map((modifier) => ({ value: modifier, label: capitalize(modifier) }))}
-            onChange={(event) => setReverse({ modifier: event.target.value })}
+            onChange={(modifier) => setReverse({ modifier })}
           />
         )}
       </Field>

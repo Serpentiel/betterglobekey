@@ -1,0 +1,91 @@
+.wrapper {
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.wrapper:hover {
+  border-color: var(--border-strong);
+}
+
+.wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.invalid {
+  border-color: var(--danger);
+}
+
+.invalid:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  appearance: textfield;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  width: 22px;
+  border-left: 1px solid var(--border);
+}
+
+.step {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--surface);
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+
+.step:first-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.step:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.step:active:not(:disabled) {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
