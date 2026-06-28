@@ -24,8 +24,6 @@ const socketFileMode os.FileMode = 0o600
 type Sources interface {
 	// All returns the IDs of every selectable input source.
 	All() []string
-	// Current returns the ID of the currently active input source.
-	Current() string
 	// Name returns the localized display name for the given input source ID.
 	Name(id string) string
 }
@@ -136,23 +134,6 @@ func (s *Server) ListInputSources(
 	})
 
 	return &controlv1.ListInputSourcesResponse{Sources: sources}, nil
-}
-
-// GetCurrentSource returns the currently active input source.
-func (s *Server) GetCurrentSource(
-	_ context.Context,
-	_ *controlv1.GetCurrentSourceRequest,
-) (*controlv1.GetCurrentSourceResponse, error) {
-	var id, name string
-
-	s.onMain(func() {
-		id = s.sources.Current()
-		name = s.sources.Name(id)
-	})
-
-	return &controlv1.GetCurrentSourceResponse{
-		Source: &controlv1.InputSource{Id: id, Name: name},
-	}, nil
 }
 
 // GetVersion returns the running daemon's version and build commit.

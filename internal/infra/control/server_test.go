@@ -13,14 +13,11 @@ import (
 )
 
 type fakeSources struct {
-	all     []string
-	current string
-	names   map[string]string
+	all   []string
+	names map[string]string
 }
 
 func (f fakeSources) All() []string { return f.all }
-
-func (f fakeSources) Current() string { return f.current }
 
 func (f fakeSources) Name(id string) string {
 	if name, ok := f.names[id]; ok {
@@ -142,27 +139,6 @@ func TestListInputSources(t *testing.T) {
 
 	if resp.GetSources()[0].GetName() != "U.S." {
 		t.Errorf("first name = %q, want U.S.", resp.GetSources()[0].GetName())
-	}
-}
-
-func TestGetCurrentSource(t *testing.T) {
-	sources := fakeSources{
-		current: "com.apple.keylayout.US",
-		names:   map[string]string{"com.apple.keylayout.US": "U.S."},
-	}
-	client := newTestClient(t, "", sources)
-
-	resp, err := client.GetCurrentSource(context.Background(), &controlv1.GetCurrentSourceRequest{})
-	if err != nil {
-		t.Fatalf("GetCurrentSource: %v", err)
-	}
-
-	if resp.GetSource().GetId() != "com.apple.keylayout.US" {
-		t.Errorf("id = %q, want com.apple.keylayout.US", resp.GetSource().GetId())
-	}
-
-	if resp.GetSource().GetName() != "U.S." {
-		t.Errorf("name = %q, want U.S.", resp.GetSource().GetName())
 	}
 }
 

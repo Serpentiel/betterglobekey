@@ -22,7 +22,6 @@ const (
 	ConfigService_GetConfig_FullMethodName        = "/betterglobekey.control.v1.ConfigService/GetConfig"
 	ConfigService_ApplyConfig_FullMethodName      = "/betterglobekey.control.v1.ConfigService/ApplyConfig"
 	ConfigService_ListInputSources_FullMethodName = "/betterglobekey.control.v1.ConfigService/ListInputSources"
-	ConfigService_GetCurrentSource_FullMethodName = "/betterglobekey.control.v1.ConfigService/GetCurrentSource"
 	ConfigService_GetVersion_FullMethodName       = "/betterglobekey.control.v1.ConfigService/GetVersion"
 )
 
@@ -43,8 +42,6 @@ type ConfigServiceClient interface {
 	// ListInputSources returns every selectable input source with its localized
 	// name.
 	ListInputSources(ctx context.Context, in *ListInputSourcesRequest, opts ...grpc.CallOption) (*ListInputSourcesResponse, error)
-	// GetCurrentSource returns the currently active input source.
-	GetCurrentSource(ctx context.Context, in *GetCurrentSourceRequest, opts ...grpc.CallOption) (*GetCurrentSourceResponse, error)
 	// GetVersion returns the running daemon's version and build commit.
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 }
@@ -87,16 +84,6 @@ func (c *configServiceClient) ListInputSources(ctx context.Context, in *ListInpu
 	return out, nil
 }
 
-func (c *configServiceClient) GetCurrentSource(ctx context.Context, in *GetCurrentSourceRequest, opts ...grpc.CallOption) (*GetCurrentSourceResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetCurrentSourceResponse)
-	err := c.cc.Invoke(ctx, ConfigService_GetCurrentSource_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *configServiceClient) GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetVersionResponse)
@@ -124,8 +111,6 @@ type ConfigServiceServer interface {
 	// ListInputSources returns every selectable input source with its localized
 	// name.
 	ListInputSources(context.Context, *ListInputSourcesRequest) (*ListInputSourcesResponse, error)
-	// GetCurrentSource returns the currently active input source.
-	GetCurrentSource(context.Context, *GetCurrentSourceRequest) (*GetCurrentSourceResponse, error)
 	// GetVersion returns the running daemon's version and build commit.
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()
@@ -146,9 +131,6 @@ func (UnimplementedConfigServiceServer) ApplyConfig(context.Context, *ApplyConfi
 }
 func (UnimplementedConfigServiceServer) ListInputSources(context.Context, *ListInputSourcesRequest) (*ListInputSourcesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInputSources not implemented")
-}
-func (UnimplementedConfigServiceServer) GetCurrentSource(context.Context, *GetCurrentSourceRequest) (*GetCurrentSourceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetCurrentSource not implemented")
 }
 func (UnimplementedConfigServiceServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersion not implemented")
@@ -228,24 +210,6 @@ func _ConfigService_ListInputSources_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ConfigService_GetCurrentSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCurrentSourceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConfigServiceServer).GetCurrentSource(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ConfigService_GetCurrentSource_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServiceServer).GetCurrentSource(ctx, req.(*GetCurrentSourceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ConfigService_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetVersionRequest)
 	if err := dec(in); err != nil {
@@ -282,10 +246,6 @@ var ConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListInputSources",
 			Handler:    _ConfigService_ListInputSources_Handler,
-		},
-		{
-			MethodName: "GetCurrentSource",
-			Handler:    _ConfigService_GetCurrentSource_Handler,
 		},
 		{
 			MethodName: "GetVersion",

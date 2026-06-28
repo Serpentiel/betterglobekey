@@ -703,86 +703,6 @@ func (x *ListInputSourcesResponse) GetSources() []*InputSource {
 	return nil
 }
 
-type GetCurrentSourceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCurrentSourceRequest) Reset() {
-	*x = GetCurrentSourceRequest{}
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCurrentSourceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCurrentSourceRequest) ProtoMessage() {}
-
-func (x *GetCurrentSourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetCurrentSourceRequest.ProtoReflect.Descriptor instead.
-func (*GetCurrentSourceRequest) Descriptor() ([]byte, []int) {
-	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{13}
-}
-
-type GetCurrentSourceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        *InputSource           `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetCurrentSourceResponse) Reset() {
-	*x = GetCurrentSourceResponse{}
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetCurrentSourceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetCurrentSourceResponse) ProtoMessage() {}
-
-func (x *GetCurrentSourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetCurrentSourceResponse.ProtoReflect.Descriptor instead.
-func (*GetCurrentSourceResponse) Descriptor() ([]byte, []int) {
-	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *GetCurrentSourceResponse) GetSource() *InputSource {
-	if x != nil {
-		return x.Source
-	}
-	return nil
-}
-
 type GetVersionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -791,7 +711,7 @@ type GetVersionRequest struct {
 
 func (x *GetVersionRequest) Reset() {
 	*x = GetVersionRequest{}
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[15]
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +723,7 @@ func (x *GetVersionRequest) String() string {
 func (*GetVersionRequest) ProtoMessage() {}
 
 func (x *GetVersionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[15]
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +736,7 @@ func (x *GetVersionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionRequest.ProtoReflect.Descriptor instead.
 func (*GetVersionRequest) Descriptor() ([]byte, []int) {
-	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{15}
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{13}
 }
 
 type GetVersionResponse struct {
@@ -831,7 +751,7 @@ type GetVersionResponse struct {
 
 func (x *GetVersionResponse) Reset() {
 	*x = GetVersionResponse{}
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[16]
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -843,7 +763,7 @@ func (x *GetVersionResponse) String() string {
 func (*GetVersionResponse) ProtoMessage() {}
 
 func (x *GetVersionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[16]
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -856,7 +776,7 @@ func (x *GetVersionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVersionResponse.ProtoReflect.Descriptor instead.
 func (*GetVersionResponse) Descriptor() ([]byte, []int) {
-	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{16}
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetVersionResponse) GetVersion() string {
@@ -914,19 +834,15 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x13ApplyConfigResponse\"\x19\n" +
 	"\x17ListInputSourcesRequest\"\\\n" +
 	"\x18ListInputSourcesResponse\x12@\n" +
-	"\asources\x18\x01 \x03(\v2&.betterglobekey.control.v1.InputSourceR\asources\"\x19\n" +
-	"\x17GetCurrentSourceRequest\"Z\n" +
-	"\x18GetCurrentSourceResponse\x12>\n" +
-	"\x06source\x18\x01 \x01(\v2&.betterglobekey.control.v1.InputSourceR\x06source\"\x13\n" +
+	"\asources\x18\x01 \x03(\v2&.betterglobekey.control.v1.InputSourceR\asources\"\x13\n" +
 	"\x11GetVersionRequest\"F\n" +
 	"\x12GetVersionResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x16\n" +
-	"\x06commit\x18\x02 \x01(\tR\x06commit2\xca\x04\n" +
+	"\x06commit\x18\x02 \x01(\tR\x06commit2\xcd\x03\n" +
 	"\rConfigService\x12f\n" +
 	"\tGetConfig\x12+.betterglobekey.control.v1.GetConfigRequest\x1a,.betterglobekey.control.v1.GetConfigResponse\x12l\n" +
 	"\vApplyConfig\x12-.betterglobekey.control.v1.ApplyConfigRequest\x1a..betterglobekey.control.v1.ApplyConfigResponse\x12{\n" +
-	"\x10ListInputSources\x122.betterglobekey.control.v1.ListInputSourcesRequest\x1a3.betterglobekey.control.v1.ListInputSourcesResponse\x12{\n" +
-	"\x10GetCurrentSource\x122.betterglobekey.control.v1.GetCurrentSourceRequest\x1a3.betterglobekey.control.v1.GetCurrentSourceResponse\x12i\n" +
+	"\x10ListInputSources\x122.betterglobekey.control.v1.ListInputSourcesRequest\x1a3.betterglobekey.control.v1.ListInputSourcesResponse\x12i\n" +
 	"\n" +
 	"GetVersion\x12,.betterglobekey.control.v1.GetVersionRequest\x1a-.betterglobekey.control.v1.GetVersionResponseBWZUgithub.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1b\x06proto3"
 
@@ -942,7 +858,7 @@ func file_betterglobekey_control_v1_control_proto_rawDescGZIP() []byte {
 	return file_betterglobekey_control_v1_control_proto_rawDescData
 }
 
-var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*Config)(nil),                   // 0: betterglobekey.control.v1.Config
 	(*Logger)(nil),                   // 1: betterglobekey.control.v1.Logger
@@ -957,10 +873,8 @@ var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*ApplyConfigResponse)(nil),      // 10: betterglobekey.control.v1.ApplyConfigResponse
 	(*ListInputSourcesRequest)(nil),  // 11: betterglobekey.control.v1.ListInputSourcesRequest
 	(*ListInputSourcesResponse)(nil), // 12: betterglobekey.control.v1.ListInputSourcesResponse
-	(*GetCurrentSourceRequest)(nil),  // 13: betterglobekey.control.v1.GetCurrentSourceRequest
-	(*GetCurrentSourceResponse)(nil), // 14: betterglobekey.control.v1.GetCurrentSourceResponse
-	(*GetVersionRequest)(nil),        // 15: betterglobekey.control.v1.GetVersionRequest
-	(*GetVersionResponse)(nil),       // 16: betterglobekey.control.v1.GetVersionResponse
+	(*GetVersionRequest)(nil),        // 13: betterglobekey.control.v1.GetVersionRequest
+	(*GetVersionResponse)(nil),       // 14: betterglobekey.control.v1.GetVersionResponse
 }
 var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	1,  // 0: betterglobekey.control.v1.Config.logger:type_name -> betterglobekey.control.v1.Logger
@@ -971,22 +885,19 @@ var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	0,  // 5: betterglobekey.control.v1.GetConfigResponse.config:type_name -> betterglobekey.control.v1.Config
 	0,  // 6: betterglobekey.control.v1.ApplyConfigRequest.config:type_name -> betterglobekey.control.v1.Config
 	6,  // 7: betterglobekey.control.v1.ListInputSourcesResponse.sources:type_name -> betterglobekey.control.v1.InputSource
-	6,  // 8: betterglobekey.control.v1.GetCurrentSourceResponse.source:type_name -> betterglobekey.control.v1.InputSource
-	7,  // 9: betterglobekey.control.v1.ConfigService.GetConfig:input_type -> betterglobekey.control.v1.GetConfigRequest
-	9,  // 10: betterglobekey.control.v1.ConfigService.ApplyConfig:input_type -> betterglobekey.control.v1.ApplyConfigRequest
-	11, // 11: betterglobekey.control.v1.ConfigService.ListInputSources:input_type -> betterglobekey.control.v1.ListInputSourcesRequest
-	13, // 12: betterglobekey.control.v1.ConfigService.GetCurrentSource:input_type -> betterglobekey.control.v1.GetCurrentSourceRequest
-	15, // 13: betterglobekey.control.v1.ConfigService.GetVersion:input_type -> betterglobekey.control.v1.GetVersionRequest
-	8,  // 14: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
-	10, // 15: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
-	12, // 16: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
-	14, // 17: betterglobekey.control.v1.ConfigService.GetCurrentSource:output_type -> betterglobekey.control.v1.GetCurrentSourceResponse
-	16, // 18: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	7,  // 8: betterglobekey.control.v1.ConfigService.GetConfig:input_type -> betterglobekey.control.v1.GetConfigRequest
+	9,  // 9: betterglobekey.control.v1.ConfigService.ApplyConfig:input_type -> betterglobekey.control.v1.ApplyConfigRequest
+	11, // 10: betterglobekey.control.v1.ConfigService.ListInputSources:input_type -> betterglobekey.control.v1.ListInputSourcesRequest
+	13, // 11: betterglobekey.control.v1.ConfigService.GetVersion:input_type -> betterglobekey.control.v1.GetVersionRequest
+	8,  // 12: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
+	10, // 13: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
+	12, // 14: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
+	14, // 15: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
+	12, // [12:16] is the sub-list for method output_type
+	8,  // [8:12] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_betterglobekey_control_v1_control_proto_init() }
@@ -1000,7 +911,7 @@ func file_betterglobekey_control_v1_control_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_betterglobekey_control_v1_control_proto_rawDesc), len(file_betterglobekey_control_v1_control_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
