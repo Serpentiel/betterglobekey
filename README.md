@@ -120,8 +120,8 @@ Hold **Shift** while pressing the Globe key to go back: a single press returns t
 (toggling between the two most recent), and a double press switches to the previous collection.
 
 On each change, an on-screen HUD briefly shows the new input source with its collection name. It is enabled by default;
-set `hud.enabled: false` in the configuration to turn it off. The configuration is reloaded automatically when the file changes,
-so edits take effect without restarting the service.
+set `hud.enabled: false` in the configuration to turn it off. The configuration is reloaded automatically when the file
+changes, so edits take effect without restarting the service.
 
 betterglobekey requires macOS Accessibility permission to observe the Globe key, and works best with the Globe key set
 to **"No Action"** (System Settings › Keyboard) so macOS does not switch the input source as well. Run
@@ -137,6 +137,13 @@ up and configure the utility.
 
 Prefer a graphical interface? An optional [companion app](docs/companion.md) lets you edit your configuration—behavior,
 collections, and logging—without touching the YAML file, applying changes to the running service instantly.
+
+<!-- markdownlint-disable -->
+<!-- TODO: add companion.png to the `repo-assets/README.md` branch (alongside logo.png). -->
+<div align="center">
+  <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey companion app" width="760">
+</div>
+<!-- markdownlint-restore -->
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
