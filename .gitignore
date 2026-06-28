@@ -93,5 +93,10 @@ bin/
 dist/
 betterglobekey.log
 
+# Companion app
+companion/node_modules/
+companion/out/
+companion/dist/
+
 # Tracked despite the global gitignore: the pinned toolchain travels with the repo
 !mise.toml
