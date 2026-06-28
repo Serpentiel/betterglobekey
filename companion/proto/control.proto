@@ -20,9 +20,6 @@ service ConfigService {
   // name.
   rpc ListInputSources(ListInputSourcesRequest) returns (ListInputSourcesResponse);
 
-  // GetCurrentSource returns the currently active input source.
-  rpc GetCurrentSource(GetCurrentSourceRequest) returns (GetCurrentSourceResponse);
-
   // GetVersion returns the running daemon's version and build commit.
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
 }
@@ -127,12 +124,6 @@ message ListInputSourcesRequest {}
 
 message ListInputSourcesResponse {
   repeated InputSource sources = 1;
-}
-
-message GetCurrentSourceRequest {}
-
-message GetCurrentSourceResponse {
-  InputSource source = 1;
 }
 
 message GetVersionRequest {}

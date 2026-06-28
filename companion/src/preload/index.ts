@@ -6,7 +6,6 @@ const api: Api = {
   getConfig: () => ipcRenderer.invoke('config:get'),
   applyConfig: (config: Config) => ipcRenderer.invoke('config:apply', config),
   listInputSources: () => ipcRenderer.invoke('sources:list'),
-  getCurrentSource: () => ipcRenderer.invoke('sources:current'),
   getVersion: () => ipcRenderer.invoke('version:get'),
 }
 

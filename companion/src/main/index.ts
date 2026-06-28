@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
 
 import type { Config } from '../shared/types'
-import { applyConfig, getConfig, getCurrentSource, getVersion, listInputSources } from './grpc'
+import { applyConfig, getConfig, getVersion, listInputSources } from './grpc'
 
 const APP_NAME = 'betterglobekey-companion'
 
@@ -56,7 +56,6 @@ function registerHandlers(): void {
   ipcMain.handle('config:get', () => getConfig())
   ipcMain.handle('config:apply', (_event, config: Config) => applyConfig(config))
   ipcMain.handle('sources:list', () => listInputSources())
-  ipcMain.handle('sources:current', () => getCurrentSource())
   ipcMain.handle('version:get', () => getVersion())
 }
 

@@ -52,6 +52,5 @@ export interface Api {
   getConfig: () => Promise<Config>
   applyConfig: (config: Config) => Promise<void>
   listInputSources: () => Promise<InputSource[]>
-  getCurrentSource: () => Promise<InputSource>
   getVersion: () => Promise<Version>
 }

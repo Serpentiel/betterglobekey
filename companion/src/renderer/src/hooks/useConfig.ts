@@ -10,7 +10,6 @@ export interface ConfigController {
   phase: Phase
   config: Config | null
   sources: InputSource[]
-  current: InputSource | null
   version: Version | null
   validation: ValidationResult
   dirty: boolean
@@ -34,7 +33,6 @@ export function useConfig(): ConfigController {
   const [config, setConfig] = useState<Config | null>(null)
   const [original, setOriginal] = useState<Config | null>(null)
   const [sources, setSources] = useState<InputSource[]>([])
-  const [current, setCurrent] = useState<InputSource | null>(null)
   const [version, setVersion] = useState<Version | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -44,17 +42,15 @@ export function useConfig(): ConfigController {
     setPhase({ status: 'loading' })
 
     try {
-      const [loadedConfig, loadedSources, loadedCurrent, loadedVersion] = await Promise.all([
+      const [loadedConfig, loadedSources, loadedVersion] = await Promise.all([
         window.api.getConfig(),
         window.api.listInputSources(),
-        window.api.getCurrentSource(),
         window.api.getVersion(),
       ])
 
       setConfig(loadedConfig)
       setOriginal(loadedConfig)
       setSources(loadedSources)
-      setCurrent(loadedCurrent)
       setVersion(loadedVersion)
       setSaved(false)
       setSaveError(null)
@@ -106,7 +102,6 @@ export function useConfig(): ConfigController {
     phase,
     config,
     sources,
-    current,
     version,
     validation,
     dirty,

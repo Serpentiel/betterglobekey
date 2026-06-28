@@ -4,7 +4,6 @@ import styles from './Titlebar.module.css'
 
 interface TitlebarProps {
   title: string
-  subtitle?: string
   actions?: ReactNode
 }
 
@@ -12,13 +11,10 @@ interface TitlebarProps {
  * Titlebar is the draggable window chrome. The bar itself is a drag region
  * (so the frameless window can be moved); interactive children opt back out.
  */
-export function Titlebar({ title, subtitle, actions }: TitlebarProps): ReactElement {
+export function Titlebar({ title, actions }: TitlebarProps): ReactElement {
   return (
     <header className={styles.titlebar}>
-      <div className={styles.heading}>
-        <span className={styles.title}>{title}</span>
-        {subtitle ? <span className={styles.subtitle}>{subtitle}</span> : null}
-      </div>
+      <span className={styles.title}>{title}</span>
       {actions ? <div className={styles.actions}>{actions}</div> : null}
     </header>
   )

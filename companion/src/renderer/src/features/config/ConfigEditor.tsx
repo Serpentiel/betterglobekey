@@ -15,8 +15,7 @@ interface Props {
 }
 
 export function ConfigEditor({ controller }: Props): ReactElement | null {
-  const { config, sources, current, version, validation, dirty, saving, saved, saveError, update, save, revert } =
-    controller
+  const { config, sources, version, validation, dirty, saving, saved, saveError, update, save, revert } = controller
 
   const nameOf = useMemo(() => {
     const names = new Map(sources.map((source) => [source.id, source.name]))
@@ -34,7 +33,6 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
     <>
       <Titlebar
         title="betterglobekey"
-        subtitle={current ? `Active · ${current.name}` : undefined}
         actions={
           <>
             {dirty ? (

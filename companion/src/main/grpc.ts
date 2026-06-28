@@ -25,7 +25,6 @@ interface ConfigServiceClient {
   getConfig: UnaryMethod<Record<string, never>, { config: Config }>
   applyConfig: UnaryMethod<{ config: Config }, Record<string, never>>
   listInputSources: UnaryMethod<Record<string, never>, { sources?: InputSource[] }>
-  getCurrentSource: UnaryMethod<Record<string, never>, { source: InputSource }>
   getVersion: UnaryMethod<Record<string, never>, Version>
   close: () => void
 }
@@ -97,13 +96,6 @@ export async function listInputSources(): Promise<InputSource[]> {
   const response = await unary(service.listInputSources.bind(service), {})
 
   return response.sources ?? []
-}
-
-export async function getCurrentSource(): Promise<InputSource> {
-  const service = client()
-  const response = await unary(service.getCurrentSource.bind(service), {})
-
-  return response.source
 }
 
 export async function getVersion(): Promise<Version> {
