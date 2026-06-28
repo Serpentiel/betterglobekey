@@ -7,6 +7,7 @@ const api: Api = {
   applyConfig: (config: Config) => ipcRenderer.invoke('config:apply', config),
   listInputSources: () => ipcRenderer.invoke('sources:list'),
   getCurrentSource: () => ipcRenderer.invoke('sources:current'),
+  getVersion: () => ipcRenderer.invoke('version:get'),
 }
 
 contextBridge.exposeInMainWorld('api', api)

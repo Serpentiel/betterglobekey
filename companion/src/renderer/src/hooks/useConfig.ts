@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { Config, InputSource } from '../../../shared/types'
+import type { Config, InputSource, Version } from '../../../shared/types'
 import { toMessage } from '../lib/errors'
 import { validateConfig, type ValidationResult } from '../lib/config-schema'
 
@@ -11,6 +11,7 @@ export interface ConfigController {
   config: Config | null
   sources: InputSource[]
   current: InputSource | null
+  version: Version | null
   validation: ValidationResult
   dirty: boolean
   saving: boolean
@@ -34,6 +35,7 @@ export function useConfig(): ConfigController {
   const [original, setOriginal] = useState<Config | null>(null)
   const [sources, setSources] = useState<InputSource[]>([])
   const [current, setCurrent] = useState<InputSource | null>(null)
+  const [version, setVersion] = useState<Version | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -42,16 +44,18 @@ export function useConfig(): ConfigController {
     setPhase({ status: 'loading' })
 
     try {
-      const [loadedConfig, loadedSources, loadedCurrent] = await Promise.all([
+      const [loadedConfig, loadedSources, loadedCurrent, loadedVersion] = await Promise.all([
         window.api.getConfig(),
         window.api.listInputSources(),
         window.api.getCurrentSource(),
+        window.api.getVersion(),
       ])
 
       setConfig(loadedConfig)
       setOriginal(loadedConfig)
       setSources(loadedSources)
       setCurrent(loadedCurrent)
+      setVersion(loadedVersion)
       setSaved(false)
       setSaveError(null)
       setPhase({ status: 'ready' })
@@ -103,6 +107,7 @@ export function useConfig(): ConfigController {
     config,
     sources,
     current,
+    version,
     validation,
     dirty,
     saving,

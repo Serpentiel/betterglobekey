@@ -2,7 +2,8 @@ import { RotateCcw, Save } from 'lucide-react'
 import { type ReactElement, useMemo } from 'react'
 
 import type { ConfigController } from '../../hooks/useConfig'
-import { Banner, Button, Stack, Titlebar } from '../../ui'
+import { formatVersion } from '../../lib/text'
+import { Banner, Button, Footer, Stack, Titlebar } from '../../ui'
 import { BehaviorSection } from './BehaviorSection'
 import { CollectionsSection } from './CollectionsSection'
 import { HudSection } from './HudSection'
@@ -14,7 +15,8 @@ interface Props {
 }
 
 export function ConfigEditor({ controller }: Props): ReactElement | null {
-  const { config, sources, current, validation, dirty, saving, saved, saveError, update, save, revert } = controller
+  const { config, sources, current, version, validation, dirty, saving, saved, saveError, update, save, revert } =
+    controller
 
   const nameOf = useMemo(() => {
     const names = new Map(sources.map((source) => [source.id, source.name]))
@@ -64,6 +66,7 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
           <LoggingSection config={config} errors={validation.errors} onChange={update} />
         </Stack>
       </div>
+      <Footer>{version ? formatVersion(version) : '…'}</Footer>
     </>
   )
 }

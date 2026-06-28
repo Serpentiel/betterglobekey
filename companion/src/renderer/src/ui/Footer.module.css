@@ -1,0 +1,12 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 28px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+}

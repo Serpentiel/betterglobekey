@@ -6,7 +6,7 @@ import { credentials, loadPackageDefinition, type ServiceClientConstructor } fro
 import { loadSync } from '@grpc/proto-loader'
 import { app } from 'electron'
 
-import type { Config, InputSource } from '../shared/types'
+import type { Config, InputSource, Version } from '../shared/types'
 
 // protoPath resolves the control.proto contract both in development (read from
 // the synced copy next to the build output) and when packaged (from resources).
@@ -26,6 +26,7 @@ interface ConfigServiceClient {
   applyConfig: UnaryMethod<{ config: Config }, Record<string, never>>
   listInputSources: UnaryMethod<Record<string, never>, { sources?: InputSource[] }>
   getCurrentSource: UnaryMethod<Record<string, never>, { source: InputSource }>
+  getVersion: UnaryMethod<Record<string, never>, Version>
   close: () => void
 }
 
@@ -103,4 +104,10 @@ export async function getCurrentSource(): Promise<InputSource> {
   const response = await unary(service.getCurrentSource.bind(service), {})
 
   return response.source
+}
+
+export async function getVersion(): Promise<Version> {
+  const service = client()
+
+  return unary(service.getVersion.bind(service), {})
 }
