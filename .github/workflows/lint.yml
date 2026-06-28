@@ -89,5 +89,6 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: npm ci
         working-directory: companion
+      - run: task companion:lint
       - run: task companion:typecheck
       - run: task companion:build
