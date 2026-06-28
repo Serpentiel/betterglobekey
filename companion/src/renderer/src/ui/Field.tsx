@@ -13,7 +13,7 @@ interface FieldProps {
 }
 
 /** Field is the canonical label + control + hint/error wrapper for all inputs. */
-export function Field({ label, hint, error, children }: FieldProps): JSX.Element {
+export function Field({ label, hint, error, children }: FieldProps): ReactElement {
   const id = useId()
   const invalid = Boolean(error)
 

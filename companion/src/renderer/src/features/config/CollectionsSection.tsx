@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { Layers, Plus } from 'lucide-react'
 
 import type { Collection, Config, InputSource } from '../../../../shared/types'
@@ -14,7 +15,7 @@ interface Props {
   onChange: (config: Config) => void
 }
 
-export function CollectionsSection({ config, sources, errors, nameOf, onChange }: Props): JSX.Element {
+export function CollectionsSection({ config, sources, errors, nameOf, onChange }: Props): ReactElement {
   const setCollections = (collections: Collection[]): void => onChange({ ...config, collections })
 
   const replace = (index: number, collection: Collection): void =>

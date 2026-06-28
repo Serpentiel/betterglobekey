@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { Keyboard } from 'lucide-react'
 
 import type { Config } from '../../../../shared/types'
@@ -11,7 +12,7 @@ interface Props {
   onChange: (config: Config) => void
 }
 
-export function BehaviorSection({ config, errors, onChange }: Props): JSX.Element {
+export function BehaviorSection({ config, errors, onChange }: Props): ReactElement {
   const setDoublePress = (patch: Partial<Config['doublePress']>): void =>
     onChange({ ...config, doublePress: { ...config.doublePress, ...patch } })
 

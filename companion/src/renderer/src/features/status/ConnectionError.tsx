@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { PlugZap, RotateCw } from 'lucide-react'
 
 import { Button, EmptyState } from '../../ui'
@@ -7,7 +8,7 @@ interface Props {
   onRetry: () => void
 }
 
-export function ConnectionError({ message, onRetry }: Props): JSX.Element {
+export function ConnectionError({ message, onRetry }: Props): ReactElement {
   return (
     <EmptyState
       icon={PlugZap}

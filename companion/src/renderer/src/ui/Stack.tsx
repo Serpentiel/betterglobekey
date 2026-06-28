@@ -1,4 +1,4 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react'
+import type { ReactElement, CSSProperties, ElementType, ReactNode } from 'react'
 
 interface StackProps {
   as?: ElementType
@@ -29,7 +29,7 @@ export function Stack({
   className,
   style,
   children,
-}: StackProps): JSX.Element {
+}: StackProps): ReactElement {
   return (
     <Tag
       className={className}

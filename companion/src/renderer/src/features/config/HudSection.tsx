@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { SquareMousePointer } from 'lucide-react'
 
 import type { Config } from '../../../../shared/types'
@@ -10,7 +11,7 @@ interface Props {
   onChange: (config: Config) => void
 }
 
-export function HudSection({ config, errors, onChange }: Props): JSX.Element {
+export function HudSection({ config, errors, onChange }: Props): ReactElement {
   const setHud = (patch: Partial<Config['hud']>): void => onChange({ ...config, hud: { ...config.hud, ...patch } })
 
   return (

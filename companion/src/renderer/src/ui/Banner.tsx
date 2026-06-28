@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -16,7 +17,7 @@ const icons = {
   info: Info,
 } as const
 
-export function Banner({ tone, children }: BannerProps): JSX.Element {
+export function Banner({ tone, children }: BannerProps): ReactElement {
   const Icon = icons[tone]
 
   return (

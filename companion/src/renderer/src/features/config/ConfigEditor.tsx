@@ -1,5 +1,5 @@
 import { RotateCcw, Save } from 'lucide-react'
-import { useMemo } from 'react'
+import { type ReactElement, useMemo } from 'react'
 
 import type { ConfigController } from '../../hooks/useConfig'
 import { Banner, Button, Stack, Titlebar } from '../../ui'
@@ -13,7 +13,7 @@ interface Props {
   controller: ConfigController
 }
 
-export function ConfigEditor({ controller }: Props): JSX.Element | null {
+export function ConfigEditor({ controller }: Props): ReactElement | null {
   const { config, sources, current, validation, dirty, saving, saved, saveError, update, save, revert } = controller
 
   const nameOf = useMemo(() => {

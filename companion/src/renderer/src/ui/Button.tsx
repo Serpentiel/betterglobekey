@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ReactElement, ButtonHTMLAttributes, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Spinner } from './Spinner'
@@ -20,7 +20,7 @@ export function Button({
   children,
   disabled,
   ...rest
-}: ButtonProps): JSX.Element {
+}: ButtonProps): ReactElement {
   return (
     <button
       type="button"

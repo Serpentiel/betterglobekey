@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { ScrollText } from 'lucide-react'
 
 import type { Config } from '../../../../shared/types'
@@ -11,7 +12,7 @@ interface Props {
   onChange: (config: Config) => void
 }
 
-export function LoggingSection({ config, errors, onChange }: Props): JSX.Element {
+export function LoggingSection({ config, errors, onChange }: Props): ReactElement {
   const setLogger = (patch: Partial<Config['logger']>): void =>
     onChange({ ...config, logger: { ...config.logger, ...patch } })
 

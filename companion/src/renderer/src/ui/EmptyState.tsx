@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Stack } from './Stack'
@@ -12,7 +12,7 @@ interface EmptyStateProps {
 }
 
 /** EmptyState is the centered placeholder for empty, loading, or error screens. */
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps): JSX.Element {
+export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps): ReactElement {
   return (
     <Stack className={styles.empty} align="center" justify="center" gap={12}>
       <span className={styles.icon}>

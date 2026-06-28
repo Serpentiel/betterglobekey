@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { type ReactElement, useEffect } from 'react'
 
 import { ConfigEditor } from './features/config/ConfigEditor'
 import { ConnectionError } from './features/status/ConnectionError'
@@ -6,7 +6,7 @@ import { useConfig } from './hooks/useConfig'
 import { Spinner, Stack, Titlebar } from './ui'
 import styles from './App.module.css'
 
-export function App(): JSX.Element {
+export function App(): ReactElement {
   const controller = useConfig()
   const { save } = controller
 

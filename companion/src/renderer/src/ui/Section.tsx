@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Stack } from './Stack'
@@ -13,7 +13,7 @@ interface SectionProps {
 }
 
 /** Section is a titled, elevated panel grouping related controls. */
-export function Section({ icon: Icon, title, description, actions, children }: SectionProps): JSX.Element {
+export function Section({ icon: Icon, title, description, actions, children }: SectionProps): ReactElement {
   return (
     <section className={styles.section}>
       <header className={styles.header}>

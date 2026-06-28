@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { clsx } from 'clsx'
 
 import styles from './Switch.module.css'
@@ -10,7 +11,7 @@ interface SwitchProps {
 }
 
 /** Switch is an Apple-style toggle. */
-export function Switch({ checked, onChange, label, id }: SwitchProps): JSX.Element {
+export function Switch({ checked, onChange, label, id }: SwitchProps): ReactElement {
   return (
     <button
       type="button"

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ReactElement, ButtonHTMLAttributes } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 import styles from './IconButton.module.css'
@@ -11,7 +11,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /** IconButton is an accessible, icon-only button (label is required for a11y). */
-export function IconButton({ icon: Icon, label, tone = 'default', className, ...rest }: IconButtonProps): JSX.Element {
+export function IconButton({ icon: Icon, label, tone = 'default', className, ...rest }: IconButtonProps): ReactElement {
   return (
     <button
       type="button"

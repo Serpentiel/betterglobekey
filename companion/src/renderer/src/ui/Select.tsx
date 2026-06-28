@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
-import type { SelectHTMLAttributes } from 'react'
+import type { ReactElement, SelectHTMLAttributes } from 'react'
 
 import styles from './Select.module.css'
 
@@ -14,7 +14,7 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'chi
   placeholder?: string
 }
 
-export function Select({ options, placeholder, className, ...rest }: SelectProps): JSX.Element {
+export function Select({ options, placeholder, className, ...rest }: SelectProps): ReactElement {
   return (
     <div className={clsx(styles.wrapper, className)}>
       <select className={styles.select} {...rest}>

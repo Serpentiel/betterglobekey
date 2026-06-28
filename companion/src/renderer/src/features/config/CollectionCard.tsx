@@ -1,5 +1,5 @@
 import { AlertCircle, ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactElement, useState } from 'react'
 
 import type { Collection, InputSource } from '../../../../shared/types'
 import { move } from '../../lib/array'
@@ -30,7 +30,7 @@ export function CollectionCard({
   onChange,
   onMove,
   onRemove,
-}: Props): JSX.Element {
+}: Props): ReactElement {
   const [toAdd, setToAdd] = useState('')
 
   const available = sources.filter((source) => !collection.sources.includes(source.id))

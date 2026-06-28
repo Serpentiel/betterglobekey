@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 import styles from './Setting.module.css'
 
@@ -9,7 +9,7 @@ interface SettingProps {
 }
 
 /** Setting is a row with a title/description on the left and a control on the right. */
-export function Setting({ title, description, control }: SettingProps): JSX.Element {
+export function Setting({ title, description, control }: SettingProps): ReactElement {
   return (
     <div className={styles.setting}>
       <div className={styles.text}>
