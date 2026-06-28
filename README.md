@@ -141,7 +141,7 @@ collections, and logging—without touching the YAML file, applying changes to t
 <!-- markdownlint-disable -->
 <!-- TODO: add companion.png to the `repo-assets/README.md` branch (alongside logo.png). -->
 <div align="center">
-  <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey companion app" width="760">
+  <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey-companion" width="760">
 </div>
 <!-- markdownlint-restore -->
 
