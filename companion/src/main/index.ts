@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, type MenuItemConstructorOptions, shell } from 'electron'
 
 import type { Config } from '../shared/types'
 import { applyConfig, getConfig, getVersion, listInputSources } from './grpc'
@@ -21,16 +21,21 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
+      spellcheck: false,
     },
   })
 
   window.on('ready-to-show', () => window.show())
 
+  // Open external links in the browser and never navigate the window away from
+  // the app itself.
   window.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
 
     return { action: 'deny' }
   })
+
+  window.webContents.on('will-navigate', (event) => event.preventDefault())
 
   if (process.env.ELECTRON_RENDERER_URL) {
     void window.loadURL(process.env.ELECTRON_RENDERER_URL)
@@ -42,12 +47,13 @@ function createWindow(): BrowserWindow {
 }
 
 function buildMenu(): void {
-  const menu = Menu.buildFromTemplate([
-    { role: 'appMenu' },
-    { role: 'editMenu' },
-    { role: 'viewMenu' },
-    { role: 'windowMenu' },
-  ])
+  // Keep reload/devtools only in development; a shipped app should not expose
+  // web-page affordances.
+  const viewMenu: MenuItemConstructorOptions = app.isPackaged
+    ? { label: 'View', submenu: [{ role: 'togglefullscreen' }] }
+    : { role: 'viewMenu' }
+
+  const menu = Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, viewMenu, { role: 'windowMenu' }])
 
   Menu.setApplicationMenu(menu)
 }

@@ -97,6 +97,20 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* Desktop app, not a web page: no text selection or I-beam cursor by default. */
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Re-enable selection only where it is expected: editable fields and copyable IDs. */
+input,
+textarea,
+select,
+code {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 h1,
