@@ -8,20 +8,8 @@ package mainthread
 #cgo CFLAGS: -x objective-c
 #cgo LDFLAGS: -framework Foundation
 
-#import <Foundation/Foundation.h>
-
-void bgkRunOnMain(unsigned long long handle);
-
-static void bgkDispatchMain(unsigned long long handle) {
-	if ([NSThread isMainThread]) {
-		bgkRunOnMain(handle);
-		return;
-	}
-
-	dispatch_sync(dispatch_get_main_queue(), ^{
-		bgkRunOnMain(handle);
-	});
-}
+// Implemented in mainthread.m.
+void bgkDispatchMain(unsigned long long handle);
 */
 import "C"
 

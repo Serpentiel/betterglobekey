@@ -4,25 +4,10 @@ package accessibility
 
 /*
 #cgo LDFLAGS: -framework ApplicationServices -framework CoreFoundation
-#include <ApplicationServices/ApplicationServices.h>
 
-static int bgkTrusted(void) {
-	return AXIsProcessTrusted() ? 1 : 0;
-}
-
-static int bgkPrompt(void) {
-	const void *keys[] = { kAXTrustedCheckOptionPrompt };
-	const void *values[] = { kCFBooleanTrue };
-	CFDictionaryRef options = CFDictionaryCreate(
-		NULL, keys, values, 1,
-		&kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-
-	int trusted = AXIsProcessTrustedWithOptions(options) ? 1 : 0;
-
-	CFRelease(options);
-
-	return trusted;
-}
+// Implemented in accessibility.m.
+int bgkTrusted(void);
+int bgkPrompt(void);
 */
 import "C"
 
