@@ -1,0 +1,19 @@
+appId: com.serpentiel.betterglobekey.companion
+productName: betterglobekey-companion
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+extraResources:
+  - from: proto
+    to: proto
+mac:
+  category: public.app-category.utilities
+  target:
+    - target: zip
+      arch: universal
+    - target: dmg
+      arch: universal
+artifactName: ${name}-${version}-${arch}.${ext}

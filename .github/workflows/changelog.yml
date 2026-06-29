@@ -32,14 +32,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - name: Install task
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@v3.51.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Require a changie fragment
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_REF"
-          if git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- '.changes/unreleased/*.yaml' | grep -q .; then
-            echo "Changelog entry found."
-          else
-            echo "::error::No changelog entry found. Run 'changie new' to add one, or apply the 'no changelog' label."
-            exit 1
-          fi
+        run: task changelog:verify

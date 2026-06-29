@@ -87,18 +87,20 @@ from the currently active input source:
    In this mode, the utility cycles through a collection of input sources. Each press of the Globe key switches to the
    next input source within the current collection.
 
-   The collections of input sources are defined in the configuration under `input_sources`. Each key-value pair within
-   this map represents a named collection of input sources. For example:
+   The collections of input sources are defined in the configuration under `collections`, an ordered list of named
+   collections. For example:
 
    ```yaml
-   input_sources:
-     foo:
-       - com.apple.keylayout.US
-       - com.apple.keylayout.Russian
-     bar:
-       - com.apple.keylayout.Finnish
-       - com.apple.keylayout.Ukrainian-PC
-       - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
+   collections:
+     - name: foo
+       sources:
+         - com.apple.keylayout.US
+         - com.apple.keylayout.Russian
+     - name: bar
+       sources:
+         - com.apple.keylayout.Finnish
+         - com.apple.keylayout.Ukrainian-PC
+         - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
    ```
 
    Upon initialization, the utility determines the current active input source and starts from that particular source
@@ -112,13 +114,35 @@ from the currently active input source:
    key cycles to the next collection in the configuration.
 
    The maximum time interval between the first and second press that is considered a double press can be configured
-   in the `double_press.maximum_delay` property. This delay is specified in milliseconds.
+   in the `double_press.maximum_delay` property. This delay is specified as a Go duration, e.g. `250ms`.
+
+Hold **Shift** while pressing the Globe key to go back: a single press returns to the previously used input source
+(toggling between the two most recent), and a double press switches to the previous collection.
+
+On each change, an on-screen HUD briefly shows the new input source with its collection name. It is enabled by default;
+set `hud.enabled: false` in the configuration to turn it off. The configuration is reloaded automatically when the file
+changes, so edits take effect without restarting the service.
+
+betterglobekey requires macOS Accessibility permission to observe the Globe key, and works best with the Globe key set
+to **"No Action"** (System Settings › Keyboard) so macOS does not switch the input source as well. Run
+`betterglobekey doctor` to check your setup.
 
 These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
 especially for users who frequently switch between different languages or keyboard layouts.
 
-See our wiki for more information on
-[how to set up and configure the utility](https://github.com/Serpentiel/betterglobekey/wiki).
+The utility also provides helper commands: `betterglobekey list` (available input sources, with names),
+`betterglobekey current`, `betterglobekey doctor` (diagnose configuration and permissions), and
+`betterglobekey edit` (open the configuration file). See the [documentation](docs/) for more information on how to set
+up and configure the utility.
+
+Prefer a graphical interface? An optional [companion app](docs/companion.md) lets you edit your configuration—behavior,
+collections, and logging—without touching the YAML file, applying changes to the running service instantly.
+
+<!-- markdownlint-disable -->
+<div align="center">
+  <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey-companion" width="760">
+</div>
+<!-- markdownlint-restore -->
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>

@@ -1,0 +1,23 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}

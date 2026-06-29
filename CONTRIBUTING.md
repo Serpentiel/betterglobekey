@@ -92,7 +92,7 @@ you are expected to uphold this code. Please report unacceptable behavior via an
 ## I Have a Question
 
 > **N.B.** If you want to ask a question, we assume that you have read the
-> available [documentation](https://github.com/Serpentiel/betterglobekey/wiki).
+> available [documentation](docs/).
 
 Before you ask a question, it is best to search for existing [issues](https://github.com/Serpentiel/betterglobekey/issues)
 that might help you. In case you have found a suitable issue and still need clarification, you can write your question
@@ -126,7 +126,7 @@ following steps in advance to help us fix any potential bug as fast as possible.
 - Make sure that you are using the latest version
 - Determine if your bug is really a bug and not an error on your side, e.g. using incompatible environment
   components/versions—make sure that you have read the
-  [documentation](https://github.com/Serpentiel/betterglobekey/wiki). If you are looking for support, you might want to
+  [documentation](docs/). If you are looking for support, you might want to
   check [this section](#i-have-a-question))
 - Check if other users have experienced—and potentially already solved—the same issue you are having, check if there is
   not already a bug report existing for your bug or error
@@ -174,7 +174,7 @@ community to understand your suggestion and find related suggestions.
 #### Before Submitting an Enhancement
 
 - Make sure that you are using the latest version of **betterglobekey**
-- Read the [documentation](https://github.com/Serpentiel/betterglobekey/wiki) carefully and find out if the
+- Read the [documentation](docs/) carefully and find out if the
   functionality is already covered, maybe by an individual configuration
 - Perform a [search](https://github.com/Serpentiel/betterglobekey/issues) to see if the enhancement has already been
   suggested—if it has, add a comment to the existing issue instead of opening a new one

@@ -1,0 +1,2 @@
+kind: Changed
+body: Restructure the codebase into a domain-driven architecture with explicit dependency wiring.

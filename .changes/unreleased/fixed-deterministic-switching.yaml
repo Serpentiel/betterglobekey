@@ -1,0 +1,2 @@
+kind: Fixed
+body: Make double-press collection switching deterministic; it previously relied on Go map iteration order.

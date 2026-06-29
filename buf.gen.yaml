@@ -1,0 +1,9 @@
+version: v2
+clean: true
+plugins:
+  - local: protoc-gen-go
+    out: internal/gen
+    opt: paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: internal/gen
+    opt: paths=source_relative

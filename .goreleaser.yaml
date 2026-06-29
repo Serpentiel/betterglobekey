@@ -12,5 +12,11 @@ builds:
       - CGO_ENABLED=1
     goos:
       - darwin
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
 universal_binaries:
   - replace: false
+release:
+  extra_files:
+    - glob: ./companion/dist/*.zip
+    - glob: ./companion/dist/*.dmg

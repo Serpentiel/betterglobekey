@@ -1,28 +1,27 @@
-**About this change—what it does?**
+## Summary
 
-<!-- Please include a summary of the change and which issue is fixed, relevant motivation and context. Don't forget to list any dependencies that are required for this change. -->
+<!-- What does this change do, and why? Link any related issues (e.g. "Closes #123"). -->
 
-**What type of change is it?**
+## Type of change
 
-<!-- Please delete options that are not relevant. -->
+<!-- Check all that apply; remove those that don't. -->
 
-- [ ] Breaking change, i.e. fix or feature that would cause existing functionality to not work as expected
-- [ ] Bug fix, i.e. non-breaking change which fixes an issue
-- [ ] Dependencies bump, i.e. upgrade of dependencies this project uses
-- [ ] Documentation update, i.e. documentation-only change
-- [ ] New feature, i.e. non-breaking change which adds functionality
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (alters existing behavior or interfaces)
+- [ ] Refactor (no functional change)
+- [ ] Documentation
+- [ ] Build, CI, or dependencies
 
-- [ ] This change requires a documentation update
+## How was this tested?
 
-**Have you checked yourself twice?**
+<!-- How did you verify the change? Note if testing isn't applicable. -->
 
-<!-- Please check all the boxes before opening the PR. -->
+## Checklist
 
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] I have checked my code and corrected any misspellings
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] I have performed a self-review of my own code
-- [ ] My changes generate no new warnings
-- [ ] My code follows the contributing guidelines of this project
+- [ ] My code follows the project's conventions and passes lint/format
+- [ ] I performed a self-review and commented anything non-obvious
+- [ ] I added or updated tests where it makes sense
+- [ ] I updated documentation where needed
+- [ ] My changes produce no new warnings
+- [ ] Any dependent changes have been merged and published

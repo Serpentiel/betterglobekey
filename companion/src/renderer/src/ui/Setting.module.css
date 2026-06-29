@@ -1,0 +1,27 @@
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.control {
+  flex-shrink: 0;
+}

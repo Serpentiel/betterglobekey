@@ -1,0 +1,2 @@
+kind: Added
+body: Add `--version`, `doctor`, `current`, and `edit` commands, and show localized names in `list`.

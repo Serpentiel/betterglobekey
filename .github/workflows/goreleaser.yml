@@ -29,19 +29,16 @@ jobs:
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
           go-version-file: go.mod
-      - name: Install changie
+      - name: Install changie and task
         run: |
           go install github.com/miniscruff/changie@v1.24.2
+          go install github.com/go-task/task/v3/cmd/task@v3.51.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - id: release
         env:
           TAG_INPUT: ${{ inputs.tag }}
         run: |
-          tag="v${TAG_INPUT#[vV]}"
-          if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([-+].+)?$'; then
-            echo "::error::'$TAG_INPUT' is not a valid semantic version" >&2
-            exit 1
-          fi
+          tag="$(task release:normalize-tag)"
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
             echo "::error::tag $tag already exists" >&2
             exit 1
@@ -52,19 +49,38 @@ jobs:
         env:
           TAG: ${{ steps.release.outputs.tag }}
           VERSION: ${{ steps.release.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
         run: |
-          changie batch "$VERSION"
-          changie merge
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A .changes CHANGELOG.md
-          git commit -m "chore(release): $TAG"
-          git push origin "HEAD:$GITHUB_REF_NAME"
-          git tag -a "$TAG" -m "$TAG"
-          git push origin "$TAG"
+          task changelog:batch
+          task release:publish
+      - name: Build companion
+        working-directory: companion
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm ci
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npm run dist
       - uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89
         with:
           version: ~> v2
           args: release --clean --release-notes=.changes/${{ steps.release.outputs.version }}.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Mint betterglobekey-release-bot token
+        id: tap-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          app-id: ${{ secrets.BETTERGLOBEKEY_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.BETTERGLOBEKEY_RELEASE_BOT_PRIVATE_KEY }}
+          owner: Serpentiel
+          repositories: homebrew-tools
+      - name: Trigger Homebrew tap bump
+        env:
+          GH_TOKEN: ${{ steps.tap-token.outputs.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          gh api repos/Serpentiel/homebrew-tools/dispatches \
+            -f event_type=betterglobekey-release \
+            -f "client_payload[version]=$VERSION"

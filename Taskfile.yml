@@ -1,0 +1,103 @@
+version: "3"
+
+env:
+  CGO_ENABLED: "1"
+
+includes:
+  companion:
+    taskfile: ./companion/Taskfile.yml
+    dir: ./companion
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  install:
+    desc: Download Go modules and install companion dependencies
+    cmds:
+      - go mod download
+      - task: companion:install
+
+  generate:
+    desc: Generate Go code from the protobuf contract and sync it to the companion
+    cmds:
+      - buf lint
+      - buf generate
+      - cp proto/betterglobekey/control/v1/control.proto companion/proto/control.proto
+
+  build:
+    desc: Build the betterglobekey binary into ./bin
+    vars:
+      COMMIT:
+        sh: git rev-parse --short HEAD
+    cmds:
+      - go build -ldflags "-X main.commit={{.COMMIT}}" -o bin/betterglobekey .
+
+  test:
+    desc: Run the Go test suite
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run all linters via trunk
+    cmds:
+      - trunk check {{.CLI_ARGS}}
+
+  fmt:
+    desc: Format the codebase via trunk
+    cmds:
+      - trunk fmt {{.CLI_ARGS}}
+
+  tidy:
+    desc: Tidy the Go module
+    cmds:
+      - go mod tidy
+
+  changelog:new:
+    desc: Add a new changelog fragment
+    cmds:
+      - changie new
+
+  changelog:verify:
+    desc: Verify a changie fragment was added on this branch (expects BASE_REF)
+    cmds:
+      - |
+        git fetch --no-tags --depth=1 origin "$BASE_REF"
+        if git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- '.changes/unreleased/*.yaml' | grep -q .; then
+          echo "Changelog entry found."
+        else
+          echo "::error::No changelog entry found. Run 'task changelog:new' to add one, or apply the 'no changelog' label."
+          exit 1
+        fi
+
+  changelog:batch:
+    desc: Batch and merge the changelog for a release (expects VERSION)
+    cmds:
+      - changie batch "$VERSION"
+      - changie merge
+
+  release:normalize-tag:
+    desc: Normalize and validate a release tag (expects TAG_INPUT), printing the v-prefixed tag
+    silent: true
+    cmds:
+      - |
+        tag="v${TAG_INPUT#[vV]}"
+        if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([-+].+)?$'; then
+          echo "::error::'$TAG_INPUT' is not a valid semantic version" >&2
+          exit 1
+        fi
+        printf '%s\n' "$tag"
+
+  release:publish:
+    desc: Commit the batched changelog, then create and push the release tag (expects TAG, BRANCH)
+    cmds:
+      - |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -A .changes CHANGELOG.md
+        git commit -m "chore(release): $TAG"
+        git push origin "HEAD:$BRANCH"
+        git tag -a "$TAG" -m "$TAG"
+        git push origin "$TAG"

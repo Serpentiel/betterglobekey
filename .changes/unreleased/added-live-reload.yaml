@@ -1,0 +1,2 @@
+kind: Added
+body: Reload the configuration automatically when the file changes, without restarting the service.

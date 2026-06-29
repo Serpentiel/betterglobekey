@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "color-no-invalid-hex": true,
+    "unit-no-unknown": true,
+    "block-no-empty": true,
+    "no-duplicate-selectors": true,
+    "no-invalid-double-slash-comments": true,
+    "declaration-block-no-duplicate-properties": [
+      true,
+      { "ignore": ["consecutive-duplicates-with-different-values"] }
+    ],
+    "property-no-unknown": [true, { "ignoreProperties": ["/^-webkit-/"] }]
+  }
+}

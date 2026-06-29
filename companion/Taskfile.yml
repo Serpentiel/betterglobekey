@@ -1,0 +1,37 @@
+version: '3'
+
+tasks:
+  install:
+    desc: Install companion dependencies
+    cmds:
+      - npm install
+
+  dev:
+    desc: Run the companion in development mode
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build the companion (main, preload, renderer)
+    cmds:
+      - npm run build
+
+  typecheck:
+    desc: Type-check the companion
+    cmds:
+      - npm run typecheck
+
+  lint:
+    desc: Lint the companion with ESLint
+    cmds:
+      - npm run lint
+
+  test:
+    desc: Run the companion unit tests
+    cmds:
+      - npm run test
+
+  dist:
+    desc: Build a distributable macOS application
+    cmds:
+      - npm run dist

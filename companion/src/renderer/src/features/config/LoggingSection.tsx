@@ -1,0 +1,68 @@
+import type { ReactElement } from 'react'
+import { ScrollText } from 'lucide-react'
+
+import type { Config } from '../../../../shared/types'
+import { LOG_LEVELS, type ConfigErrors } from '../../lib/config-schema'
+import { capitalize } from '../../lib/text'
+import { Field, Input, NumberField, Section, Select, Stack } from '../../ui'
+
+interface Props {
+  config: Config
+  errors: ConfigErrors
+  onChange: (config: Config) => void
+}
+
+export function LoggingSection({ config, errors, onChange }: Props): ReactElement {
+  const setLogger = (patch: Partial<Config['logger']>): void =>
+    onChange({ ...config, logger: { ...config.logger, ...patch } })
+
+  return (
+    <Section icon={ScrollText} title="Logging" description="Where logs are written and how long they are kept.">
+      <Field label="Log file" error={errors.logger.path}>
+        {({ id, invalid }) => (
+          <Input
+            id={id}
+            invalid={invalid}
+            value={config.logger.path}
+            placeholder="~/Library/Logs/betterglobekey.log"
+            onChange={(event) => setLogger({ path: event.target.value })}
+          />
+        )}
+      </Field>
+      <Field label="Level" error={errors.logger.level}>
+        {({ id }) => (
+          <Select
+            id={id}
+            value={config.logger.level}
+            options={LOG_LEVELS.map((level) => ({ value: level, label: capitalize(level) }))}
+            onChange={(level) => setLogger({ level })}
+          />
+        )}
+      </Field>
+      <Stack direction="row" gap={16}>
+        <Field label="Retention (days)" error={errors.logger.retentionDays}>
+          {({ id, invalid }) => (
+            <NumberField
+              id={id}
+              invalid={invalid}
+              min={0}
+              value={config.logger.retentionDays}
+              onChange={(retentionDays) => setLogger({ retentionDays })}
+            />
+          )}
+        </Field>
+        <Field label="Retention (files)" error={errors.logger.retentionFiles}>
+          {({ id, invalid }) => (
+            <NumberField
+              id={id}
+              invalid={invalid}
+              min={0}
+              value={config.logger.retentionFiles}
+              onChange={(retentionFiles) => setLogger({ retentionFiles })}
+            />
+          )}
+        </Field>
+      </Stack>
+    </Section>
+  )
+}
