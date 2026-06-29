@@ -20,15 +20,15 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/app"
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
-	"github.com/Serpentiel/betterglobekey/internal/infra/accessibility"
 	"github.com/Serpentiel/betterglobekey/internal/infra/config"
 	"github.com/Serpentiel/betterglobekey/internal/infra/control"
 	"github.com/Serpentiel/betterglobekey/internal/infra/feedback"
-	"github.com/Serpentiel/betterglobekey/internal/infra/hud"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
-	"github.com/Serpentiel/betterglobekey/internal/infra/mainthread"
+	"github.com/Serpentiel/betterglobekey/pkg/accessibility"
+	"github.com/Serpentiel/betterglobekey/pkg/hud"
+	"github.com/Serpentiel/betterglobekey/pkg/mainthread"
 	"github.com/spf13/cobra"
 )
 

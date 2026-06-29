@@ -1,7 +1,7 @@
 // Package feedback shows the HUD overlay when the input source changes.
 package feedback
 
-import "github.com/Serpentiel/betterglobekey/internal/infra/hud"
+import "github.com/Serpentiel/betterglobekey/pkg/hud"
 
 // Namer resolves an input source ID to its localized display name.
 type Namer interface {
