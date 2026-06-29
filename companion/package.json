@@ -14,6 +14,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "lint": "eslint .",
+    "test": "vitest run",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "dist": "electron-vite build && electron-builder --mac --publish never"
@@ -43,6 +44,7 @@
     "react-dom": "19.2.7",
     "typescript": "6.0.3",
     "typescript-eslint": "8.62.0",
-    "vite": "7.3.6"
+    "vite": "7.3.6",
+    "vitest": "4.1.9"
   }
 }

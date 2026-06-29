@@ -91,4 +91,5 @@ jobs:
         working-directory: companion
       - run: task companion:lint
       - run: task companion:typecheck
+      - run: task companion:test
       - run: task companion:build

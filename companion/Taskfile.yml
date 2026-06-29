@@ -26,6 +26,11 @@ tasks:
     cmds:
       - npm run lint
 
+  test:
+    desc: Run the companion unit tests
+    cmds:
+      - npm run test
+
   dist:
     desc: Build a distributable macOS application
     cmds:
