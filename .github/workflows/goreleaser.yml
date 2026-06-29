@@ -22,9 +22,18 @@ jobs:
     timeout-minutes: 30
     environment: release
     steps:
+      - name: Mint release-bot token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.BETTERGLOBEKEY_RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BETTERGLOBEKEY_RELEASE_BOT_PRIVATE_KEY }}
+          owner: Serpentiel
+          repositories: betterglobekey,homebrew-tools
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
       - run: git fetch -f -t
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
@@ -68,17 +77,9 @@ jobs:
           args: release --clean --release-notes=.changes/${{ steps.release.outputs.version }}.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Mint betterglobekey-release-bot token
-        id: tap-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        with:
-          app-id: ${{ secrets.BETTERGLOBEKEY_RELEASE_BOT_APP_ID }}
-          private-key: ${{ secrets.BETTERGLOBEKEY_RELEASE_BOT_PRIVATE_KEY }}
-          owner: Serpentiel
-          repositories: homebrew-tools
       - name: Trigger Homebrew tap bump
         env:
-          GH_TOKEN: ${{ steps.tap-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.release.outputs.version }}
         run: |
           gh api repos/Serpentiel/homebrew-tools/dispatches \
