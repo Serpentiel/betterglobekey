@@ -41,4 +41,17 @@ brew install --cask serpentiel/tools/betterglobekey-companion
 The app is placed in your Applications folder. Start the service with `brew services start betterglobekey`, then open
 the companion.
 
+### First launch
+
+The companion is not signed with an Apple Developer ID or notarized, so the first time you open it macOS Gatekeeper
+blocks it ("betterglobekey-companion can't be opened because Apple cannot check it for malicious software"). To approve
+it, clear the quarantine attribute that Homebrew set on the download:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/betterglobekey-companion.app
+```
+
+Then open the app normally. Alternatively, after the first blocked launch, open **System Settings → Privacy &
+Security** and click **Open Anyway**.
+
 To build it from source instead, see the [development guide](development.md).

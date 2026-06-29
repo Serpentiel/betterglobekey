@@ -139,7 +139,6 @@ Prefer a graphical interface? An optional [companion app](docs/companion.md) let
 collections, and logging—without touching the YAML file, applying changes to the running service instantly.
 
 <!-- markdownlint-disable -->
-<!-- TODO: add companion.png to the `repo-assets/README.md` branch (alongside logo.png). -->
 <div align="center">
   <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey-companion" width="760">
 </div>
