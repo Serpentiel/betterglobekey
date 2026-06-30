@@ -80,6 +80,12 @@ jobs:
           args: release --clean --release-notes=.changes/${{ steps.release.outputs.version }}.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the changelog as the release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: gh release edit "$TAG" --notes-file ".changes/$VERSION.md"
       - name: Trigger Homebrew tap bump
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
