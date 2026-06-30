@@ -71,6 +71,9 @@ jobs:
           npm ci
           npm version "$VERSION" --no-git-tag-version --allow-same-version
           npm run dist
+          # The version bump is only needed to stamp the build; revert it so the
+          # working tree is clean for goreleaser (which refuses a dirty state).
+          git checkout -- package.json package-lock.json
       - uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89
         with:
           version: ~> v2
