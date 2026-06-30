@@ -1,2 +1,0 @@
-kind: Changed
-body: Rework the configuration format (schema v2, ordered `collections`) with automatic, backed-up migration from v1.

@@ -1,2 +1,0 @@
-kind: Added
-body: Add Task (Taskfile.dev) as the unified entry point for development workflows across the app and companion, and route CI through it.

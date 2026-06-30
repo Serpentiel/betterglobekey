@@ -1,2 +1,0 @@
-kind: Added
-body: Add an optional Electron + React companion app for editing the configuration graphically, connected to the service over a local gRPC control socket.

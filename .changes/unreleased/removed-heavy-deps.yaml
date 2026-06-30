@@ -1,2 +1,0 @@
-kind: Removed
-body: Drop the `uber/fx`, `viper`, and custom asynchronous-logging dependencies.

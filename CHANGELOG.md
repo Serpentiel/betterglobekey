@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
 with [Changie](https://github.com/miniscruff/changie).
 
+## [4.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.0.0) - 2026-06-30
+
+### Added
+
+- Reload the configuration automatically when the file changes, without restarting the service.
+- Add Task (Taskfile.dev) as the unified entry point for development workflows across the app and companion, and route CI through it.
+- Add `--version`, `doctor`, `current`, and `edit` commands, and show localized names in `list`.
+- Add an optional Electron + React companion app for editing the configuration graphically, connected to the service over a local gRPC control socket.
+- Add configuration options for double-press and reverse toggles, the reverse modifier key, the log level, and the HUD duration and collection subtitle.
+- Show an on-screen HUD naming the new input source and its collection on each change (enabled by default; set `hud.enabled: false` to disable).
+- Hold the reverse modifier (Shift by default) while pressing the Globe key to jump to the previous input source (single press) or previous collection (double press).
+- Add unit tests covering the input-source switching and configuration logic.
+- Warn (and prompt) when Accessibility permission is not granted, instead of silently doing nothing.
+
+### Changed
+
+- Rework the configuration format (schema v2, ordered `collections`) with automatic, backed-up migration from v1.
+- Restructure the codebase into a domain-driven architecture with explicit dependency wiring.
+- Default the log file location to `~/Library/Logs/betterglobekey.log`.
+- Replace the gohook dependency with a native CoreGraphics event tap that re-arms across sleep and ignores the Globe key when it is held as a modifier (e.g. fn+F1).
+
+### Removed
+
+- Drop the `uber/fx`, `viper`, and custom asynchronous-logging dependencies.
+
+### Fixed
+
+- Make double-press collection switching deterministic; it previously relied on Go map iteration order.
+
 ## [3.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v3.0.0) - 2024-01-21
 
 ### Added
