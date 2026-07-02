@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
 with [Changie](https://github.com/miniscruff/changie).
 
+## [4.0.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.0.1) - 2026-07-02
+
+### Fixed
+
+- `doctor` now reports the Accessibility permission held by the running daemon, not by the launching terminal.
+
 ## [4.0.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.0.0) - 2026-06-30
 
 ### Added
