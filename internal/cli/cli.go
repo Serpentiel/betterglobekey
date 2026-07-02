@@ -332,8 +332,15 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	return command.Run()
 }
 
+// sourceLister lists the system's available input source IDs. It is the subset
+// of the input-source controller ensureConfig needs to seed a default config,
+// narrowed to an interface so it can be faked in tests.
+type sourceLister interface {
+	All() []string
+}
+
 // ensureConfig writes a default, seeded config if none exists at path.
-func ensureConfig(path string, sources inputsource.Controller) error {
+func ensureConfig(path string, sources sourceLister) error {
 	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 		return config.WriteDefault(path, sources.All())
 	}

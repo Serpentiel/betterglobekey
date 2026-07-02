@@ -13,12 +13,15 @@ type Namer interface {
 type HUD struct {
 	namer          Namer
 	showCollection bool
+	// show renders the overlay. It is a field so tests can observe the resolved
+	// title and subtitle without invoking the real cgo overlay.
+	show func(title, subtitle string)
 }
 
 // NewHUD returns a notifier that shows the HUD on each change. When
 // showCollection is false the collection subtitle is omitted.
 func NewHUD(namer Namer, showCollection bool) HUD {
-	return HUD{namer: namer, showCollection: showCollection}
+	return HUD{namer: namer, showCollection: showCollection, show: hud.Show}
 }
 
 // Notify shows the localized source name, with the collection name as a subtitle
@@ -33,5 +36,5 @@ func (h HUD) Notify(source, collection string) {
 		collection = ""
 	}
 
-	hud.Show(label, collection)
+	h.show(label, collection)
 }
