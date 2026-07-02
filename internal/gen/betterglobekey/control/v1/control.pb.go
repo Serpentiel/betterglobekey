@@ -793,6 +793,88 @@ func (x *GetVersionResponse) GetCommit() string {
 	return ""
 }
 
+type GetStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStatusRequest) Reset() {
+	*x = GetStatusRequest{}
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStatusRequest) ProtoMessage() {}
+
+func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetStatusRequest) Descriptor() ([]byte, []int) {
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{15}
+}
+
+type GetStatusResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// accessibility_trusted reports whether the daemon holds the Accessibility
+	// permission required by the global event tap.
+	AccessibilityTrusted bool `protobuf:"varint,1,opt,name=accessibility_trusted,json=accessibilityTrusted,proto3" json:"accessibility_trusted,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *GetStatusResponse) Reset() {
+	*x = GetStatusResponse{}
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStatusResponse) ProtoMessage() {}
+
+func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetStatusResponse) Descriptor() ([]byte, []int) {
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetStatusResponse) GetAccessibilityTrusted() bool {
+	if x != nil {
+		return x.AccessibilityTrusted
+	}
+	return false
+}
+
 var File_betterglobekey_control_v1_control_proto protoreflect.FileDescriptor
 
 const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
@@ -838,13 +920,17 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x11GetVersionRequest\"F\n" +
 	"\x12GetVersionResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x16\n" +
-	"\x06commit\x18\x02 \x01(\tR\x06commit2\xcd\x03\n" +
+	"\x06commit\x18\x02 \x01(\tR\x06commit\"\x12\n" +
+	"\x10GetStatusRequest\"H\n" +
+	"\x11GetStatusResponse\x123\n" +
+	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrusted2\xb5\x04\n" +
 	"\rConfigService\x12f\n" +
 	"\tGetConfig\x12+.betterglobekey.control.v1.GetConfigRequest\x1a,.betterglobekey.control.v1.GetConfigResponse\x12l\n" +
 	"\vApplyConfig\x12-.betterglobekey.control.v1.ApplyConfigRequest\x1a..betterglobekey.control.v1.ApplyConfigResponse\x12{\n" +
 	"\x10ListInputSources\x122.betterglobekey.control.v1.ListInputSourcesRequest\x1a3.betterglobekey.control.v1.ListInputSourcesResponse\x12i\n" +
 	"\n" +
-	"GetVersion\x12,.betterglobekey.control.v1.GetVersionRequest\x1a-.betterglobekey.control.v1.GetVersionResponseBWZUgithub.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1b\x06proto3"
+	"GetVersion\x12,.betterglobekey.control.v1.GetVersionRequest\x1a-.betterglobekey.control.v1.GetVersionResponse\x12f\n" +
+	"\tGetStatus\x12+.betterglobekey.control.v1.GetStatusRequest\x1a,.betterglobekey.control.v1.GetStatusResponseBWZUgithub.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1b\x06proto3"
 
 var (
 	file_betterglobekey_control_v1_control_proto_rawDescOnce sync.Once
@@ -858,7 +944,7 @@ func file_betterglobekey_control_v1_control_proto_rawDescGZIP() []byte {
 	return file_betterglobekey_control_v1_control_proto_rawDescData
 }
 
-var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*Config)(nil),                   // 0: betterglobekey.control.v1.Config
 	(*Logger)(nil),                   // 1: betterglobekey.control.v1.Logger
@@ -875,6 +961,8 @@ var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*ListInputSourcesResponse)(nil), // 12: betterglobekey.control.v1.ListInputSourcesResponse
 	(*GetVersionRequest)(nil),        // 13: betterglobekey.control.v1.GetVersionRequest
 	(*GetVersionResponse)(nil),       // 14: betterglobekey.control.v1.GetVersionResponse
+	(*GetStatusRequest)(nil),         // 15: betterglobekey.control.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),        // 16: betterglobekey.control.v1.GetStatusResponse
 }
 var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	1,  // 0: betterglobekey.control.v1.Config.logger:type_name -> betterglobekey.control.v1.Logger
@@ -889,12 +977,14 @@ var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	9,  // 9: betterglobekey.control.v1.ConfigService.ApplyConfig:input_type -> betterglobekey.control.v1.ApplyConfigRequest
 	11, // 10: betterglobekey.control.v1.ConfigService.ListInputSources:input_type -> betterglobekey.control.v1.ListInputSourcesRequest
 	13, // 11: betterglobekey.control.v1.ConfigService.GetVersion:input_type -> betterglobekey.control.v1.GetVersionRequest
-	8,  // 12: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
-	10, // 13: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
-	12, // 14: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
-	14, // 15: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
+	15, // 12: betterglobekey.control.v1.ConfigService.GetStatus:input_type -> betterglobekey.control.v1.GetStatusRequest
+	8,  // 13: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
+	10, // 14: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
+	12, // 15: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
+	14, // 16: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
+	16, // 17: betterglobekey.control.v1.ConfigService.GetStatus:output_type -> betterglobekey.control.v1.GetStatusResponse
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -911,7 +1001,7 @@ func file_betterglobekey_control_v1_control_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_betterglobekey_control_v1_control_proto_rawDesc), len(file_betterglobekey_control_v1_control_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
