@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"path/filepath"
 	"testing"
@@ -29,11 +30,11 @@ func (f fakeSources) Name(id string) string {
 
 // newTestClient starts a control server backed by path and sources on an
 // in-memory listener and returns a connected client.
-func newTestClient(t *testing.T, path string, sources Sources) controlv1.ConfigServiceClient {
+func newTestClient(t *testing.T, path string, sources Sources, trusted bool) controlv1.ConfigServiceClient {
 	t.Helper()
 
 	listener := bufconn.Listen(1 << 20)
-	server := NewServer(path, sources, func(fn func()) { fn() }, "1.2.3", "abc1234")
+	server := NewServer(path, sources, func(fn func()) { fn() }, "1.2.3", "abc1234", func() bool { return trusted })
 
 	go func() { _ = server.grpc.Serve(listener) }()
 
@@ -70,7 +71,7 @@ func sampleProtoConfig() *controlv1.Config {
 
 func TestApplyThenGetConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	client := newTestClient(t, path, fakeSources{})
+	client := newTestClient(t, path, fakeSources{}, true)
 
 	if _, err := client.ApplyConfig(
 		context.Background(),
@@ -108,7 +109,7 @@ func TestApplyThenGetConfig(t *testing.T) {
 
 func TestApplyConfigRejectsInvalid(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	client := newTestClient(t, path, fakeSources{})
+	client := newTestClient(t, path, fakeSources{}, true)
 
 	invalid := sampleProtoConfig()
 	invalid.DoublePress.MaximumDelay = "not-a-duration"
@@ -126,7 +127,7 @@ func TestListInputSources(t *testing.T) {
 		all:   []string{"com.apple.keylayout.US", "com.apple.keylayout.Russian"},
 		names: map[string]string{"com.apple.keylayout.US": "U.S."},
 	}
-	client := newTestClient(t, "", sources)
+	client := newTestClient(t, "", sources, true)
 
 	resp, err := client.ListInputSources(context.Background(), &controlv1.ListInputSourcesRequest{})
 	if err != nil {
@@ -143,7 +144,7 @@ func TestListInputSources(t *testing.T) {
 }
 
 func TestGetVersion(t *testing.T) {
-	client := newTestClient(t, "", fakeSources{})
+	client := newTestClient(t, "", fakeSources{}, true)
 
 	resp, err := client.GetVersion(context.Background(), &controlv1.GetVersionRequest{})
 	if err != nil {
@@ -152,5 +153,22 @@ func TestGetVersion(t *testing.T) {
 
 	if resp.GetVersion() != "1.2.3" || resp.GetCommit() != "abc1234" {
 		t.Errorf("version/commit = %q/%q, want 1.2.3/abc1234", resp.GetVersion(), resp.GetCommit())
+	}
+}
+
+func TestGetStatus(t *testing.T) {
+	for _, trusted := range []bool{true, false} {
+		t.Run(fmt.Sprintf("trusted=%v", trusted), func(t *testing.T) {
+			client := newTestClient(t, "", fakeSources{}, trusted)
+
+			resp, err := client.GetStatus(context.Background(), &controlv1.GetStatusRequest{})
+			if err != nil {
+				t.Fatalf("GetStatus: %v", err)
+			}
+
+			if resp.GetAccessibilityTrusted() != trusted {
+				t.Errorf("accessibility_trusted = %v, want %v", resp.GetAccessibilityTrusted(), trusted)
+			}
+		})
 	}
 }

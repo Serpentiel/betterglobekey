@@ -23,6 +23,7 @@ const (
 	ConfigService_ApplyConfig_FullMethodName      = "/betterglobekey.control.v1.ConfigService/ApplyConfig"
 	ConfigService_ListInputSources_FullMethodName = "/betterglobekey.control.v1.ConfigService/ListInputSources"
 	ConfigService_GetVersion_FullMethodName       = "/betterglobekey.control.v1.ConfigService/GetVersion"
+	ConfigService_GetStatus_FullMethodName        = "/betterglobekey.control.v1.ConfigService/GetStatus"
 )
 
 // ConfigServiceClient is the client API for ConfigService service.
@@ -44,6 +45,11 @@ type ConfigServiceClient interface {
 	ListInputSources(ctx context.Context, in *ListInputSourcesRequest, opts ...grpc.CallOption) (*ListInputSourcesResponse, error)
 	// GetVersion returns the running daemon's version and build commit.
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
+	// GetStatus reports the daemon's runtime state, including whether it holds the
+	// Accessibility permission the global event tap requires. Because the daemon
+	// answers from its own process, this reflects the daemon's grant rather than
+	// that of whatever launched the caller.
+	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 }
 
 type configServiceClient struct {
@@ -94,6 +100,16 @@ func (c *configServiceClient) GetVersion(ctx context.Context, in *GetVersionRequ
 	return out, nil
 }
 
+func (c *configServiceClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStatusResponse)
+	err := c.cc.Invoke(ctx, ConfigService_GetStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigServiceServer is the server API for ConfigService service.
 // All implementations must embed UnimplementedConfigServiceServer
 // for forward compatibility.
@@ -113,6 +129,11 @@ type ConfigServiceServer interface {
 	ListInputSources(context.Context, *ListInputSourcesRequest) (*ListInputSourcesResponse, error)
 	// GetVersion returns the running daemon's version and build commit.
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
+	// GetStatus reports the daemon's runtime state, including whether it holds the
+	// Accessibility permission the global event tap requires. Because the daemon
+	// answers from its own process, this reflects the daemon's grant rather than
+	// that of whatever launched the caller.
+	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()
 }
 
@@ -134,6 +155,9 @@ func (UnimplementedConfigServiceServer) ListInputSources(context.Context, *ListI
 }
 func (UnimplementedConfigServiceServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVersion not implemented")
+}
+func (UnimplementedConfigServiceServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStatus not implemented")
 }
 func (UnimplementedConfigServiceServer) mustEmbedUnimplementedConfigServiceServer() {}
 func (UnimplementedConfigServiceServer) testEmbeddedByValue()                       {}
@@ -228,6 +252,24 @@ func _ConfigService_GetVersion_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigService_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigServiceServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigService_GetStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigServiceServer).GetStatus(ctx, req.(*GetStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigService_ServiceDesc is the grpc.ServiceDesc for ConfigService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +292,10 @@ var ConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVersion",
 			Handler:    _ConfigService_GetVersion_Handler,
+		},
+		{
+			MethodName: "GetStatus",
+			Handler:    _ConfigService_GetStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

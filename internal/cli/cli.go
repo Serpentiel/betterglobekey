@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -20,6 +21,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/app"
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
+	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
 	"github.com/Serpentiel/betterglobekey/internal/infra/config"
 	"github.com/Serpentiel/betterglobekey/internal/infra/control"
 	"github.com/Serpentiel/betterglobekey/internal/infra/feedback"
@@ -30,6 +32,8 @@ import (
 	"github.com/Serpentiel/betterglobekey/pkg/hud"
 	"github.com/Serpentiel/betterglobekey/pkg/mainthread"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // configFileName is the default config file name, looked up in the user's home directory.
@@ -40,6 +44,9 @@ const socketFileName = ".betterglobekey.sock"
 
 // listColumnPadding is the gap between columns in the `list` output.
 const listColumnPadding = 2
+
+// daemonStatusTimeout bounds the doctor's status query to the running daemon.
+const daemonStatusTimeout = 2 * time.Second
 
 // Execute builds the root command and runs it.
 func Execute(version, commit string) error {
@@ -228,7 +235,7 @@ func startControlServer(
 		return err
 	}
 
-	server := control.NewServer(path, sources, mainthread.Run, version, commit)
+	server := control.NewServer(path, sources, mainthread.Run, version, commit, accessibility.Trusted)
 
 	go func() {
 		if err := server.Serve(socketPath); err != nil {
@@ -255,11 +262,16 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	out := cmd.OutOrStdout()
 	sources := inputsource.New()
 
-	if accessibility.Trusted() {
-		fmt.Fprintln(out, "accessibility: granted")
-	} else {
-		fmt.Fprintln(out, "accessibility: NOT granted (enable in System Settings > Privacy & Security > Accessibility)")
+	// Ask the running daemon rather than checking this process: AXIsProcessTrusted
+	// reflects the responsible process (e.g. the terminal that launched us), not
+	// the daemon that actually needs the permission.
+	socketPath, err := resolveSocketPath()
+	if err != nil {
+		return err
 	}
+
+	trusted, running := queryDaemonAccessibility(socketPath)
+	fmt.Fprintln(out, accessibilityStatusLine(running, trusted))
 
 	path, err := resolveConfigPath(cmd)
 	if err != nil {
@@ -320,8 +332,15 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	return command.Run()
 }
 
+// sourceLister lists the system's available input source IDs. It is the subset
+// of the input-source controller ensureConfig needs to seed a default config,
+// narrowed to an interface so it can be faked in tests.
+type sourceLister interface {
+	All() []string
+}
+
 // ensureConfig writes a default, seeded config if none exists at path.
-func ensureConfig(path string, sources inputsource.Controller) error {
+func ensureConfig(path string, sources sourceLister) error {
 	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 		return config.WriteDefault(path, sources.All())
 	}
@@ -347,6 +366,50 @@ func resolveConfigPath(cmd *cobra.Command) (string, error) {
 	}
 
 	return filepath.Join(home, configFileName), nil
+}
+
+// queryDaemonAccessibility asks the running daemon, over the control socket,
+// whether it holds the Accessibility permission. running is false when the
+// daemon cannot be reached (for example, it is not started).
+func queryDaemonAccessibility(socketPath string) (trusted, running bool) {
+	conn, err := grpc.NewClient(
+		"passthrough:///"+socketPath,
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+
+			return dialer.DialContext(ctx, "unix", socketPath)
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return false, false
+	}
+	defer func() { _ = conn.Close() }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), daemonStatusTimeout)
+	defer cancel()
+
+	resp, err := controlv1.NewConfigServiceClient(conn).GetStatus(ctx, &controlv1.GetStatusRequest{})
+	if err != nil {
+		return false, false
+	}
+
+	return resp.GetAccessibilityTrusted(), true
+}
+
+// accessibilityStatusLine renders the doctor's accessibility line from the
+// daemon's reported state. The permission belongs to the daemon, so it is only
+// meaningful while the service is running.
+func accessibilityStatusLine(running, trusted bool) string {
+	switch {
+	case !running:
+		return "accessibility: unknown (service not running; " +
+			"start it with `brew services start betterglobekey`, then re-run)"
+	case trusted:
+		return "accessibility: granted"
+	default:
+		return "accessibility: NOT granted (enable in System Settings > Privacy & Security > Accessibility)"
+	}
 }
 
 // resolveSocketPath returns the path to the control socket in the user's home

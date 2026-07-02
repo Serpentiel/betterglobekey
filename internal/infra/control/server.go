@@ -42,19 +42,22 @@ type Server struct {
 	onMain  OnMain
 	version string
 	commit  string
+	trusted func() bool
 	grpc    *grpc.Server
 }
 
 // NewServer builds a control server that reads and writes the configuration at
 // path and reports input sources via sources. Input-source queries are run via
-// onMain. version and commit identify the running build.
-func NewServer(path string, sources Sources, onMain OnMain, version, commit string) *Server {
+// onMain. version and commit identify the running build. trusted reports whether
+// the daemon holds Accessibility, evaluated in the daemon's own process.
+func NewServer(path string, sources Sources, onMain OnMain, version, commit string, trusted func() bool) *Server {
 	srv := &Server{
 		path:    path,
 		sources: sources,
 		onMain:  onMain,
 		version: version,
 		commit:  commit,
+		trusted: trusted,
 		grpc:    grpc.NewServer(),
 	}
 	controlv1.RegisterConfigServiceServer(srv.grpc, srv)
@@ -142,4 +145,14 @@ func (s *Server) GetVersion(
 	_ *controlv1.GetVersionRequest,
 ) (*controlv1.GetVersionResponse, error) {
 	return &controlv1.GetVersionResponse{Version: s.version, Commit: s.commit}, nil
+}
+
+// GetStatus reports the daemon's runtime state. accessibility_trusted is
+// evaluated in the daemon's own process, so it reflects the daemon's grant
+// rather than that of the process that launched the caller.
+func (s *Server) GetStatus(
+	_ context.Context,
+	_ *controlv1.GetStatusRequest,
+) (*controlv1.GetStatusResponse, error) {
+	return &controlv1.GetStatusResponse{AccessibilityTrusted: s.trusted()}, nil
 }

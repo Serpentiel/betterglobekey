@@ -22,6 +22,12 @@ service ConfigService {
 
   // GetVersion returns the running daemon's version and build commit.
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
+
+  // GetStatus reports the daemon's runtime state, including whether it holds the
+  // Accessibility permission the global event tap requires. Because the daemon
+  // answers from its own process, this reflects the daemon's grant rather than
+  // that of whatever launched the caller.
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
 }
 
 // Config mirrors the daemon's resolved configuration.
@@ -134,4 +140,12 @@ message GetVersionResponse {
 
   // commit is the build's git commit, when embedded.
   string commit = 2;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  // accessibility_trusted reports whether the daemon holds the Accessibility
+  // permission required by the global event tap.
+  bool accessibility_trusted = 1;
 }
