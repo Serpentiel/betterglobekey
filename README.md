@@ -92,14 +92,14 @@ from the currently active input source:
 
    ```yaml
    collections:
-     - name: foo
+     - name: primary
        sources:
          - com.apple.keylayout.US
-         - com.apple.keylayout.Russian
-     - name: bar
+         - com.apple.keylayout.Spanish
+     - name: secondary
        sources:
-         - com.apple.keylayout.Finnish
-         - com.apple.keylayout.Ukrainian-PC
+         - com.apple.keylayout.US
+         - com.apple.keylayout.Dvorak
          - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
    ```
 

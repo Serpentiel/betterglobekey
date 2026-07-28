@@ -32,8 +32,8 @@ name as a subtitle. It is enabled by default and can be tuned or turned off unde
 
 ## Example
 
-Suppose you define a `default` collection with U.S. and Russian for everyday use, and a `coding` collection with U.S.
-and a programmer layout. A single press flips between the languages in your current collection; a double press jumps over
-to the other collection; Shift + single press snaps back to the language you were just using.
+Suppose you define a `primary` collection with U.S. and Spanish for everyday use, and a `secondary` collection with U.S.
+and Dvorak. A single press flips between the sources in your current collection; a double press jumps over
+to the other collection; Shift + single press snaps back to the source you were just using.
 
 Experiment with different collections and the Shift modifier to find the setup that best suits your workflow.

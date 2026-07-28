@@ -37,14 +37,14 @@ hud:
   show_collection: true
 
 collections:
-  - name: default
+  - name: primary
     sources:
       - com.apple.keylayout.US
-      - com.apple.keylayout.Russian
-  - name: coding
+      - com.apple.keylayout.Spanish
+  - name: secondary
     sources:
       - com.apple.keylayout.US
-      - com.apple.keylayout.Ukrainian-PC
+      - com.apple.keylayout.Dvorak
 ```
 
 All options other than `collections` are optional and fall back to the defaults shown above.
