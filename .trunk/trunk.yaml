@@ -75,8 +75,19 @@ lint:
       paths:
         - companion/proto/**
 actions:
+  definitions:
+    # The full CI mirror runs before anything leaves the machine; CI's job
+    # is to double-check, not to discover.
+    - id: verify-pre-push
+      display_name: verify
+      description: Go tests and build plus the companion suite before push
+      run: task verify
+      triggers:
+        - git_hooks: [pre-push]
   enabled:
+    - commitlint
     - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
+    - verify-pre-push

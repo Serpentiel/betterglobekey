@@ -45,6 +45,15 @@ tasks:
     cmds:
       - trunk check {{.CLI_ARGS}}
 
+  verify:
+    desc: The full CI mirror — Go tests and build, companion lint, typecheck, tests
+    cmds:
+      - task: test
+      - task: build
+      - task: companion:lint
+      - task: companion:typecheck
+      - task: companion:test
+
   fmt:
     desc: Format the codebase via trunk
     cmds:
