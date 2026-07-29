@@ -35,7 +35,7 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.2.0",
     "@vitest/coverage-v8": "4.1.10",
-    "electron": "42.5.0",
+    "electron": "43.1.1",
     "electron-builder": "26.15.3",
     "electron-vite": "5.0.0",
     "eslint": "9.39.4",
