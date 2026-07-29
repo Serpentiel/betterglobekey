@@ -8,9 +8,32 @@ updates:
     # supply chain attacks that are caught/yanked shortly after release.
     cooldown:
       default-days: 14
+    # Minor and patch bumps arrive as one reviewable PR; majors stay
+    # standalone so one breaking dependency cannot poison the batch.
+    groups:
+      actions-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
   - package-ecosystem: gomod
     directory: /
     schedule:
       interval: weekly
     cooldown:
       default-days: 14
+    groups:
+      gomod-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /companion
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      companion-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
