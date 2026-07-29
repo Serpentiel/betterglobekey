@@ -8,12 +8,14 @@ updates:
     # supply chain attacks that are caught/yanked shortly after release.
     cooldown:
       default-days: 14
-    # Minor and patch bumps arrive as one reviewable PR; majors stay
-    # standalone so one breaking dependency cannot poison the batch.
+    # Every bump — majors included — arrives in one reviewable PR per
+    # ecosystem; the ignore lists keep known-broken majors out of the batch.
     groups:
-      actions-minor-and-patch:
+      actions-all:
         applies-to: version-updates
-        update-types: [minor, patch]
+        patterns: ["*"]
+      actions-security:
+        applies-to: security-updates
         patterns: ["*"]
   - package-ecosystem: gomod
     directory: /
@@ -22,9 +24,11 @@ updates:
     cooldown:
       default-days: 14
     groups:
-      gomod-minor-and-patch:
+      gomod-all:
         applies-to: version-updates
-        update-types: [minor, patch]
+        patterns: ["*"]
+      gomod-security:
+        applies-to: security-updates
         patterns: ["*"]
   - package-ecosystem: npm
     directory: /companion
@@ -33,9 +37,11 @@ updates:
     cooldown:
       default-days: 14
     groups:
-      companion-minor-and-patch:
+      companion-all:
         applies-to: version-updates
-        update-types: [minor, patch]
+        patterns: ["*"]
+      companion-security:
+        applies-to: security-updates
         patterns: ["*"]
     # Held majors, each blocked upstream; revisit when the blocker moves.
     # typescript 7 is the native compiler — typescript-eslint peers <6.1.
