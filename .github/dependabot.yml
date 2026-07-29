@@ -37,3 +37,14 @@ updates:
         applies-to: version-updates
         update-types: [minor, patch]
         patterns: ["*"]
+    # Held majors, each blocked upstream; revisit when the blocker moves.
+    # typescript 7 is the native compiler — typescript-eslint peers <6.1.
+    # vite 8 needs electron-vite to lift its ^5-^7 peer range, and
+    # @vitejs/plugin-react 6 requires vite 8, so it waits on the same lift.
+    ignore:
+      - dependency-name: typescript
+        versions: [">=7"]
+      - dependency-name: vite
+        versions: [">=8"]
+      - dependency-name: "@vitejs/plugin-react"
+        versions: [">=6"]
