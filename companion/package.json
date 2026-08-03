@@ -23,7 +23,7 @@
     "@grpc/grpc-js": "1.14.4",
     "@grpc/proto-loader": "0.8.1",
     "clsx": "2.1.1",
-    "lucide-react": "1.24.0",
+    "lucide-react": "1.25.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
