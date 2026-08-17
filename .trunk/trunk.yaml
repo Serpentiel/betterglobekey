@@ -50,15 +50,15 @@ lint:
     - stylelint@17.14.1
     - clang-format@20.1.0
     - actionlint@1.7.12
-    - checkov@3.3.9
+    - checkov@3.3.11
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint2@2.12.2
     - markdownlint@0.49.1
-    - osv-scanner@2.5.0
+    - osv-scanner@2.5.1
     - prettier@3.9.6
-    - trivy@0.73.0
-    - trufflehog@3.96.0
+    - trivy@0.74.0
+    - trufflehog@3.97.0
     - yamllint@1.38.0
   ignore:
     - linters:
