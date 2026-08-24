@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
           go-version-file: go.mod
-      - uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3
+      - uses: trunk-io/trunk-action@e1234e67a86010d61ddac8d8ebf4b783e2ffd2fa
   go:
     if: >
       (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip workflows')) ||
