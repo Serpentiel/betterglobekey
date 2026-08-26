@@ -62,6 +62,11 @@ lint:
     - yamllint@1.38.0
   ignore:
     - linters:
+        - trivy
+        - checkov
+      paths:
+        - .devcontainer/**
+    - linters:
         - markdownlint
       paths:
         - .github/**

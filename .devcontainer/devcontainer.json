@@ -1,0 +1,13 @@
+{
+  "name": "betterglobekey",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "mise trust --yes && mise install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go", "trunk.io"]
+    }
+  }
+}
