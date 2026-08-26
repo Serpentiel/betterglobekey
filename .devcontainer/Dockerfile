@@ -12,9 +12,11 @@ RUN install -dm 755 /etc/apt/keyrings \
  && rm -rf /var/lib/apt/lists/*
 
 # Created here so a cache volume mounted over them keeps vscode's ownership.
+# The image stays root: envbuilder runs the container that way, and switching
+# users here leaves mise's lock files owned by the wrong one. devcontainer.json
+# still asks for vscode, which is what an editor attaches as.
 RUN mkdir -p /home/vscode/.local/share/mise /home/vscode/.local/state/mise \
- && chown -R vscode:vscode /home/vscode/.local
-
-USER vscode
-RUN echo 'eval "$(mise activate bash)"' >> /home/vscode/.bashrc \
- && echo 'eval "$(mise activate zsh)"' >> /home/vscode/.zshrc
+ && chown -R vscode:vscode /home/vscode/.local \
+ && echo 'eval "$(mise activate bash)"' >> /home/vscode/.bashrc \
+ && echo 'eval "$(mise activate zsh)"' >> /home/vscode/.zshrc \
+ && echo 'eval "$(mise activate bash)"' >> /root/.bashrc
