@@ -47,7 +47,7 @@ lint:
         - c++
   enabled:
     - buf-lint@1.72.0
-    - stylelint@17.14.1
+    - stylelint@17.15.0
     - clang-format@20.1.0
     - actionlint@1.7.12
     - checkov@3.3.16
@@ -58,7 +58,7 @@ lint:
     - osv-scanner@2.5.1
     - prettier@3.9.6
     - trivy@0.74.0
-    - trufflehog@3.97.1
+    - trufflehog@3.97.4
     - yamllint@1.38.0
   ignore:
     - linters:
