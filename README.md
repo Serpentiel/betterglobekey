@@ -44,10 +44,7 @@
       <a href="#getting-started">2. Getting Started</a>
       <ul>
         <li>
-          <a href="#prerequisites">2.1. Prerequisites</a>
-        </li>
-        <li>
-          <a href="#setting-it-up">2.2. Setting It Up</a>
+          <a href="#installation">2.1. Installation</a>
         </li>
       </ul>
     </li>
@@ -76,6 +73,20 @@ experience, and I sincerely hope that one day Apple is going to make it this way
 <!-- markdownlint-restore -->
 
 ## Getting Started
+
+### Installation
+
+**betterglobekey** ships in `homebrew/core`:
+
+```bash
+brew install betterglobekey
+brew services start betterglobekey
+```
+
+Then grant Accessibility permission when prompted, and set the Globe key to **"Do Nothing"** under _System Settings ›
+Keyboard_ so macOS stops switching the input source on its own. `betterglobekey doctor` checks both.
+
+Full walkthrough: [Getting Started](docs/getting-started.md).
 
 The utility enhances the functionality of the Globe key by introducing two distinct modes of operation and starting
 from the currently active input source:

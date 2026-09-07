@@ -31,12 +31,15 @@ configuration is left untouched.
 
 ## Installing It
 
-The companion is distributed as a Homebrew cask. Installing it also pulls in the **betterglobekey** formula (the
-command-line tool and its background service):
+The companion is distributed as a Homebrew cask from the `Serpentiel/tools` tap. Installing it also pulls in the
+**betterglobekey** formula from `homebrew/core` (the command-line tool and its background service):
 
 ```bash
 brew install --cask serpentiel/tools/betterglobekey-companion
 ```
+
+> **N.B.** The companion stays in the tap rather than `homebrew/cask`: Homebrew requires cask artifacts to pass
+> Gatekeeper, and the app is neither signed with an Apple Developer ID nor notarized.
 
 The app is placed in your Applications folder. Start the service with `brew services start betterglobekey`, then open
 the companion.

@@ -1,0 +1,2 @@
+kind: Changed
+body: Install betterglobekey from `homebrew/core` — `brew install betterglobekey`, no tap. The `Serpentiel/tools` tap is now only needed for the companion cask, and existing tap installations migrate automatically on `brew update`.

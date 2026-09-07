@@ -10,12 +10,13 @@ First, ensure you have Homebrew installed. If not, install it by running the fol
 
 See <https://brew.sh> for more information.
 
-With Homebrew installed, install **betterglobekey**:
+With Homebrew installed, install **betterglobekey** from `homebrew/core`:
 
 ```bash
-brew tap Serpentiel/tools
 brew install betterglobekey
 ```
+
+> **N.B.** Existing `Serpentiel/tools` tap installations migrate to `homebrew/core` automatically on `brew update`.
 
 ## Accessibility Permissions
 
