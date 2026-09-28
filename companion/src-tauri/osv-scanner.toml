@@ -1,0 +1,13 @@
+# Both advisories sit in Tauri 2's Linux-only GTK 3 bindings (tauri → muda →
+# gtk 0.18 → glib 0.18). The companion ships for macOS only, where neither crate
+# is compiled: `cargo tree --target aarch64-apple-darwin -i glib` prints nothing.
+# Revisit when Tauri moves off gtk-rs 0.18. The glib advisory is also allowed in
+# .github/workflows/dependency_review.yml.
+
+[[IgnoredVulns]]
+id = "GHSA-wrw7-89jp-8q8g"
+reason = "glib 0.18 VariantStrIter unsoundness; Linux-only dependency, not in the macOS build"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+reason = "proc-macro-error is unmaintained; build-time macro for Linux-only glib, not in the macOS build"

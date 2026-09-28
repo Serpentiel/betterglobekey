@@ -1,0 +1,3 @@
+# Match the frontend's 120-column Prettier width.
+max_width = 120
+use_small_heuristics = "Max"

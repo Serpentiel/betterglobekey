@@ -20,39 +20,44 @@ Prefer to manage tools yourself? You will need:
 
 - [Go](https://go.dev/) (see the version in `go.mod`), with `CGO_ENABLED=1` — the application links against macOS
   frameworks.
-- [Node.js](https://nodejs.org/) for the companion app.
+- [Node.js](https://nodejs.org/) and [rustup](https://rustup.rs/) for the companion app. The Rust toolchain is pinned
+  in [`companion/src-tauri/rust-toolchain.toml`](../companion/src-tauri/rust-toolchain.toml); rustup installs it on
+  the first `cargo` run.
 - [Task](https://taskfile.dev/installation/).
 - [buf](https://buf.build/) and the Go protobuf plugins (`protoc-gen-go`, `protoc-gen-go-grpc`) — only needed to
   regenerate code from the protobuf contract.
 
 ## Common Tasks
 
-| Task                 | Description                                                       |
-| -------------------- | ----------------------------------------------------------------- |
-| `task install`       | Download Go modules and install companion dependencies.           |
-| `task build`         | Build the `betterglobekey` binary into `./bin`.                   |
-| `task test`          | Run the Go test suite.                                            |
-| `task lint`          | Run all linters via [trunk](https://trunk.io/).                   |
-| `task fmt`           | Format the codebase via trunk.                                    |
-| `task generate`      | Regenerate Go code from the protobuf contract and sync it across. |
-| `task changelog:new` | Add a [changie](https://changie.dev/) changelog fragment.         |
+| Task                 | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| `task install`       | Download Go modules and install companion dependencies.   |
+| `task build`         | Build the `betterglobekey` binary into `./bin`.           |
+| `task test`          | Run the Go test suite.                                    |
+| `task lint`          | Run all linters via [trunk](https://trunk.io/).           |
+| `task fmt`           | Format the codebase via trunk.                            |
+| `task generate`      | Regenerate Go code from the protobuf contract.            |
+| `task changelog:new` | Add a [changie](https://changie.dev/) changelog fragment. |
 
 ## The Companion App
 
 The companion lives in [`companion/`](../companion) and has its own tasks, namespaced under `companion:`:
 
-| Task                       | Description                                    |
-| -------------------------- | ---------------------------------------------- |
-| `task companion:install`   | Install companion dependencies.                |
-| `task companion:dev`       | Run the companion in development mode.         |
-| `task companion:build`     | Build the companion (main, preload, renderer). |
-| `task companion:lint`      | Lint the companion with ESLint.                |
-| `task companion:typecheck` | Type-check the companion.                      |
-| `task companion:dist`      | Build a distributable macOS application.       |
+| Task                       | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| `task companion:install`   | Install companion dependencies.                         |
+| `task companion:dev`       | Run the companion against the Vite dev server.          |
+| `task companion:build`     | Build the UI into `companion/out`.                      |
+| `task companion:lint`      | Lint the UI with ESLint.                                |
+| `task companion:lint:rust` | Check formatting and lint the Rust core with Clippy.    |
+| `task companion:typecheck` | Type-check the UI.                                      |
+| `task companion:test`      | Run the UI unit tests.                                  |
+| `task companion:test:rust` | Run the Rust tests, including a stub-daemon round trip. |
+| `task companion:dist`      | Build the universal macOS app into `companion/dist`.    |
 
 The companion talks to the running service over the gRPC control API; see [Companion App](companion.md) for the
-architecture. The contract is defined in [`proto/`](../proto) and the generated Go code is committed under
-`internal/gen`. After changing the `.proto` file, run `task generate`.
+architecture. The contract is defined in [`proto/`](../proto): the generated Go code is committed under `internal/gen`
+(after changing the `.proto` file, run `task generate`), and the companion compiles the same file at build time.
 
 ## Releasing
 

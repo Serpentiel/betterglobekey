@@ -1,0 +1,2 @@
+kind: Changed
+body: The companion is rebuilt on Tauri instead of Electron. It renders in the system WebKit view and no longer bundles Chromium or Node.js, and it now requires macOS 13 Ventura or later.

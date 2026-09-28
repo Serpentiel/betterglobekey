@@ -1,8 +1,8 @@
 # Companion App
 
 The companion is an optional desktop application for editing your **betterglobekey** configuration with a graphical
-interface, instead of editing the YAML file by hand. It is a small [Electron](https://www.electronjs.org/) application
-built with React and TypeScript.
+interface, instead of editing the YAML file by hand. It is a [Tauri](https://tauri.app/) application: a React UI in the
+system WebKit view, with a small Rust core that talks to the service. It needs macOS 13 Ventura or later.
 
 ## How It Works
 

@@ -19,7 +19,8 @@ concurrency:
 jobs:
   goreleaser:
     runs-on: macos-latest
-    timeout-minutes: 30
+    # The companion's universal release build compiles every crate twice.
+    timeout-minutes: 60
     environment: release
     steps:
       - name: Mint release-bot token
@@ -66,8 +67,20 @@ jobs:
         working-directory: companion
         env:
           VERSION: ${{ steps.release.outputs.version }}
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          # Developer ID signing and notarization. Until these secrets exist the
+          # app is ad-hoc signed (bundle.macOS.signingIdentity in tauri.conf.json).
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # A missing secret arrives as an empty string; unset it so Tauri sees
+          # no signing configuration rather than an empty one.
+          for var in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!var}" ] || unset "$var"
+          done
           npm ci
           npm version "$VERSION" --no-git-tag-version --allow-same-version
           npm run dist

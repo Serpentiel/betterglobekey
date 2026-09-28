@@ -8,13 +8,15 @@ interface TitlebarProps {
 }
 
 /**
- * Titlebar is the draggable window chrome. The bar itself is a drag region
- * (so the frameless window can be moved); interactive children opt back out.
+ * Titlebar is the draggable window chrome. Only elements marked as a drag
+ * region move the window, so the actions stay clickable.
  */
 export function Titlebar({ title, actions }: TitlebarProps): ReactElement {
   return (
-    <header className={styles.titlebar}>
-      <span className={styles.title}>{title}</span>
+    <header className={styles.titlebar} data-tauri-drag-region>
+      <span className={styles.title} data-tauri-drag-region>
+        {title}
+      </span>
       {actions ? <div className={styles.actions}>{actions}</div> : null}
     </header>
   )

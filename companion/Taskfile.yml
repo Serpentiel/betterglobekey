@@ -7,31 +7,44 @@ tasks:
       - npm install
 
   dev:
-    desc: Run the companion in development mode
+    desc: Run the companion against the Vite dev server (macOS)
     cmds:
       - npm run dev
 
   build:
-    desc: Build the companion (main, preload, renderer)
+    desc: Build the companion UI into out/
     cmds:
       - npm run build
 
   typecheck:
-    desc: Type-check the companion
+    desc: Type-check the companion UI
     cmds:
       - npm run typecheck
 
   lint:
-    desc: Lint the companion with ESLint
+    desc: Lint the companion UI with ESLint
     cmds:
       - npm run lint
 
+  lint:rust:
+    desc: Check formatting and lint the companion's Rust core with Clippy
+    dir: src-tauri
+    cmds:
+      - cargo fmt --check
+      - cargo clippy --all-targets --locked -- -D warnings
+
   test:
-    desc: Run the companion unit tests
+    desc: Run the companion UI unit tests
     cmds:
       - npm run test
 
+  test:rust:
+    desc: Run the companion's Rust tests
+    dir: src-tauri
+    cmds:
+      - cargo test --locked
+
   dist:
-    desc: Build a distributable macOS application
+    desc: Build the universal macOS app into dist/
     cmds:
       - npm run dist

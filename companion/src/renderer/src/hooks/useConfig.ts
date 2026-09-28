@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { Config, InputSource, Version } from '../../../shared/types'
+import { api } from '../lib/api'
 import { toMessage } from '../lib/errors'
 import { validateConfig, type ValidationResult } from '../lib/config-schema'
 
@@ -43,9 +44,9 @@ export function useConfig(): ConfigController {
 
     try {
       const [loadedConfig, loadedSources, loadedVersion] = await Promise.all([
-        window.api.getConfig(),
-        window.api.listInputSources(),
-        window.api.getVersion(),
+        api.getConfig(),
+        api.listInputSources(),
+        api.getVersion(),
       ])
 
       setConfig(loadedConfig)
@@ -88,7 +89,7 @@ export function useConfig(): ConfigController {
     setSaveError(null)
 
     try {
-      await window.api.applyConfig(config)
+      await api.applyConfig(config)
       setOriginal(config)
       setSaved(true)
     } catch (error) {
