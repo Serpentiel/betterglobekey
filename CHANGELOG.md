@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
 with [Changie](https://github.com/miniscruff/changie).
 
+## [4.1.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.1.0) - 2026-09-28
+
+### Changed
+
+- The companion is rebuilt on Tauri instead of Electron. It renders in the system WebKit view and no longer bundles Chromium or Node.js, and it now requires macOS 13 Ventura or later.
+- Install betterglobekey from `homebrew/core` — `brew install betterglobekey`, no tap. The `Serpentiel/tools` tap is now only needed for the companion cask, and existing tap installations migrate automatically on `brew update`.
+
 ## [4.0.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.0.1) - 2026-07-02
 
 ### Fixed
