@@ -100,3 +100,6 @@ companion/dist/
 
 # Tracked despite the global gitignore: the pinned toolchain travels with the repo
 !mise.toml
+# Tauri build output and generated ACL schemas
+companion/src-tauri/target/
+companion/src-tauri/gen/

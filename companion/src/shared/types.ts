@@ -1,5 +1,5 @@
-// Types mirroring the betterglobekey.control.v1 protobuf messages, as decoded by
-// @grpc/proto-loader (camelCase field names, defaults applied).
+// Types mirroring the betterglobekey.control.v1 protobuf messages, as the Tauri
+// commands serialize them (camelCase field names, every field present).
 
 export interface Logger {
   path: string
@@ -47,7 +47,7 @@ export interface Version {
   commit: string
 }
 
-// Api is the surface exposed to the renderer via the preload bridge.
+// Api is the daemon surface the UI calls, implemented by lib/api.ts.
 export interface Api {
   getConfig: () => Promise<Config>
   applyConfig: (config: Config) => Promise<void>

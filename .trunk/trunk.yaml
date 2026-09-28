@@ -73,12 +73,6 @@ lint:
         - CHANGELOG.md
         - LICENSE.md
         - .changes/**
-    # companion/proto is a synced copy of the buf module under proto/, not a
-    # module itself; lint the source, not the copy.
-    - linters:
-        - buf-lint
-      paths:
-        - companion/proto/**
 actions:
   definitions:
     # The full CI mirror runs before anything leaves the machine; CI's job

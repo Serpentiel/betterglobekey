@@ -21,11 +21,10 @@ tasks:
       - task: companion:install
 
   generate:
-    desc: Generate Go code from the protobuf contract and sync it to the companion
+    desc: Generate Go code from the protobuf contract (the companion compiles it at build time)
     cmds:
       - buf lint
       - buf generate
-      - cp proto/betterglobekey/control/v1/control.proto companion/proto/control.proto
 
   build:
     desc: Build the betterglobekey binary into ./bin
@@ -51,8 +50,10 @@ tasks:
       - task: test
       - task: build
       - task: companion:lint
+      - task: companion:lint:rust
       - task: companion:typecheck
       - task: companion:test
+      - task: companion:test:rust
 
   fmt:
     desc: Format the codebase via trunk

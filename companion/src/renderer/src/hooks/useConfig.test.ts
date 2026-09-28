@@ -3,6 +3,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Api, Config, InputSource, Version } from '../../../shared/types'
+import { api } from '../lib/api'
 import { useConfig } from './useConfig'
 
 const validConfig: Config = {
@@ -30,8 +31,8 @@ function mockApi(overrides: Partial<Api> = {}): Api {
   }
 }
 
-async function renderReady(api: Api) {
-  window.api = api
+async function renderReady(fake: Api) {
+  Object.assign(api, fake)
 
   const view = renderHook(() => useConfig())
   await waitFor(() => expect(view.result.current.phase.status).toBe('ready'))
@@ -39,11 +40,14 @@ async function renderReady(api: Api) {
   return view
 }
 
+// Each test installs its own fake daemon by filling in this object.
+vi.mock('../lib/api', () => ({ api: {} }))
+
 afterEach(cleanup)
 
 describe('useConfig', () => {
   it('loads config, sources, and version on mount', async () => {
-    window.api = mockApi()
+    Object.assign(api, mockApi())
 
     const { result } = renderHook(() => useConfig())
     expect(result.current.phase.status).toBe('loading')
@@ -58,7 +62,7 @@ describe('useConfig', () => {
   })
 
   it('enters the error phase when loading fails', async () => {
-    window.api = mockApi({ getConfig: vi.fn(() => Promise.reject(new Error('boom'))) })
+    Object.assign(api, mockApi({ getConfig: vi.fn(() => Promise.reject(new Error('boom'))) }))
 
     const { result } = renderHook(() => useConfig())
 

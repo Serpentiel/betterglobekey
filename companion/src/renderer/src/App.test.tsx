@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
 import type { Api, Config, InputSource, Version } from '../../shared/types'
+import { api } from './lib/api'
 
 const validConfig: Config = {
   logger: { path: '/tmp/betterglobekey.log', level: 'info', retentionDays: 7, retentionFiles: 3 },
@@ -26,11 +27,14 @@ function mockApi(overrides: Partial<Api> = {}): Api {
   }
 }
 
+// Each test installs its own fake daemon by filling in this object.
+vi.mock('./lib/api', () => ({ api: {} }))
+
 afterEach(cleanup)
 
 describe('App', () => {
   it('shows the editor once the configuration loads', async () => {
-    window.api = mockApi()
+    Object.assign(api, mockApi())
 
     render(<App />)
     expect(screen.queryByText('Behavior')).toBeNull() // still loading
@@ -43,7 +47,7 @@ describe('App', () => {
       .fn<Api['getConfig']>()
       .mockImplementationOnce(() => Promise.reject(new Error('no socket')))
       .mockImplementation(() => Promise.resolve(validConfig))
-    window.api = mockApi({ getConfig })
+    Object.assign(api, mockApi({ getConfig }))
 
     render(<App />)
 
@@ -56,7 +60,7 @@ describe('App', () => {
 
   it('saves via the Cmd/Ctrl+S shortcut after an edit', async () => {
     const applyConfig = vi.fn(() => Promise.resolve())
-    window.api = mockApi({ applyConfig })
+    Object.assign(api, mockApi({ applyConfig }))
 
     render(<App />)
     await waitFor(() => expect(screen.getByText('Behavior')).toBeTruthy())
