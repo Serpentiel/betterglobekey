@@ -30,3 +30,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
+        with:
+          # glib 0.18 comes only from Tauri 2's Linux GTK 3 bindings (gtk 0.18,
+          # the last gtk3-rs release; the fix is in glib 0.20). The companion
+          # ships for macOS only, where glib is not compiled. Mirrors
+          # companion/src-tauri/osv-scanner.toml.
+          allow-ghsas: GHSA-wrw7-89jp-8q8g
