@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
 with [Changie](https://github.com/miniscruff/changie).
 
+## [4.2.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.2.0) - 2026-10-22
+
+### Added
+
+- The companion's footer shows its own version next to the service's, and a banner warns when the two differ, for example when the service still runs an older release after an upgrade.
+
+### Fixed
+
+- The companion's close, minimize, and zoom buttons line up with the window title again instead of sitting near the top edge.
+
 ## [4.1.0](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.1.0) - 2026-09-28
 
 ### Changed
