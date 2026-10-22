@@ -75,7 +75,7 @@
   /* Motion. */
   --transition: 150ms cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* Layout. */
+  /* Layout. The traffic lights are centred on this height in src-tauri/src/lib.rs. */
   --titlebar-height: 52px;
 }
 

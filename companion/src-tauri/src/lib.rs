@@ -68,11 +68,14 @@ fn create_window(app: &AppHandle) -> tauri::Result<()> {
             false
         });
 
+    // The buttons move one-for-one with `y`; 29 puts their centre level with the
+    // title text, half of the UI's 52px titlebar (--titlebar-height in
+    // theme.css) down. Electron's trafficLightPosition is not the same measure.
     #[cfg(target_os = "macos")]
     let builder = builder
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true)
-        .traffic_light_position(tauri::LogicalPosition::new(19.0, 18.0));
+        .traffic_light_position(tauri::LogicalPosition::new(19.0, 29.0));
 
     builder.build()?;
 
