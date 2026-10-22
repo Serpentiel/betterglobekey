@@ -12,6 +12,7 @@ export interface ConfigController {
   config: Config | null
   sources: InputSource[]
   version: Version | null
+  companionVersion: string | null
   validation: ValidationResult
   dirty: boolean
   saving: boolean
@@ -35,6 +36,7 @@ export function useConfig(): ConfigController {
   const [original, setOriginal] = useState<Config | null>(null)
   const [sources, setSources] = useState<InputSource[]>([])
   const [version, setVersion] = useState<Version | null>(null)
+  const [companionVersion, setCompanionVersion] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -43,16 +45,18 @@ export function useConfig(): ConfigController {
     setPhase({ status: 'loading' })
 
     try {
-      const [loadedConfig, loadedSources, loadedVersion] = await Promise.all([
+      const [loadedConfig, loadedSources, loadedVersion, loadedCompanionVersion] = await Promise.all([
         api.getConfig(),
         api.listInputSources(),
         api.getVersion(),
+        api.getCompanionVersion(),
       ])
 
       setConfig(loadedConfig)
       setOriginal(loadedConfig)
       setSources(loadedSources)
       setVersion(loadedVersion)
+      setCompanionVersion(loadedCompanionVersion)
       setSaved(false)
       setSaveError(null)
       setPhase({ status: 'ready' })
@@ -104,6 +108,7 @@ export function useConfig(): ConfigController {
     config,
     sources,
     version,
+    companionVersion,
     validation,
     dirty,
     saving,

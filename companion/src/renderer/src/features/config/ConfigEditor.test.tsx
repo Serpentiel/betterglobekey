@@ -28,6 +28,7 @@ function makeController(overrides: Partial<ConfigController> = {}): ConfigContro
     config: validConfig,
     sources,
     version: { version: '4.0.0', commit: 'abc1234' },
+    companionVersion: '4.0.0',
     validation: { valid: true, errors: noErrors },
     dirty: false,
     saving: false,
@@ -51,7 +52,15 @@ describe('ConfigEditor', () => {
       expect(screen.getByText(heading)).toBeTruthy()
     }
 
-    expect(screen.getByText('v4.0.0')).toBeTruthy()
+    expect(screen.getByText('companion v4.0.0 · service v4.0.0')).toBeTruthy()
+    expect(screen.queryByText(/brew services restart/)).toBeNull()
+  })
+
+  it('warns when the service runs a different release than the companion', () => {
+    render(<ConfigEditor controller={makeController({ companionVersion: '4.1.0' })} />)
+
+    expect(screen.getByText('companion v4.1.0 · service v4.0.0')).toBeTruthy()
+    expect(screen.getByText(/service is v4\.0\.0 but the companion is v4\.1\.0/)).toBeTruthy()
   })
 
   it('renders nothing without a config', () => {

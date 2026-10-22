@@ -22,6 +22,7 @@ function mockApi(overrides: Partial<Api> = {}): Api {
     getConfig: vi.fn(() => Promise.resolve(validConfig)),
     listInputSources: vi.fn(() => Promise.resolve(sources)),
     getVersion: vi.fn(() => Promise.resolve(version)),
+    getCompanionVersion: vi.fn(() => Promise.resolve('4.1.0')),
     applyConfig: vi.fn(() => Promise.resolve()),
     ...overrides,
   }

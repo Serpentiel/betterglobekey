@@ -1,0 +1,2 @@
+kind: Added
+body: The companion's footer shows its own version next to the service's, and a banner warns when the two differ, for example when the service still runs an older release after an upgrade.

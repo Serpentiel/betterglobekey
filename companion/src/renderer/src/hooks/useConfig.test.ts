@@ -26,6 +26,7 @@ function mockApi(overrides: Partial<Api> = {}): Api {
     getConfig: vi.fn(() => Promise.resolve(validConfig)),
     listInputSources: vi.fn(() => Promise.resolve(sources)),
     getVersion: vi.fn(() => Promise.resolve(version)),
+    getCompanionVersion: vi.fn(() => Promise.resolve('4.1.0')),
     applyConfig: vi.fn(() => Promise.resolve()),
     ...overrides,
   }
@@ -57,6 +58,7 @@ describe('useConfig', () => {
     expect(result.current.config).toEqual(validConfig)
     expect(result.current.sources).toEqual(sources)
     expect(result.current.version).toEqual(version)
+    expect(result.current.companionVersion).toBe('4.1.0')
     expect(result.current.dirty).toBe(false)
     expect(result.current.validation.valid).toBe(true)
   })

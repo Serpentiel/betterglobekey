@@ -2,7 +2,7 @@ import { RotateCcw, Save } from 'lucide-react'
 import { type ReactElement, useMemo } from 'react'
 
 import type { ConfigController } from '../../hooks/useConfig'
-import { formatVersion } from '../../lib/text'
+import { formatVersion, versionMismatch } from '../../lib/text'
 import { Banner, Button, Footer, Stack, Titlebar } from '../../ui'
 import { BehaviorSection } from './BehaviorSection'
 import { CollectionsSection } from './CollectionsSection'
@@ -15,7 +15,20 @@ interface Props {
 }
 
 export function ConfigEditor({ controller }: Props): ReactElement | null {
-  const { config, sources, version, validation, dirty, saving, saved, saveError, update, save, revert } = controller
+  const {
+    config,
+    sources,
+    version,
+    companionVersion,
+    validation,
+    dirty,
+    saving,
+    saved,
+    saveError,
+    update,
+    save,
+    revert,
+  } = controller
 
   const nameOf = useMemo(() => {
     const names = new Map(sources.map((source) => [source.id, source.name]))
@@ -28,6 +41,8 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
   }
 
   const canSave = dirty && validation.valid && !saving
+  const companionLabel = companionVersion ? formatVersion({ version: companionVersion, commit: '' }) : '…'
+  const serviceLabel = version ? formatVersion(version) : '…'
 
   return (
     <>
@@ -48,6 +63,11 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
       />
       <div className={styles.scroll}>
         <Stack className={styles.content} gap={16}>
+          {versionMismatch(companionVersion, version) ? (
+            <Banner tone="info">
+              {`The betterglobekey service is ${serviceLabel} but the companion is ${companionLabel}. Update both, then restart the service: brew services restart betterglobekey.`}
+            </Banner>
+          ) : null}
           {saved ? <Banner tone="success">Saved. The daemon reloaded the change.</Banner> : null}
           {saveError ? <Banner tone="error">{saveError}</Banner> : null}
           {dirty && !validation.valid ? <Banner tone="info">Fix the highlighted fields to save.</Banner> : null}
@@ -64,7 +84,7 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
           <LoggingSection config={config} errors={validation.errors} onChange={update} />
         </Stack>
       </div>
-      <Footer>{version ? formatVersion(version) : '…'}</Footer>
+      <Footer>{`companion ${companionLabel} · service ${serviceLabel}`}</Footer>
     </>
   )
 }

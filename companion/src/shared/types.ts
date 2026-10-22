@@ -47,10 +47,12 @@ export interface Version {
   commit: string
 }
 
-// Api is the daemon surface the UI calls, implemented by lib/api.ts.
+// Api is the surface the UI calls, implemented by lib/api.ts: the daemon, plus
+// the companion's own version.
 export interface Api {
   getConfig: () => Promise<Config>
   applyConfig: (config: Config) => Promise<void>
   listInputSources: () => Promise<InputSource[]>
   getVersion: () => Promise<Version>
+  getCompanionVersion: () => Promise<string>
 }
