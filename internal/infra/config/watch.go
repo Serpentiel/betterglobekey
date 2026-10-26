@@ -15,6 +15,7 @@ const debounce = 100 * time.Millisecond
 // Watch invokes onChange whenever the file at path changes, until ctx is done.
 // It watches the parent directory, since editors frequently replace files
 // atomically (write to a temp file, then rename), and debounces rapid events.
+// onChange runs on the calling goroutine, so none is in flight once Watch returns.
 func Watch(ctx context.Context, path string, onChange func()) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -29,12 +30,19 @@ func Watch(ctx context.Context, path string, onChange func()) error {
 
 	target := filepath.Clean(path)
 
-	var timer *time.Timer
+	var (
+		timer *time.Timer
+		fire  <-chan time.Time
+	)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-fire:
+			fire = nil
+
+			onChange()
 		case event, ok := <-watcher.Events:
 			if !ok {
 				return nil
@@ -48,11 +56,13 @@ func Watch(ctx context.Context, path string, onChange func()) error {
 				continue
 			}
 
-			if timer != nil {
-				timer.Stop()
+			if timer == nil {
+				timer = time.NewTimer(debounce)
+			} else {
+				timer.Reset(debounce)
 			}
 
-			timer = time.AfterFunc(debounce, onChange)
+			fire = timer.C
 		case _, ok := <-watcher.Errors:
 			if !ok {
 				return nil
