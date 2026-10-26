@@ -334,9 +334,19 @@ func TestWatchConfigReloadsOnChange(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	go watchConfig(ctx, path, logger, daemon, build)
+	// Wait for the watcher to exit before cleanup, or a reload still logging
+	// recreates the log file while its TempDir is being removed.
+	done := make(chan struct{})
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+
+	go func() {
+		defer close(done)
+		watchConfig(ctx, path, logger, daemon, build)
+	}()
 
 	deadline := time.After(5 * time.Second)
 
