@@ -8,7 +8,7 @@ edition = "2024"
 publish = false
 
 [build-dependencies]
-protox = "0.9.1"
+protox = "0.10.0"
 tauri-build = { version = "2.7.0", features = [] }
 tonic-prost-build = "0.14.6"
 
