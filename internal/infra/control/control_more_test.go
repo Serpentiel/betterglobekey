@@ -74,7 +74,8 @@ func TestServeOverUnixSocket(t *testing.T) {
 	}
 
 	server := NewServer(
-		"", fakeSources{}, fakeKeyboards{}, func(fn func()) { fn() }, "9.9.9", "cafe", func() bool { return true },
+		"", fakeSources{}, fakeKeyboards{}, func(fn func()) { fn() }, "9.9.9", "cafe",
+		func() Permissions { return Permissions{Accessibility: true, InputMonitoring: true} },
 	)
 
 	serveErr := make(chan error, 1)
@@ -118,6 +119,11 @@ func TestServeOverUnixSocket(t *testing.T) {
 
 	if resp.GetVersion() != "9.9.9" {
 		t.Errorf("version = %q, want 9.9.9", resp.GetVersion())
+	}
+
+	status, err := client.GetStatus(context.Background(), &controlv1.GetStatusRequest{})
+	if err != nil || !status.GetAccessibilityTrusted() || !status.GetInputMonitoringGranted() {
+		t.Errorf("status = %+v, %v; want both permissions granted", status, err)
 	}
 
 	server.Stop()

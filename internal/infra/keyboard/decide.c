@@ -66,3 +66,26 @@ int bgkDecide(const bgkTrigger *trigger, uint64_t reverseMask, bgkState *state, 
 
 	return bgkNoPress;
 }
+
+// HID usage pages and Keyboard/Keypad page usages bgkRawEvent distinguishes.
+#define bgkPageKeyboard 0x07
+#define bgkPageConsumer 0x0C
+#define bgkUsageFirstKey 0x04
+#define bgkUsageFirstModifier 0xE0
+
+bgkEvent bgkRawEvent(uint32_t page, uint32_t usage, int64_t value, int own, uint64_t flags) {
+	bgkEvent event = {.type = bgkEventOther, .keycode = -1, .flags = flags};
+
+	if (page == bgkPageKeyboard && own) {
+		event.type = value != 0 ? bgkEventKeyDown : bgkEventKeyUp;
+		event.keycode = bgkRawTriggerCode;
+	} else if (page == bgkPageKeyboard && usage >= bgkUsageFirstKey && usage < bgkUsageFirstModifier && value != 0) {
+		// Any other key going down; modifiers, like flags-changed events, do not count.
+		event.type = bgkEventKeyDown;
+		event.keycode = usage;
+	} else if (page == bgkPageConsumer && value != 0) {
+		event.type = bgkEventMedia;
+	}
+
+	return event;
+}

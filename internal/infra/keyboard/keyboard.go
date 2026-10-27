@@ -5,11 +5,12 @@
 // clearing) is treated as a press, and a held Shift marks it as a reverse press.
 // A passed-through trigger key is watched the same way: modifiers through their
 // device flag, other keys through key-down and key-up events. A dedicated
-// trigger is remapped to F20 and watched as that key, leaving Globe alone.
+// trigger is remapped to a key that produces no event and watched in the
+// keyboard's raw HID input instead, leaving Globe alone.
 package keyboard
 
 /*
-#cgo LDFLAGS: -framework AppKit -framework CoreGraphics -framework CoreFoundation
+#cgo LDFLAGS: -framework AppKit -framework CoreGraphics -framework CoreFoundation -framework IOKit
 #include <CoreGraphics/CoreGraphics.h>
 
 #include "decide.h"
@@ -17,6 +18,7 @@ package keyboard
 // Implemented in keyboard.m.
 void bgkSetReverseMask(CGEventFlags mask);
 void bgkSetTrigger(bgkTrigger trigger);
+void bgkSetRawKeys(const bgkRawKey *keys, int count);
 int bgkStart(void);
 void bgkRun(void);
 void bgkStop(void);
@@ -129,16 +131,17 @@ var passThroughTriggers = map[string]C.bgkTrigger{
 	"menu":          keyTrigger(keyContextualMenu),
 }
 
-// dedicatedTrigger is the key a dedicated trigger is remapped to.
-var dedicatedTrigger = keyTrigger(keyF20)
+// noTrigger matches no event: a dedicated trigger is silenced and watched in raw
+// HID input instead (see SetDedicatedKeys), and Globe does not switch.
+var noTrigger = C.bgkTrigger{kind: C.bgkKindKey, keycode: C.bgkRawTriggerCode}
 
 // triggerFor returns the descriptor the event tap watches for trigger: the key
-// itself when it is passed through, the dedicated key when it is remapped to
-// that, otherwise Globe (a key remapped to fn arrives as the Globe key).
+// itself when it is passed through, nothing when it is dedicated, otherwise
+// Globe (a key remapped to fn arrives as the Globe key).
 func triggerFor(trigger config.Trigger) C.bgkTrigger {
 	switch {
 	case trigger.Dedicated():
-		return dedicatedTrigger
+		return noTrigger
 	case trigger.PassThrough():
 		if descriptor, ok := passThroughTriggers[trigger.Key]; ok {
 			return descriptor
@@ -152,6 +155,32 @@ func triggerFor(trigger config.Trigger) C.bgkTrigger {
 // progress. It is safe to call while listening.
 func SetTrigger(trigger config.Trigger) {
 	C.bgkSetTrigger(triggerFor(trigger))
+}
+
+// DedicatedKey is a dedicated trigger key silenced on one keyboard.
+type DedicatedKey struct {
+	// Vendor, Product, and Location identify the keyboard.
+	Vendor, Product, Location uint32
+	// Usage is the key's usage on the HID Keyboard/Keypad page.
+	Usage uint32
+}
+
+// SetDedicatedKeys sets the silenced trigger keys watched in each keyboard's raw
+// HID input, which needs Input Monitoring. Raw input is read only while there
+// are keys; each call retries opening it, so a grant given later takes effect.
+// It is safe to call while listening.
+func SetDedicatedKeys(keys []DedicatedKey) {
+	raw := make([]C.bgkRawKey, max(len(keys), 1))
+	for i, key := range keys {
+		raw[i] = C.bgkRawKey{
+			vendor:   C.uint32_t(key.Vendor),
+			product:  C.uint32_t(key.Product),
+			location: C.uint32_t(key.Location),
+			usage:    C.uint32_t(key.Usage),
+		}
+	}
+
+	C.bgkSetRawKeys(&raw[0], C.int(len(keys)))
 }
 
 // Listener delivers trigger key releases via a CoreGraphics event tap.

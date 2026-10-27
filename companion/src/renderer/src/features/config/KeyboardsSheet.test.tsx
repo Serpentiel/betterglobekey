@@ -97,7 +97,7 @@ describe('KeyboardsSheet', () => {
       keyboards: { applyTo: 'without_globe', overrides: { '046d:c33f': false } },
     })
 
-    expect(screen.getByText('Caps Lock → fn, removed once saved')).toBeTruthy()
+    expect(screen.getByText('Caps Lock → fn, undone once saved')).toBeTruthy()
 
     fireEvent.click(toggle('Logitech K120'))
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
@@ -122,7 +122,14 @@ describe('KeyboardsSheet', () => {
   it('shows a mapping still to apply', () => {
     renderSheet({ mode: 'dedicated', keyboards: { applyTo: 'all', overrides: {} } })
 
-    expect(screen.getByText('Caps Lock → F20 once saved')).toBeTruthy()
+    expect(screen.getByText('Caps Lock silenced once saved')).toBeTruthy()
+  })
+
+  it('shows a silenced key', () => {
+    const silenced = { ...logitech, triggerMapping: { ...capsToFn, dst: 0x700000073, dstName: 'F24' } }
+    renderSheet({ mode: 'dedicated' }, { report: { keyboards: [builtIn, silenced], systemMappings: [] }, error: null })
+
+    expect(screen.getByText('Caps Lock silenced')).toBeTruthy()
   })
 
   it('warns when a dedicated trigger reaches no keyboard', () => {

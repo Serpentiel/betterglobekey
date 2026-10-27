@@ -439,7 +439,8 @@ func TestTriggerStatus(t *testing.T) {
 				Mode:      "dedicated",
 				Keyboards: domainconfig.Keyboards{ApplyTo: "all", Overrides: map[string]bool{"046d:c33f": false}},
 			},
-			"caps_lock (remapped to F20 on all keyboards, 1 override(s) while the daemon runs; Globe does not switch)",
+			"caps_lock (silenced on all keyboards, 1 override(s) and watched directly while the daemon runs; " +
+				"Globe does not switch)",
 		},
 		{domainconfig.Trigger{Key: "right_command", Mode: "pass_through"}, "right_command (passed through)"},
 	}

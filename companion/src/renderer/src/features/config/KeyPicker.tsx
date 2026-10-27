@@ -2,19 +2,14 @@ import { clsx } from 'clsx'
 import { Globe, Keyboard } from 'lucide-react'
 import { type ReactElement, useEffect, useState } from 'react'
 
-import { DEDICATED_KEY, GLOBE, triggerKey, triggerKeyForCode, triggerLabel, triggerName } from '../../lib/trigger-keys'
+import { GLOBE, triggerKeyForCode, triggerLabel, triggerName } from '../../lib/trigger-keys'
 import { Button } from '../../ui'
 import styles from './KeyPicker.module.css'
 
-/** DEDICATED_CODE is the KeyboardEvent.code of the dedicated key. */
-const DEDICATED_CODE = triggerKey(DEDICATED_KEY)?.code
-
 interface Props {
   value: string
-  /** remapped reports whether value is currently remapped, so pressing it no longer reaches the page as itself. */
+  /** remapped reports whether value is currently remapped, so pressing it no longer reaches the page. */
   remapped: boolean
-  /** dedicated reports whether value is remapped to the dedicated key, so pressing it arrives as that key. */
-  dedicated?: boolean
   onChange: (key: string) => void
   id?: string
 }
@@ -23,7 +18,7 @@ interface Props {
  * KeyPicker shows the trigger key and records a new one from the next key press.
  * Globe has its own button: web views never receive the Globe (fn) key.
  */
-export function KeyPicker({ value, remapped, dedicated = false, onChange, id }: Props): ReactElement {
+export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElement {
   const [recording, setRecording] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,9 +42,7 @@ export function KeyPicker({ value, remapped, dedicated = false, onChange, id }: 
         return
       }
 
-      // A dedicated trigger arrives as the dedicated key: that is the current key
-      // pressed again, which no keyboard sends otherwise.
-      const key = dedicated && event.code === DEDICATED_CODE ? triggerKey(value) : triggerKeyForCode(event.code)
+      const key = triggerKeyForCode(event.code)
       if (!key) {
         setError(
           `${event.key === ' ' ? 'Space' : event.key || event.code} can't switch input sources. Try another key.`,
@@ -74,12 +67,12 @@ export function KeyPicker({ value, remapped, dedicated = false, onChange, id }: 
       window.removeEventListener('keyup', onKey, true)
       window.removeEventListener('blur', stop)
     }
-  }, [recording, dedicated, value, onChange])
+  }, [recording, onChange])
 
   const status = error
     ? error
     : recording
-      ? remapped && !dedicated
+      ? remapped
         ? `Press a key, or Esc to cancel. ${triggerName(value)} is remapped right now, so pressing it won't register.`
         : 'Press a key, or Esc to cancel.'
       : null

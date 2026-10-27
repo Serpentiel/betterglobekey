@@ -86,22 +86,14 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
       ? 'Record a key other than Globe to choose how it works.'
       : {
           [MODE_FN]: `${name} becomes an fn key, with the fn shortcuts (fn+arrows, fn+Delete, fn+E, …). Globe keeps switching too.`,
-          [MODE_DEDICATED]: `Only ${name} switches: it is remapped to an unused key (F20). Globe (fn) keeps only its macOS functions.`,
+          [MODE_DEDICATED]: `Only ${name} switches: it is silenced and read directly, which needs Input Monitoring. Globe (fn) keeps only its macOS functions.`,
           [MODE_PASS_THROUGH]: `${name} keeps working as itself on every keyboard and switches only when pressed alone.`,
         }[mode])
 
   return (
     <Section icon={Globe} title="Trigger Key" description="The key that switches input sources.">
       <Field label="Trigger key" hint={keyHint} error={errors.trigger.key}>
-        {({ id }) => (
-          <KeyPicker
-            id={id}
-            value={key}
-            remapped={remapped}
-            dedicated={remapped && mode === MODE_DEDICATED}
-            onChange={setTriggerKey}
-          />
-        )}
+        {({ id }) => <KeyPicker id={id} value={key} remapped={remapped} onChange={setTriggerKey} />}
       </Field>
       <Field label="Trigger mode" hint={modeHint}>
         {({ id }) => (

@@ -6,6 +6,7 @@ import type { KeyboardsState } from '../../hooks/useKeyboards'
 import {
   includesKeyboard,
   KEYBOARDS_ALL,
+  DEDICATED_USAGE,
   KEYBOARDS_WITHOUT_GLOBE,
   MODE_DEDICATED,
   remappedTrigger,
@@ -24,6 +25,11 @@ interface Props {
 
 function mappingLabel(mapping: KeyMapping): string {
   return `${mapping.srcName} → ${mapping.dstName}`
+}
+
+/** describe renders the daemon's own mapping: silencing a dedicated key, or a remap. */
+function describe(mapping: KeyMapping): string {
+  return mapping.dst === DEDICATED_USAGE ? `${mapping.srcName} silenced` : mappingLabel(mapping)
 }
 
 function details(keyboard: Keyboard): string {
@@ -52,7 +58,6 @@ export function KeyboardsSheet({ open, config, keyboards, onChange, onClose }: P
   const disconnected = Object.keys(scope.overrides).filter((id) => !connected.some((keyboard) => keyboard.id === id))
   const others = connected.filter((keyboard) => keyboard.otherMappings.length > 0)
   const systemMappings = keyboards.report?.systemMappings ?? []
-  const target = mode === MODE_DEDICATED ? 'F20' : 'fn'
 
   const setScope = (patch: Partial<Config['trigger']['keyboards']>): void =>
     onChange({ ...config, trigger: { ...config.trigger, keyboards: { ...scope, ...patch } } })
@@ -75,15 +80,15 @@ export function KeyboardsSheet({ open, config, keyboards, onChange, onClose }: P
     const included = inScope(keyboard)
 
     if (included && keyboard.triggerMapping) {
-      return mappingLabel(keyboard.triggerMapping)
+      return describe(keyboard.triggerMapping)
     }
 
     if (included) {
-      return `${name} → ${target} once saved`
+      return mode === MODE_DEDICATED ? `${name} silenced once saved` : `${name} → fn once saved`
     }
 
     if (keyboard.triggerMapping) {
-      return `${mappingLabel(keyboard.triggerMapping)}, removed once saved`
+      return `${describe(keyboard.triggerMapping)}, undone once saved`
     }
 
     return remapped ? `${name} unchanged` : 'Not remapped'

@@ -61,7 +61,8 @@ func newTestClient(t *testing.T, path string, sources Sources, trusted bool) con
 
 	listener := bufconn.Listen(1 << 20)
 	server := NewServer(
-		path, sources, fakeKeyboards{}, func(fn func()) { fn() }, "1.2.3", "abc1234", func() bool { return trusted },
+		path, sources, fakeKeyboards{}, func(fn func()) { fn() }, "1.2.3", "abc1234",
+		func() Permissions { return Permissions{Accessibility: trusted} },
 	)
 
 	go func() { _ = server.grpc.Serve(listener) }()
@@ -293,7 +294,7 @@ func TestListKeyboardsErrors(t *testing.T) {
 
 		server := NewServer(
 			path, fakeSources{}, fakeKeyboards{err: fmt.Errorf("boom")}, func(fn func()) { fn() }, "", "",
-			func() bool { return true },
+			func() Permissions { return Permissions{Accessibility: true} },
 		)
 
 		request := &controlv1.ApplyConfigRequest{Config: sampleProtoConfig()}

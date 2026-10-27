@@ -64,14 +64,6 @@ describe('validateConfig', () => {
     expect(validateConfig(config).valid).toBe(true)
   })
 
-  it('rejects the dedicated key as a dedicated trigger', () => {
-    const config = validConfig()
-    config.trigger = { ...config.trigger, key: 'f20', mode: 'dedicated' }
-    const result = validateConfig(config)
-    expect(result.valid).toBe(false)
-    expect(result.errors.trigger.mode).toBeDefined()
-  })
-
   it('rejects an invalid keyboard override', () => {
     const config = validConfig()
     config.trigger.keyboards.overrides = { Logitech: true }

@@ -74,15 +74,17 @@ than Globe is used depends on `trigger.mode`:
 | `trigger.mode` | The key                                                   | Globe also switches | Per keyboard |
 | -------------- | --------------------------------------------------------- | ------------------- | ------------ |
 | `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | yes                 | yes          |
-| `dedicated`    | is **remapped to F20**, which only the service watches    | no                  | yes          |
+| `dedicated`    | is **silenced** and read straight from the keyboard       | no                  | yes          |
 | `pass_through` | **keeps its normal function**                             | no                  | no           |
 
 - `fn` and `dedicated` remap the key at the hardware level while the service runs, the same way
   `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
-  In `dedicated` mode the Globe (fn) key keeps only what macOS does with it. F20 is used because no Apple keyboard
-  has it and macOS binds nothing to it; F21 to F24 have no key codes on macOS.
+- `dedicated` remaps the key to F24, which macOS has no key code for, so the key produces no event at all and nothing
+  else can react to it. The service reads the keyboard's raw input instead, which needs **Input Monitoring** (_System
+  Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a restart
+  after you grant it). The Globe (fn) key keeps only what macOS does with it.
 - `pass_through` watches the key directly: pressing it on its own switches input sources; using it in a combination
-  (such as Right Command + C) does not. Caps Lock cannot be passed through, and F20 cannot be `dedicated`.
+  (such as Right Command + C) does not. Caps Lock cannot be passed through.
 
 ### Keyboards
 

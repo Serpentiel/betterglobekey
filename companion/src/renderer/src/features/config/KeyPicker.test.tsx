@@ -43,27 +43,6 @@ describe('KeyPicker', () => {
     expect(onChange).toHaveBeenCalledWith('caps_lock')
   })
 
-  it('takes the dedicated key as the current key pressed again', () => {
-    const onChange = vi.fn()
-    render(<KeyPicker value="caps_lock" remapped dedicated onChange={onChange} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    expect(screen.getByRole('status').textContent).toBe('Press a key, or Esc to cancel.')
-
-    press('F20')
-    expect(onChange).toHaveBeenCalledWith('caps_lock')
-    expect(screen.getByText('⇪ Caps Lock')).toBeTruthy()
-  })
-
-  it('records F20 itself when no key is remapped to it', () => {
-    const onChange = vi.fn()
-    render(<KeyPicker value="caps_lock" remapped onChange={onChange} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    press('F20')
-    expect(onChange).toHaveBeenCalledWith('f20')
-  })
-
   it('rejects unsupported keys and keeps recording', () => {
     const onChange = vi.fn()
     render(<KeyPicker value="globe" remapped={false} onChange={onChange} />)

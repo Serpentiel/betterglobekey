@@ -69,9 +69,9 @@ message Trigger {
   string key = 1;
 
   // mode is how a key other than globe is detected: fn (remapped to the Globe
-  // (fn) key, the default when empty), dedicated (remapped to F20, so Globe no
-  // longer switches), or pass_through (keeps its function; not allowed for
-  // caps_lock).
+  // (fn) key, the default when empty), dedicated (silenced and watched in raw
+  // input, so Globe no longer switches; needs Input Monitoring), or
+  // pass_through (keeps its function; not allowed for caps_lock).
   string mode = 3;
 
   // keyboards selects the keyboards a remapped key applies to.
@@ -187,6 +187,10 @@ message GetStatusResponse {
   // accessibility_trusted reports whether the daemon holds the Accessibility
   // permission required by the global event tap.
   bool accessibility_trusted = 1;
+
+  // input_monitoring_granted reports whether the daemon holds the Input
+  // Monitoring permission a dedicated trigger key's raw input requires.
+  bool input_monitoring_granted = 2;
 }
 
 message ListKeyboardsRequest {}

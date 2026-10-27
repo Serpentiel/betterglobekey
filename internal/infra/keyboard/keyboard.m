@@ -1,6 +1,11 @@
 #import <AppKit/AppKit.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include <IOKit/hid/IOHIDKeys.h>
+#include <IOKit/hid/IOHIDManager.h>
+#include <IOKit/hid/IOHIDUsageTables.h>
+#include <IOKit/hidsystem/IOHIDLib.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "decide.h"
 
@@ -38,6 +43,22 @@ static uint64_t bgkReverseMask = kCGEventFlagMaskShift;
 
 static bgkState bgkPressState = {0};
 
+// bgkMaxRawKeys caps the silenced trigger keys watched in raw HID input.
+#define bgkMaxRawKeys 64
+
+// bgkRawKeys are the silenced trigger keys, one per keyboard; none outside
+// dedicated mode. bgkRawState tracks their presses, and bgkRawTrigger is the
+// descriptor raw presses are decided against.
+static bgkRawKey bgkRawKeys[bgkMaxRawKeys];
+static int bgkRawKeyCount = 0;
+static bgkState bgkRawState = {0};
+static const bgkTrigger bgkRawTrigger = {.kind = bgkKindKey, .keycode = bgkRawTriggerCode};
+
+// bgkHID reads raw keyboard input while there are raw keys, which needs Input
+// Monitoring. It lives on the tap's run loop.
+static IOHIDManagerRef bgkHID = NULL;
+static int bgkHIDOpen = 0;
+
 // bgkSetReverseMask sets the modifier flag used to detect a reverse press.
 void bgkSetReverseMask(CGEventFlags mask) {
 	pthread_mutex_lock(&bgkLock);
@@ -51,6 +72,137 @@ void bgkSetTrigger(bgkTrigger trigger) {
 	bgkTriggerKey = trigger;
 	bgkPressState = (bgkState){0};
 	pthread_mutex_unlock(&bgkLock);
+}
+
+// bgkDeviceNumber reads an integer property of a HID device, or 0.
+static uint32_t bgkDeviceNumber(IOHIDDeviceRef device, CFStringRef key) {
+	int64_t number = 0;
+	CFTypeRef value = IOHIDDeviceGetProperty(device, key);
+
+	if (value != NULL && CFGetTypeID(value) == CFNumberGetTypeID()) {
+		CFNumberGetValue((CFNumberRef)value, kCFNumberSInt64Type, &number);
+	}
+
+	return (uint32_t)number;
+}
+
+// bgkIsRawKey reports whether usage on device is a silenced trigger key. The
+// caller holds bgkLock.
+static int bgkIsRawKey(IOHIDDeviceRef device, uint32_t usage) {
+	if (device == NULL || bgkRawKeyCount == 0) {
+		return 0;
+	}
+
+	uint32_t vendor = bgkDeviceNumber(device, CFSTR(kIOHIDVendorIDKey));
+	uint32_t product = bgkDeviceNumber(device, CFSTR(kIOHIDProductIDKey));
+	uint32_t location = bgkDeviceNumber(device, CFSTR(kIOHIDLocationIDKey));
+
+	for (int i = 0; i < bgkRawKeyCount; i++) {
+		const bgkRawKey *key = &bgkRawKeys[i];
+		if (key->usage == usage && key->vendor == vendor && key->product == product && key->location == location) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+// bgkHIDValue handles raw input: presses of a silenced trigger key, and any
+// other key or media key that makes such a press a combination.
+static void bgkHIDValue(void *context, IOReturn status, void *sender, IOHIDValueRef value) {
+	IOHIDElementRef element = IOHIDValueGetElement(value);
+	uint32_t page = IOHIDElementGetUsagePage(element);
+	uint32_t usage = IOHIDElementGetUsage(element);
+	CFIndex pressed = IOHIDValueGetIntegerValue(value);
+	uint64_t flags = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+
+	pthread_mutex_lock(&bgkLock);
+	int own = page == kHIDPage_KeyboardOrKeypad && bgkIsRawKey(IOHIDElementGetDevice(element), usage);
+	bgkEvent event = bgkRawEvent(page, usage, pressed, own, flags);
+	int reverse = bgkRawKeyCount > 0 ? bgkDecide(&bgkRawTrigger, bgkReverseMask, &bgkRawState, &event) : bgkNoPress;
+	pthread_mutex_unlock(&bgkLock);
+
+	if (reverse != bgkNoPress) {
+		goHandleTriggerRelease(reverse);
+	}
+}
+
+// bgkMatching returns a matching dictionary for devices of a usage page and usage.
+static CFDictionaryRef bgkMatching(int page, int usage) {
+	CFNumberRef pageNumber = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &page);
+	CFNumberRef usageNumber = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
+	const void *keys[] = {CFSTR(kIOHIDDeviceUsagePageKey), CFSTR(kIOHIDDeviceUsageKey)};
+	const void *values[] = {pageNumber, usageNumber};
+	CFDictionaryRef matching = CFDictionaryCreate(kCFAllocatorDefault, keys, values, 2, &kCFTypeDictionaryKeyCallBacks,
+	                                              &kCFTypeDictionaryValueCallBacks);
+
+	CFRelease(usageNumber);
+	CFRelease(pageNumber);
+
+	return matching;
+}
+
+// bgkSyncHID opens the HID manager while there are raw keys and closes it
+// otherwise. It runs on the tap's run loop, and retries an open that failed for
+// want of Input Monitoring each time the raw keys are set.
+static void bgkSyncHID(void) {
+	pthread_mutex_lock(&bgkLock);
+	int want = bgkRawKeyCount > 0;
+	pthread_mutex_unlock(&bgkLock);
+
+	if (want && !bgkHIDOpen) {
+		if (bgkHID == NULL) {
+			bgkHID = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+
+			CFDictionaryRef keyboards = bgkMatching(kHIDPage_GenericDesktop, kHIDUsage_GD_Keyboard);
+			CFDictionaryRef consumer = bgkMatching(kHIDPage_Consumer, kHIDUsage_Csmr_ConsumerControl);
+			const void *matches[] = {keyboards, consumer};
+			CFArrayRef matching = CFArrayCreate(kCFAllocatorDefault, matches, 2, &kCFTypeArrayCallBacks);
+
+			IOHIDManagerSetDeviceMatchingMultiple(bgkHID, matching);
+			IOHIDManagerRegisterInputValueCallback(bgkHID, bgkHIDValue, NULL);
+			IOHIDManagerScheduleWithRunLoop(bgkHID, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+			CFRelease(matching);
+			CFRelease(consumer);
+			CFRelease(keyboards);
+		}
+
+		// Shows the Input Monitoring prompt the first time; a no-op after.
+		IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
+		bgkHIDOpen = IOHIDManagerOpen(bgkHID, kIOHIDOptionsTypeNone) == kIOReturnSuccess;
+	} else if (!want && bgkHIDOpen) {
+		IOHIDManagerClose(bgkHID, kIOHIDOptionsTypeNone);
+		bgkHIDOpen = 0;
+	}
+}
+
+// bgkSetRawKeys sets the silenced trigger keys, dropping a raw press in progress
+// when they change, and opens or closes raw input to match.
+void bgkSetRawKeys(const bgkRawKey *keys, int count) {
+	if (keys == NULL || count < 0) {
+		count = 0;
+	} else if (count > bgkMaxRawKeys) {
+		count = bgkMaxRawKeys;
+	}
+
+	pthread_mutex_lock(&bgkLock);
+	if (count != bgkRawKeyCount || (count > 0 && memcmp(keys, bgkRawKeys, sizeof(bgkRawKey) * count) != 0)) {
+		if (count > 0) {
+			memcpy(bgkRawKeys, keys, sizeof(bgkRawKey) * count);
+		}
+		bgkRawKeyCount = count;
+		bgkRawState = (bgkState){0};
+	}
+	CFRunLoopRef runLoop = bgkRunLoop;
+	pthread_mutex_unlock(&bgkLock);
+
+	if (runLoop != NULL) {
+		CFRunLoopPerformBlock(runLoop, kCFRunLoopCommonModes, ^{
+		  bgkSyncHID();
+		});
+		CFRunLoopWakeUp(runLoop);
+	}
 }
 
 // bgkIsMediaKeyDown reports whether a system-defined event is a media key press.
@@ -82,6 +234,11 @@ static CGEventRef bgkCallback(CGEventTapProxy proxy, CGEventType type, CGEventRe
 			CGEventTapEnable(bgkTap, true);
 		}
 		bgkFeed((bgkEvent){.type = bgkEventReset});
+
+		pthread_mutex_lock(&bgkLock);
+		bgkRawState = (bgkState){0};
+		pthread_mutex_unlock(&bgkLock);
+
 		return event;
 	}
 
@@ -128,9 +285,14 @@ int bgkStart(void) {
 	}
 
 	bgkSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, bgkTap, 0);
+
+	pthread_mutex_lock(&bgkLock);
 	bgkRunLoop = CFRunLoopGetCurrent();
+	pthread_mutex_unlock(&bgkLock);
+
 	CFRunLoopAddSource(bgkRunLoop, bgkSource, kCFRunLoopCommonModes);
 	CGEventTapEnable(bgkTap, true);
+	bgkSyncHID();
 
 	return 1;
 }

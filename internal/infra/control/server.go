@@ -37,6 +37,14 @@ type Keyboards interface {
 	Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error)
 }
 
+// Permissions are the macOS permissions the daemon holds.
+type Permissions struct {
+	// Accessibility is required by the global event tap.
+	Accessibility bool
+	// InputMonitoring is required to read a dedicated trigger key's raw input.
+	InputMonitoring bool
+}
+
 // OnMain runs fn on the main thread, blocking until it returns. Input-source
 // queries must run there, as the underlying macOS APIs require a thread with a
 // running run loop.
@@ -46,20 +54,20 @@ type OnMain func(fn func())
 type Server struct {
 	controlv1.UnimplementedConfigServiceServer
 
-	path      string
-	sources   Sources
-	keyboards Keyboards
-	onMain    OnMain
-	version   string
-	commit    string
-	trusted   func() bool
-	grpc      *grpc.Server
+	path        string
+	sources     Sources
+	keyboards   Keyboards
+	onMain      OnMain
+	version     string
+	commit      string
+	permissions func() Permissions
+	grpc        *grpc.Server
 }
 
 // NewServer builds a control server that reads and writes the configuration at
 // path and reports input sources via sources and keyboards via keyboards.
 // Input-source queries are run via onMain. version and commit identify the
-// running build. trusted reports whether the daemon holds Accessibility,
+// running build. permissions reports the permissions the daemon holds,
 // evaluated in the daemon's own process.
 func NewServer(
 	path string,
@@ -67,17 +75,17 @@ func NewServer(
 	keyboards Keyboards,
 	onMain OnMain,
 	version, commit string,
-	trusted func() bool,
+	permissions func() Permissions,
 ) *Server {
 	srv := &Server{
-		path:      path,
-		sources:   sources,
-		keyboards: keyboards,
-		onMain:    onMain,
-		version:   version,
-		commit:    commit,
-		trusted:   trusted,
-		grpc:      grpc.NewServer(),
+		path:        path,
+		sources:     sources,
+		keyboards:   keyboards,
+		onMain:      onMain,
+		version:     version,
+		commit:      commit,
+		permissions: permissions,
+		grpc:        grpc.NewServer(),
 	}
 	controlv1.RegisterConfigServiceServer(srv.grpc, srv)
 
@@ -173,7 +181,12 @@ func (s *Server) GetStatus(
 	_ context.Context,
 	_ *controlv1.GetStatusRequest,
 ) (*controlv1.GetStatusResponse, error) {
-	return &controlv1.GetStatusResponse{AccessibilityTrusted: s.trusted()}, nil
+	permissions := s.permissions()
+
+	return &controlv1.GetStatusResponse{
+		AccessibilityTrusted:   permissions.Accessibility,
+		InputMonitoringGranted: permissions.InputMonitoring,
+	}, nil
 }
 
 // ListKeyboards reports the connected keyboards against the configured trigger.

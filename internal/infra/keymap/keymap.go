@@ -31,9 +31,10 @@ const keyboardPage = 0x07 << 32
 // GlobeUsage is the Globe (fn) key: usage 0x03 on the Apple vendor top-case page.
 const GlobeUsage uint64 = 0xFF<<32 | 0x03
 
-// DedicatedUsage is the key a dedicated trigger is remapped to: F20 (see
-// config.TriggerDedicatedKey).
-const DedicatedUsage uint64 = usageF20
+// DedicatedUsage is the key a dedicated trigger is remapped to: F24, which
+// macOS has no key code for, so the key produces no event at all and the daemon
+// watches it in the keyboard's raw input.
+const DedicatedUsage uint64 = keyboardPage | 0x73
 
 // stateFileMode is the permission mode used when writing the state file.
 const stateFileMode os.FileMode = 0o600
@@ -172,6 +173,7 @@ type Remapper struct {
 	statePath string
 	trigger   config.Trigger
 	active    bool
+	observer  func([]Applied)
 }
 
 // New returns a Remapper that edits store and records its entries at statePath.
@@ -329,6 +331,8 @@ func (r *Remapper) sync() error {
 			final = append(final, *kept)
 		}
 	}
+
+	r.notify(final)
 
 	return errors.Join(append(errs, r.save(final))...)
 }
@@ -505,6 +509,40 @@ func (r *Remapper) save(entries []entry) error {
 	}
 
 	return nil
+}
+
+// Applied is a mapping the remapper keeps on a keyboard.
+type Applied struct {
+	// Vendor, Product, and Location identify the keyboard.
+	Vendor, Product, Location uint32
+	Mapping                   Mapping
+}
+
+// Observe registers fn to receive the mappings in effect after every sync.
+func (r *Remapper) Observe(fn func([]Applied)) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.observer = fn
+}
+
+// notify reports the entries in effect to the observer.
+func (r *Remapper) notify(entries []entry) {
+	if r.observer == nil {
+		return
+	}
+
+	applied := make([]Applied, 0, len(entries))
+	for _, e := range entries {
+		applied = append(applied, Applied{
+			Vendor:   e.Vendor,
+			Product:  e.Product,
+			Location: e.Location,
+			Mapping:  e.Mapping,
+		})
+	}
+
+	r.observer(applied)
 }
 
 // Status is a connected keyboard as the remapper sees it.

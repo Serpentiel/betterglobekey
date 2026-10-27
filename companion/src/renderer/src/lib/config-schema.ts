@@ -1,14 +1,7 @@
 import { z } from 'zod'
 
 import type { Config } from '../../../shared/types'
-import {
-  allowedModes,
-  KEYBOARD_ID,
-  KEYBOARD_SCOPES,
-  MODE_PASS_THROUGH,
-  TRIGGER_KEY_VALUES,
-  TRIGGER_MODES,
-} from './trigger-keys'
+import { allowedModes, KEYBOARD_ID, KEYBOARD_SCOPES, TRIGGER_KEY_VALUES, TRIGGER_MODES } from './trigger-keys'
 
 // GO_DURATION matches a Go time.Duration string (e.g. "250ms", "1m30s").
 const GO_DURATION = /^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$/
@@ -107,8 +100,7 @@ export const configSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['trigger', 'mode'],
-        message:
-          config.trigger.mode === MODE_PASS_THROUGH ? 'This key can only be remapped' : 'This key is the dedicated key',
+        message: 'This key can only be remapped',
       })
     }
 

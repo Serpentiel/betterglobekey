@@ -52,7 +52,7 @@ describe('trigger keys', () => {
   it('lists the modes each key allows', () => {
     expect(allowedModes('right_command')).toEqual(['fn', 'dedicated', 'pass_through'])
     expect(allowedModes('caps_lock')).toEqual(['fn', 'dedicated'])
-    expect(allowedModes('f20')).toEqual(['fn', 'pass_through'])
+    expect(allowedModes('f20')).toEqual(['fn', 'dedicated', 'pass_through'])
   })
 
   it('scopes keyboards like the daemon', () => {

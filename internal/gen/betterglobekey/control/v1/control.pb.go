@@ -122,9 +122,9 @@ type Trigger struct {
 	// left_shift, f13 through f20, or menu.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// mode is how a key other than globe is detected: fn (remapped to the Globe
-	// (fn) key, the default when empty), dedicated (remapped to F20, so Globe no
-	// longer switches), or pass_through (keeps its function; not allowed for
-	// caps_lock).
+	// (fn) key, the default when empty), dedicated (silenced and watched in raw
+	// input, so Globe no longer switches; needs Input Monitoring), or
+	// pass_through (keeps its function; not allowed for caps_lock).
 	Mode string `protobuf:"bytes,3,opt,name=mode,proto3" json:"mode,omitempty"`
 	// keyboards selects the keyboards a remapped key applies to.
 	Keyboards     *Keyboards `protobuf:"bytes,4,opt,name=keyboards,proto3" json:"keyboards,omitempty"`
@@ -969,8 +969,11 @@ type GetStatusResponse struct {
 	// accessibility_trusted reports whether the daemon holds the Accessibility
 	// permission required by the global event tap.
 	AccessibilityTrusted bool `protobuf:"varint,1,opt,name=accessibility_trusted,json=accessibilityTrusted,proto3" json:"accessibility_trusted,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// input_monitoring_granted reports whether the daemon holds the Input
+	// Monitoring permission a dedicated trigger key's raw input requires.
+	InputMonitoringGranted bool `protobuf:"varint,2,opt,name=input_monitoring_granted,json=inputMonitoringGranted,proto3" json:"input_monitoring_granted,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *GetStatusResponse) Reset() {
@@ -1006,6 +1009,13 @@ func (*GetStatusResponse) Descriptor() ([]byte, []int) {
 func (x *GetStatusResponse) GetAccessibilityTrusted() bool {
 	if x != nil {
 		return x.AccessibilityTrusted
+	}
+	return false
+}
+
+func (x *GetStatusResponse) GetInputMonitoringGranted() bool {
+	if x != nil {
+		return x.InputMonitoringGranted
 	}
 	return false
 }
@@ -1338,9 +1348,10 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x12GetVersionResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x16\n" +
 	"\x06commit\x18\x02 \x01(\tR\x06commit\"\x12\n" +
-	"\x10GetStatusRequest\"H\n" +
+	"\x10GetStatusRequest\"\x82\x01\n" +
 	"\x11GetStatusResponse\x123\n" +
-	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrusted\"\x16\n" +
+	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrusted\x128\n" +
+	"\x18input_monitoring_granted\x18\x02 \x01(\bR\x16inputMonitoringGranted\"\x16\n" +
 	"\x14ListKeyboardsRequest\"\xaa\x01\n" +
 	"\x15ListKeyboardsResponse\x12A\n" +
 	"\tkeyboards\x18\x01 \x03(\v2#.betterglobekey.control.v1.KeyboardR\tkeyboards\x12N\n" +

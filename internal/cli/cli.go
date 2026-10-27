@@ -33,6 +33,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/Serpentiel/betterglobekey/pkg/accessibility"
 	"github.com/Serpentiel/betterglobekey/pkg/hud"
+	"github.com/Serpentiel/betterglobekey/pkg/inputmonitoring"
 	"github.com/Serpentiel/betterglobekey/pkg/mainthread"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -214,9 +215,16 @@ func newSwitcherBuilder(
 	remapper *keymap.Remapper,
 	logger *logging.Logger,
 ) func(domainconfig.Config) *switcher.Switcher {
+	remapper.Observe(watchDedicatedKeys)
+
 	return func(c domainconfig.Config) *switcher.Switcher {
 		keyboard.SetReverseModifier(c.Reverse.Modifier)
 		keyboard.SetTrigger(c.Trigger)
+
+		if c.Trigger.Dedicated() && !inputmonitoring.Granted() {
+			logger.Error("input monitoring permission not granted; the dedicated trigger key is ignored until it " +
+				"is enabled in System Settings > Privacy & Security > Input Monitoring")
+		}
 
 		if err := remapper.Apply(c.Trigger); err != nil {
 			logger.Error("remapping the trigger key failed", "key", c.Trigger.Key, "error", err)
@@ -272,6 +280,11 @@ func watchConfig(
 	}
 }
 
+// permissions reports the macOS permissions this process holds.
+func permissions() control.Permissions {
+	return control.Permissions{Accessibility: accessibility.Trusted(), InputMonitoring: inputmonitoring.Granted()}
+}
+
 // startControlServer launches the local gRPC control server on a background
 // goroutine and arranges for it to stop when ctx is cancelled. It returns an
 // error only if the socket path cannot be resolved.
@@ -289,7 +302,7 @@ func startControlServer(
 		return err
 	}
 
-	server := control.NewServer(path, sources, keyboards, mainthread.Run, version, commit, accessibility.Trusted)
+	server := control.NewServer(path, sources, keyboards, mainthread.Run, version, commit, permissions)
 
 	go func() {
 		if err := server.Serve(socketPath); err != nil {
@@ -324,8 +337,12 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	trusted, running := queryDaemonAccessibility(socketPath)
-	fmt.Fprintln(out, accessibilityStatusLine(running, trusted))
+	status, running := queryDaemonStatus(socketPath)
+	fmt.Fprintln(out, accessibilityStatusLine(running, status.GetAccessibilityTrusted()))
+
+	if running {
+		fmt.Fprintln(out, inputMonitoringStatusLine(status.GetInputMonitoringGranted()))
+	}
 
 	path, err := resolveConfigPath(cmd)
 	if err != nil {
@@ -370,8 +387,8 @@ func triggerStatus(trigger domainconfig.Trigger) string {
 	}
 
 	if trigger.Dedicated() {
-		return fmt.Sprintf("%s (remapped to %s on %s while the daemon runs; Globe does not switch)",
-			trigger.Key, strings.ToUpper(domainconfig.TriggerDedicatedKey), scope)
+		return fmt.Sprintf("%s (silenced on %s and watched directly while the daemon runs; Globe does not switch)",
+			trigger.Key, scope)
 	}
 
 	return fmt.Sprintf("%s (remapped to fn on %s while the daemon runs)", trigger.Key, scope)
@@ -545,10 +562,10 @@ func resolveConfigPath(cmd *cobra.Command) (string, error) {
 	return filepath.Join(home, configFileName), nil
 }
 
-// queryDaemonAccessibility asks the running daemon, over the control socket,
-// whether it holds the Accessibility permission. running is false when the
-// daemon cannot be reached (for example, it is not started).
-func queryDaemonAccessibility(socketPath string) (trusted, running bool) {
+// queryDaemonStatus asks the running daemon, over the control socket, which
+// permissions it holds. running is false when the daemon cannot be reached (for
+// example, it is not started).
+func queryDaemonStatus(socketPath string) (status *controlv1.GetStatusResponse, running bool) {
 	conn, err := grpc.NewClient(
 		"passthrough:///"+socketPath,
 		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
@@ -559,7 +576,7 @@ func queryDaemonAccessibility(socketPath string) (trusted, running bool) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		return false, false
+		return nil, false
 	}
 	defer func() { _ = conn.Close() }()
 
@@ -568,10 +585,10 @@ func queryDaemonAccessibility(socketPath string) (trusted, running bool) {
 
 	resp, err := controlv1.NewConfigServiceClient(conn).GetStatus(ctx, &controlv1.GetStatusRequest{})
 	if err != nil {
-		return false, false
+		return nil, false
 	}
 
-	return resp.GetAccessibilityTrusted(), true
+	return resp, true
 }
 
 // accessibilityStatusLine renders the doctor's accessibility line from the
@@ -587,6 +604,17 @@ func accessibilityStatusLine(running, trusted bool) string {
 	default:
 		return "accessibility: NOT granted (enable in System Settings > Privacy & Security > Accessibility)"
 	}
+}
+
+// inputMonitoringStatusLine renders the doctor's Input Monitoring line from the
+// daemon's reported state.
+func inputMonitoringStatusLine(granted bool) string {
+	if granted {
+		return "input monitoring: granted"
+	}
+
+	return "input monitoring: not granted (only trigger.mode: dedicated needs it; enable in System Settings > " +
+		"Privacy & Security > Input Monitoring, then restart the service)"
 }
 
 // newRemapper returns the trigger key remapper backed by the system's HID key

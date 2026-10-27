@@ -64,3 +64,37 @@ func (d *decider) feed(event tapEvent) press {
 
 	return press{fired: true, reverse: result != 0}
 }
+
+// rawValue is a Go view of a raw HID value fed through bgkRawEvent.
+type rawValue struct {
+	page, usage uint32
+	value       int64
+	own         bool
+	flags       uint64
+}
+
+// newRawDecider returns a decider for a dedicated trigger's raw presses.
+func newRawDecider(reverseModifier string) *decider {
+	return &decider{
+		trigger:     C.bgkTrigger{kind: C.bgkKindKey, keycode: C.bgkRawTriggerCode},
+		reverseMask: modifierMasks[reverseModifier],
+	}
+}
+
+func (d *decider) feedRaw(value rawValue) press {
+	own := C.int(0)
+	if value.own {
+		own = 1
+	}
+
+	raw := C.bgkRawEvent(
+		C.uint32_t(value.page), C.uint32_t(value.usage), C.int64_t(value.value), own, C.uint64_t(value.flags),
+	)
+
+	result := C.bgkDecide(&d.trigger, d.reverseMask, &d.state, &raw)
+	if result == C.bgkNoPress {
+		return press{}
+	}
+
+	return press{fired: true, reverse: result != 0}
+}

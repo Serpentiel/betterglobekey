@@ -60,6 +60,24 @@ typedef struct {
 // bgkNoPress is returned by bgkDecide when the event does not complete a tap.
 #define bgkNoPress (-1)
 
+// bgkRawTriggerCode is the key code raw presses of a silenced trigger key are
+// fed to bgkDecide as; no CoreGraphics key code is negative.
+#define bgkRawTriggerCode (-2)
+
+// bgkRawKey is a trigger key silenced on one keyboard: remapped to a usage that
+// produces no event, so it is watched in the keyboard's raw HID input instead.
+typedef struct {
+	uint32_t vendor;
+	uint32_t product;
+	uint32_t location;
+	// usage is the key's usage on the Keyboard/Keypad page.
+	uint32_t usage;
+} bgkRawKey;
+
+// bgkRawEvent classifies a raw HID value for bgkDecide. own reports that it is a
+// silenced trigger key; flags are the modifier flags at the time.
+bgkEvent bgkRawEvent(uint32_t page, uint32_t usage, int64_t value, int own, uint64_t flags);
+
 // bgkDecide feeds event into state and returns 1 for a reverse tap, 0 for a
 // forward tap, or bgkNoPress.
 int bgkDecide(const bgkTrigger *trigger, uint64_t reverseMask, bgkState *state, const bgkEvent *event);

@@ -61,6 +61,11 @@ const (
 	digits  = "1234567890"
 )
 
+// KeyUsage returns a usage without its usage page.
+func KeyUsage(usage uint64) uint32 {
+	return uint32(usage & usageMask) //nolint:gosec // masked to 32 bits
+}
+
 // UsageName names a HID usage, or formats it in hex.
 func UsageName(usage uint64) string {
 	if name, ok := usageNames[usage]; ok {

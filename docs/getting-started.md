@@ -24,7 +24,10 @@ brew install betterglobekey
 automatically; grant it under _System Settings > Privacy & Security > Accessibility_ by enabling the switch next to
 **betterglobekey**.
 
-You can check the permission (and the rest of your setup) at any time with:
+A [dedicated trigger key](configuration.md#trigger-key) also needs Input Monitoring, under _System Settings > Privacy &
+Security > Input Monitoring_.
+
+You can check the permissions (and the rest of your setup) at any time with:
 
 ```bash
 betterglobekey doctor

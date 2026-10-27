@@ -15,8 +15,8 @@ export interface TriggerKey {
 
 export const GLOBE = 'globe'
 
-/** DEDICATED_KEY is the key a dedicated trigger is remapped to, mirroring the daemon's TriggerDedicatedKey. */
-export const DEDICATED_KEY = 'f20'
+/** DEDICATED_USAGE is the HID usage a dedicated trigger is silenced to (F24), mirroring the daemon's DedicatedUsage. */
+export const DEDICATED_USAGE = 0x700000073
 
 /** Trigger modes, mirroring the daemon's TriggerModes. */
 export const MODE_FN = 'fn'
@@ -73,13 +73,9 @@ export function triggerLabel(value: string): string {
 }
 
 /** allowedModes lists the modes a key can use: every mode but pass-through for
- * keys that cannot keep their function, and but dedicated for the dedicated key itself. */
+ * keys that cannot keep their function. */
 export function allowedModes(value: string): string[] {
-  return TRIGGER_MODES.filter(
-    (mode) =>
-      !(mode === MODE_PASS_THROUGH && triggerKey(value)?.passThrough === false) &&
-      !(mode === MODE_DEDICATED && value === DEDICATED_KEY),
-  )
+  return TRIGGER_MODES.filter((mode) => !(mode === MODE_PASS_THROUGH && triggerKey(value)?.passThrough === false))
 }
 
 /** remappedTrigger reports whether the trigger key is remapped at the HID level,

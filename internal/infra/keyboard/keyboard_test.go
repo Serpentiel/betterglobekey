@@ -26,3 +26,9 @@ func TestSetTrigger(_ *testing.T) {
 	SetTrigger(config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated})
 	SetTrigger(config.Trigger{Key: config.TriggerGlobe})
 }
+
+func TestSetDedicatedKeys(_ *testing.T) {
+	// The listener is not running, so this only records the keys.
+	SetDedicatedKeys([]DedicatedKey{{Vendor: 0x046d, Product: 0xc33f, Location: 1, Usage: 0x39}})
+	SetDedicatedKeys(nil)
+}

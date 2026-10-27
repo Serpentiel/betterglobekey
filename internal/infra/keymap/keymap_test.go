@@ -149,9 +149,35 @@ func TestUsagesCoverRemappableTriggerKeys(t *testing.T) {
 	}
 }
 
-func TestDedicatedUsageIsTheDedicatedKey(t *testing.T) {
-	if DedicatedUsage != Usages[config.TriggerDedicatedKey] {
-		t.Errorf("DedicatedUsage = %#x, want the usage of %q", DedicatedUsage, config.TriggerDedicatedKey)
+func TestDedicatedUsageIsNoTriggerKey(t *testing.T) {
+	for key, usage := range Usages {
+		if usage == DedicatedUsage {
+			t.Errorf("DedicatedUsage is the usage of trigger key %q", key)
+		}
+	}
+}
+
+func TestObserveReportsAppliedMappings(t *testing.T) {
+	store := newStore()
+	remapper, _ := newRemapper(t, store)
+
+	var got []Applied
+
+	remapper.Observe(func(applied []Applied) { got = applied })
+
+	apply(t, remapper, caps(config.TriggerModeDedicated, config.Keyboards{}))
+
+	silenced := Mapping{Src: capsLock, Dst: DedicatedUsage}
+
+	want := []Applied{{Vendor: 0x046d, Product: 0xc33f, Location: 3, Mapping: silenced}}
+	if !slices.Equal(got, want) {
+		t.Errorf("applied = %+v, want %+v", got, want)
+	}
+
+	restore(t, remapper)
+
+	if len(got) != 0 {
+		t.Errorf("applied after restore = %+v, want none", got)
 	}
 }
 
@@ -548,14 +574,13 @@ func TestUsageName(t *testing.T) {
 	tests := map[uint64]string{
 		GlobeUsage:          "fn",
 		capsLock:            "Caps Lock",
-		DedicatedUsage:      "F20",
+		DedicatedUsage:      "F24",
 		keyboardPage | 0x04: "A",
 		keyboardPage | 0x1D: "Z",
 		keyboardPage | 0x1E: "1",
 		keyboardPage | 0x27: "0",
 		keyboardPage | 0x3A: "F1",
 		keyboardPage | 0x45: "F12",
-		keyboardPage | 0x73: "F24",
 		keyboardPage | 0x29: "Escape",
 		0x0C<<32 | 0xE9:     "0xc000000e9",
 	}

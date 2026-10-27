@@ -52,9 +52,6 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"caps lock pass-through": func(c *config.Config) {
 			c.Trigger.Key, c.Trigger.Mode = config.TriggerCapsLock, config.TriggerModePassThrough
 		},
-		"dedicated key as dedicated trigger": func(c *config.Config) {
-			c.Trigger.Key, c.Trigger.Mode = config.TriggerDedicatedKey, config.TriggerModeDedicated
-		},
 		"invalid keyboard scope": func(c *config.Config) { c.Trigger.Keyboards.ApplyTo = "apple" },
 		"invalid keyboard id": func(c *config.Config) {
 			c.Trigger.Keyboards.Overrides = map[string]bool{"05AC:29C": true}

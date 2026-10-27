@@ -24,11 +24,6 @@ const TriggerGlobe = "globe"
 // TriggerCapsLock is the Caps Lock key, which can only be remapped, not passed through.
 const TriggerCapsLock = "caps_lock"
 
-// TriggerDedicatedKey is the key a dedicated trigger is remapped to. F20 has a
-// key code but no Apple keyboard has the key and macOS binds nothing to it;
-// F21-F24 would be rarer still, but macOS defines no key code for them.
-const TriggerDedicatedKey = "f20"
-
 // TriggerKeys are the accepted trigger keys.
 var TriggerKeys = []string{
 	TriggerGlobe,
@@ -44,9 +39,10 @@ const (
 	// TriggerModeFn remaps the key to the Globe (fn) key, so it gains the fn
 	// shortcuts (fn+arrows, fn+F-keys, ...) and Globe keeps switching too.
 	TriggerModeFn = "fn"
-	// TriggerModeDedicated remaps the key to TriggerDedicatedKey, so it is the
-	// only key that switches and the Globe (fn) key keeps just its macOS
-	// functions.
+	// TriggerModeDedicated silences the key, remapping it to one macOS has no key
+	// code for, and watches its raw input instead: it is the only key that
+	// switches and the Globe (fn) key keeps just its macOS functions. Raw input
+	// needs Input Monitoring.
 	TriggerModeDedicated = "dedicated"
 	// TriggerModePassThrough keeps the key's normal function and watches it
 	// directly, switching only when it is tapped on its own.
@@ -156,8 +152,8 @@ func (t Trigger) Remapped() bool {
 	return t.Key != TriggerGlobe && t.Mode != TriggerModePassThrough
 }
 
-// Dedicated reports whether the trigger key is remapped to TriggerDedicatedKey,
-// leaving Globe out of switching.
+// Dedicated reports whether the trigger key is silenced and watched in raw
+// input, leaving Globe out of switching.
 func (t Trigger) Dedicated() bool {
 	return t.Key != TriggerGlobe && t.Mode == TriggerModeDedicated
 }
@@ -230,10 +226,6 @@ func (t Trigger) validate() error {
 
 	if t.Key == TriggerCapsLock && t.Mode == TriggerModePassThrough {
 		return fmt.Errorf("trigger key %q cannot be passed through", TriggerCapsLock)
-	}
-
-	if t.Key == TriggerDedicatedKey && t.Mode == TriggerModeDedicated {
-		return fmt.Errorf("trigger key %q is the dedicated key itself; pass it through instead", TriggerDedicatedKey)
 	}
 
 	if !slices.Contains(KeyboardScopes, t.Keyboards.ApplyTo) {

@@ -61,14 +61,8 @@ func TestDecide(t *testing.T) {
 			[]press{{fired: true, reverse: true}},
 		},
 		{"remapped key arrives as globe", remapped, []tapEvent{globeDown, globeUp}, []press{{fired: true}}},
-		{"dedicated key tap", dedicated, []tapEvent{keyDown(keyF20, 0), keyUp(keyF20, 0)}, []press{{fired: true}}},
-		{
-			"dedicated key tap with shift reverses", dedicated,
-			[]tapEvent{keyDown(keyF20, flagShift), keyUp(keyF20, flagShift)},
-			[]press{{fired: true, reverse: true}},
-		},
 		{"globe does nothing in dedicated mode", dedicated, []tapEvent{globeDown, globeUp}, nil},
-		{"dedicated key + c", dedicated, []tapEvent{keyDown(keyF20, 0), keyDown(keyC, 0), keyUp(keyF20, 0)}, nil},
+		{"f20 does nothing in dedicated mode", dedicated, []tapEvent{keyDown(keyF20, 0), keyUp(keyF20, 0)}, nil},
 		{"globe + f1 media", globe, []tapEvent{globeDown, media, globeUp}, nil},
 		{"globe + f1 key", globe, []tapEvent{globeDown, keyDown(keyF1, flagFn), keyUp(keyF1, flagFn), globeUp}, nil},
 		{
@@ -143,6 +137,82 @@ func TestDecide(t *testing.T) {
 
 			for _, event := range test.events {
 				if result := d.feed(event); result.fired {
+					got = append(got, result)
+				}
+			}
+
+			if len(got) != len(test.want) {
+				t.Fatalf("presses = %+v, want %+v", got, test.want)
+			}
+
+			for i := range got {
+				if got[i] != test.want[i] {
+					t.Errorf("press %d = %+v, want %+v", i, got[i], test.want[i])
+				}
+			}
+		})
+	}
+}
+
+// HID usage pages and usages the raw cases use.
+const (
+	pageKeyboard  = 0x07
+	pageConsumer  = 0x0C
+	usageCapsLock = 0x39
+	usageA        = 0x04
+	usageLShift   = 0xE1
+	usageVolumeUp = 0xE9
+)
+
+func capsLock(down, own bool, flags uint64) rawValue {
+	value := int64(0)
+	if down {
+		value = 1
+	}
+
+	return rawValue{page: pageKeyboard, usage: usageCapsLock, value: value, own: own, flags: flags}
+}
+
+func TestDecideRaw(t *testing.T) {
+	keyA := rawValue{page: pageKeyboard, usage: usageA, value: 1}
+	shiftDown := rawValue{page: pageKeyboard, usage: usageLShift, value: 1, flags: flagShift}
+	volumeUp := rawValue{page: pageConsumer, usage: usageVolumeUp, value: 1}
+	rollover := rawValue{page: pageKeyboard, usage: 0xFFFFFFFF, value: 1}
+
+	tests := []struct {
+		name   string
+		values []rawValue
+		want   []press
+	}{
+		{"tap", []rawValue{capsLock(true, true, 0), capsLock(false, true, 0)}, []press{{fired: true}}},
+		{
+			"tap with shift reverses",
+			[]rawValue{capsLock(true, true, flagShift), capsLock(false, true, flagShift)},
+			[]press{{fired: true, reverse: true}},
+		},
+		{"key while held", []rawValue{capsLock(true, true, 0), keyA, capsLock(false, true, 0)}, nil},
+		{"media key while held", []rawValue{capsLock(true, true, 0), volumeUp, capsLock(false, true, 0)}, nil},
+		{
+			"modifier and rollover while held",
+			[]rawValue{capsLock(true, true, 0), shiftDown, rollover, capsLock(false, true, 0)},
+			[]press{{fired: true}},
+		},
+		{"same key on another keyboard", []rawValue{capsLock(true, false, 0), capsLock(false, false, 0)}, nil},
+		{
+			"same key on another keyboard while held",
+			[]rawValue{capsLock(true, true, 0), capsLock(true, false, 0), capsLock(false, true, 0)},
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d := newRawDecider("shift")
+
+			var got []press
+
+			for _, value := range test.values {
+				if result := d.feedRaw(value); result.fired {
 					got = append(got, result)
 				}
 			}

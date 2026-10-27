@@ -66,7 +66,7 @@ impl ConfigService for Stub {
     }
 
     async fn get_status(&self, _: Request<GetStatusRequest>) -> Result<Response<GetStatusResponse>, Status> {
-        Ok(Response::new(GetStatusResponse { accessibility_trusted: true }))
+        Ok(Response::new(GetStatusResponse { accessibility_trusted: true, input_monitoring_granted: true }))
     }
 }
 

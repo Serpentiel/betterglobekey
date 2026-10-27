@@ -3,9 +3,31 @@ package cli
 import (
 	"errors"
 
+	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/pkg/hidkeymap"
 )
+
+// watchDedicatedKeys points the event tap's raw input at the keys the remapper
+// silenced for a dedicated trigger.
+func watchDedicatedKeys(applied []keymap.Applied) {
+	keys := make([]keyboard.DedicatedKey, 0, len(applied))
+
+	for _, a := range applied {
+		if a.Mapping.Dst != keymap.DedicatedUsage {
+			continue
+		}
+
+		keys = append(keys, keyboard.DedicatedKey{
+			Vendor:   a.Vendor,
+			Product:  a.Product,
+			Location: a.Location,
+			Usage:    keymap.KeyUsage(a.Mapping.Src),
+		})
+	}
+
+	keyboard.SetDedicatedKeys(keys)
+}
 
 // hidStore adapts pkg/hidkeymap to the remapper's Store port.
 type hidStore struct{}
