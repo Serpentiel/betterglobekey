@@ -218,9 +218,14 @@ static void bgkHIDPerform(void *info) {
 // bgkSignalHID runs bgkSyncHID on the tap's run loop, once it runs.
 static void bgkSignalHID(void) {
 	pthread_mutex_lock(&bgkLock);
+	CFRunLoopRef runLoop = bgkRunLoop;
+	CFRunLoopSourceRef signal = bgkHIDSignal;
 	pthread_mutex_unlock(&bgkLock);
 
-	bgkSignalHID();
+	if (runLoop != NULL && signal != NULL) {
+		CFRunLoopSourceSignal(signal);
+		CFRunLoopWakeUp(runLoop);
+	}
 }
 
 // bgkSetRecording turns reporting pressed keys to goRecordedKey on or off,
