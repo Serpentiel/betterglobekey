@@ -1,5 +1,6 @@
 package keyboard
 
+// #include <stdint.h>
 import "C"
 
 // goHandleTriggerRelease is invoked from the C event-tap callback for each clean
