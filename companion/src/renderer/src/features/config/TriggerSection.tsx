@@ -93,7 +93,15 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
   return (
     <Section icon={Globe} title="Trigger Key" description="The key that switches input sources.">
       <Field label="Trigger key" hint={keyHint} error={errors.trigger.key}>
-        {({ id }) => <KeyPicker id={id} value={key} remapped={remapped} onChange={setTriggerKey} />}
+        {({ id }) => (
+          <KeyPicker
+            id={id}
+            value={key}
+            remapped={remapped}
+            dedicated={remapped && mode === MODE_DEDICATED}
+            onChange={setTriggerKey}
+          />
+        )}
       </Field>
       <Field label="Trigger mode" hint={modeHint}>
         {({ id }) => (
