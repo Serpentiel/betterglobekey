@@ -25,6 +25,7 @@ const (
 	ConfigService_GetVersion_FullMethodName       = "/betterglobekey.control.v1.ConfigService/GetVersion"
 	ConfigService_GetStatus_FullMethodName        = "/betterglobekey.control.v1.ConfigService/GetStatus"
 	ConfigService_ListKeyboards_FullMethodName    = "/betterglobekey.control.v1.ConfigService/ListKeyboards"
+	ConfigService_RecordKey_FullMethodName        = "/betterglobekey.control.v1.ConfigService/RecordKey"
 )
 
 // ConfigServiceClient is the client API for ConfigService service.
@@ -51,10 +52,15 @@ type ConfigServiceClient interface {
 	// answers from its own process, this reflects the daemon's grant rather than
 	// that of whatever launched the caller.
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
-	// ListKeyboards reports every connected keyboard, whether the trigger key is
-	// remapped on it, and its key mappings, plus the system-wide key mappings.
-	// It reports against the configuration on disk.
+	// ListKeyboards reports every connected keyboard, its trigger, and its key
+	// mappings, plus the system-wide key mappings. It reports against the
+	// configuration on disk.
 	ListKeyboards(ctx context.Context, in *ListKeyboardsRequest, opts ...grpc.CallOption) (*ListKeyboardsResponse, error)
+	// RecordKey returns the next key pressed, read from raw keyboard input, which
+	// needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
+	// a key before any remapping, so a remapped key records as itself. It waits
+	// until the caller's deadline, or 30 seconds.
+	RecordKey(ctx context.Context, in *RecordKeyRequest, opts ...grpc.CallOption) (*RecordKeyResponse, error)
 }
 
 type configServiceClient struct {
@@ -125,6 +131,16 @@ func (c *configServiceClient) ListKeyboards(ctx context.Context, in *ListKeyboar
 	return out, nil
 }
 
+func (c *configServiceClient) RecordKey(ctx context.Context, in *RecordKeyRequest, opts ...grpc.CallOption) (*RecordKeyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordKeyResponse)
+	err := c.cc.Invoke(ctx, ConfigService_RecordKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigServiceServer is the server API for ConfigService service.
 // All implementations must embed UnimplementedConfigServiceServer
 // for forward compatibility.
@@ -149,10 +165,15 @@ type ConfigServiceServer interface {
 	// answers from its own process, this reflects the daemon's grant rather than
 	// that of whatever launched the caller.
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
-	// ListKeyboards reports every connected keyboard, whether the trigger key is
-	// remapped on it, and its key mappings, plus the system-wide key mappings.
-	// It reports against the configuration on disk.
+	// ListKeyboards reports every connected keyboard, its trigger, and its key
+	// mappings, plus the system-wide key mappings. It reports against the
+	// configuration on disk.
 	ListKeyboards(context.Context, *ListKeyboardsRequest) (*ListKeyboardsResponse, error)
+	// RecordKey returns the next key pressed, read from raw keyboard input, which
+	// needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
+	// a key before any remapping, so a remapped key records as itself. It waits
+	// until the caller's deadline, or 30 seconds.
+	RecordKey(context.Context, *RecordKeyRequest) (*RecordKeyResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()
 }
 
@@ -180,6 +201,9 @@ func (UnimplementedConfigServiceServer) GetStatus(context.Context, *GetStatusReq
 }
 func (UnimplementedConfigServiceServer) ListKeyboards(context.Context, *ListKeyboardsRequest) (*ListKeyboardsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListKeyboards not implemented")
+}
+func (UnimplementedConfigServiceServer) RecordKey(context.Context, *RecordKeyRequest) (*RecordKeyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordKey not implemented")
 }
 func (UnimplementedConfigServiceServer) mustEmbedUnimplementedConfigServiceServer() {}
 func (UnimplementedConfigServiceServer) testEmbeddedByValue()                       {}
@@ -310,6 +334,24 @@ func _ConfigService_ListKeyboards_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigService_RecordKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigServiceServer).RecordKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigService_RecordKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigServiceServer).RecordKey(ctx, req.(*RecordKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigService_ServiceDesc is the grpc.ServiceDesc for ConfigService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -340,6 +382,10 @@ var ConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListKeyboards",
 			Handler:    _ConfigService_ListKeyboards_Handler,
+		},
+		{
+			MethodName: "RecordKey",
+			Handler:    _ConfigService_RecordKey_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

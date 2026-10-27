@@ -1,0 +1,3 @@
+kind: Added
+body: The companion records a trigger key straight from the keyboard, through the service, so it tells keys like Print Screen and Insert apart from the keys macOS reports them as, and records a remapped key as itself.
+time: 2026-10-28T10:00:04.000000+02:00

@@ -7,7 +7,7 @@ use std::time::Duration;
 use hyper_util::rt::TokioIo;
 use tokio::net::UnixStream;
 use tonic::transport::{Channel, Endpoint, Uri};
-use tonic::{Code, Status};
+use tonic::{Code, Request, Status};
 use tower::service_fn;
 
 pub mod proto {
@@ -17,7 +17,7 @@ pub mod proto {
 use proto::config_service_client::ConfigServiceClient;
 use proto::{
     ApplyConfigRequest, Config, GetConfigRequest, GetVersionRequest, GetVersionResponse, InputSource,
-    ListInputSourcesRequest, ListKeyboardsRequest, ListKeyboardsResponse,
+    ListInputSourcesRequest, ListKeyboardsRequest, ListKeyboardsResponse, RecordKeyRequest, RecordKeyResponse,
 };
 
 /// Daemon is a client for the daemon's ConfigService. It is cheap to clone.
@@ -78,6 +78,21 @@ impl Daemon {
         Ok(response.into_inner())
     }
 
+    /// record_key returns the next key pressed on the keyboard with
+    /// `keyboard_id`, or on any keyboard when it is empty. The daemon reads it
+    /// from raw input, so it waits until a key is pressed or RECORD_TIMEOUT.
+    pub async fn record_key(&self, keyboard_id: String) -> Result<RecordKeyResponse, String> {
+        let mut request = Request::new(RecordKeyRequest { keyboard_id });
+        request.set_timeout(RECORD_TIMEOUT);
+
+        let response = self.client.clone().record_key(request).await.map_err(|s| match s.code() {
+            Code::DeadlineExceeded => "no key was pressed in time".to_owned(),
+            _ => self.error(s),
+        })?;
+
+        Ok(response.into_inner())
+    }
+
     pub async fn get_version(&self) -> Result<GetVersionResponse, String> {
         let response = self.client.clone().get_version(GetVersionRequest {}).await.map_err(|s| self.error(s))?;
 
@@ -95,6 +110,9 @@ impl Daemon {
     }
 }
 
+/// RECORD_TIMEOUT is how long record_key waits for a key.
+const RECORD_TIMEOUT: Duration = Duration::from_secs(30);
+
 /// default_socket returns the daemon's control socket in the user's home
 /// directory.
 pub fn default_socket() -> PathBuf {
@@ -107,9 +125,6 @@ const GLOBE: &str = "globe";
 
 /// FN is the default trigger mode.
 const FN: &str = "fn";
-
-/// WITHOUT_GLOBE is the default keyboard scope.
-const WITHOUT_GLOBE: &str = "without_globe";
 
 /// fill sets `value` to `default` when it is empty.
 fn fill(value: &mut String, default: &str) {
@@ -129,7 +144,6 @@ fn complete(mut config: Config) -> Config {
     let trigger = config.trigger.get_or_insert_default();
     fill(&mut trigger.key, GLOBE);
     fill(&mut trigger.mode, FN);
-    fill(&mut trigger.keyboards.get_or_insert_default().apply_to, WITHOUT_GLOBE);
 
     config
 }
@@ -138,7 +152,7 @@ fn complete(mut config: Config) -> Config {
 mod tests {
     use serde_json::json;
 
-    use super::proto::{KeyMapping, Keyboard, Keyboards, Trigger};
+    use super::proto::{KeyMapping, Keyboard, KeyboardTrigger, Trigger};
     use super::*;
 
     #[test]
@@ -156,7 +170,7 @@ mod tests {
                 "trigger": {
                     "key": "globe",
                     "mode": "fn",
-                    "keyboards": { "applyTo": "without_globe", "overrides": {} },
+                    "keyboards": {},
                 },
             }),
         );
@@ -173,7 +187,7 @@ mod tests {
             "trigger": {
                 "key": "right_command",
                 "mode": "pass_through",
-                "keyboards": { "applyTo": "all", "overrides": { "046d:c33f": false } },
+                "keyboards": { "046d:c33f": { "key": "insert", "mode": "pass_through" } },
             },
         }))
         .unwrap();
@@ -187,9 +201,8 @@ mod tests {
         assert_eq!(trigger.key, "right_command");
         assert_eq!(trigger.mode, "pass_through");
 
-        let keyboards = trigger.keyboards.unwrap();
-        assert_eq!(keyboards.apply_to, "all");
-        assert_eq!(keyboards.overrides.get("046d:c33f"), Some(&false));
+        let logitech = &trigger.keyboards["046d:c33f"];
+        assert_eq!((logitech.key.as_str(), logitech.mode.as_str()), ("insert", "pass_through"));
     }
 
     #[test]
@@ -198,7 +211,11 @@ mod tests {
             trigger: Some(Trigger {
                 key: "f13".to_owned(),
                 mode: "dedicated".to_owned(),
-                keyboards: Some(Keyboards { apply_to: "all".to_owned(), ..Keyboards::default() }),
+                keyboards: [(
+                    "046d:c33f".to_owned(),
+                    KeyboardTrigger { key: "insert".to_owned(), mode: "pass_through".to_owned() },
+                )]
+                .into(),
             }),
             ..Config::default()
         });
@@ -206,7 +223,7 @@ mod tests {
         let trigger = config.trigger.unwrap();
         assert_eq!(trigger.key, "f13");
         assert_eq!(trigger.mode, "dedicated");
-        assert_eq!(trigger.keyboards.unwrap().apply_to, "all");
+        assert_eq!(trigger.keyboards["046d:c33f"].key, "insert");
     }
 
     #[test]
@@ -214,7 +231,8 @@ mod tests {
         let response = ListKeyboardsResponse {
             keyboards: vec![Keyboard {
                 id: "046d:c33f".to_owned(),
-                in_scope: true,
+                trigger: Some(KeyboardTrigger { key: "caps_lock".to_owned(), mode: "fn".to_owned() }),
+                listed: true,
                 trigger_mapping: Some(KeyMapping {
                     src: 0x7_0000_0039,
                     dst: 0xFF_0000_0003,
@@ -227,7 +245,8 @@ mod tests {
         };
 
         let value = serde_json::to_value(response).unwrap();
-        assert_eq!(value["keyboards"][0]["inScope"], json!(true));
+        assert_eq!(value["keyboards"][0]["trigger"], json!({ "key": "caps_lock", "mode": "fn" }));
+        assert_eq!(value["keyboards"][0]["listed"], json!(true));
         assert_eq!(value["keyboards"][0]["triggerMapping"]["srcName"], json!("Caps Lock"));
         assert_eq!(value["keyboards"][0]["otherMappings"], json!([]));
         assert_eq!(value["systemMappings"], json!([]));

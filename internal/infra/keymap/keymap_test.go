@@ -90,15 +90,27 @@ func newStore(mappings ...Mapping) *fakeStore {
 	}}
 }
 
-func caps(mode string, keyboards config.Keyboards) config.Trigger {
-	if keyboards.ApplyTo == "" {
-		keyboards.ApplyTo = config.KeyboardsWithoutGlobe
-	}
+// IDs of the store's keyboards.
+const (
+	builtInID  = "05ac:0281"
+	magicID    = "004c:029c"
+	logitechID = "046d:c33f"
+)
 
-	return config.Trigger{Key: config.TriggerCapsLock, Mode: mode, Keyboards: keyboards}
+func caps(mode string) config.KeyboardTrigger {
+	return config.KeyboardTrigger{Key: config.TriggerCapsLock, Mode: mode}
 }
 
-var capsGlobe = caps(config.TriggerModeFn, config.Keyboards{})
+// everywhere makes trigger the trigger of every keyboard in the store.
+func everywhere(trigger config.KeyboardTrigger) config.Trigger {
+	return config.Trigger{
+		Default:   trigger,
+		Keyboards: map[string]config.KeyboardTrigger{builtInID: trigger, magicID: trigger},
+	}
+}
+
+// capsGlobe remaps Caps Lock to fn on keyboards without a Globe key.
+var capsGlobe = config.Trigger{Default: caps(config.TriggerModeFn)}
 
 func newRemapper(t *testing.T, store *fakeStore) (*Remapper, string) {
 	t.Helper()
@@ -149,6 +161,22 @@ func TestUsagesCoverRemappableTriggerKeys(t *testing.T) {
 	}
 }
 
+func TestTriggerKeyFor(t *testing.T) {
+	for key, usage := range Usages {
+		if got, ok := TriggerKeyFor(usage); !ok || got != key {
+			t.Errorf("TriggerKeyFor(%#x) = %q, %v; want %q", usage, got, ok, key)
+		}
+	}
+
+	if got, ok := TriggerKeyFor(GlobeUsage); !ok || got != config.TriggerGlobe {
+		t.Errorf("TriggerKeyFor(Globe) = %q, %v", got, ok)
+	}
+
+	if _, ok := TriggerKeyFor(keyboardPage | 0x04); ok {
+		t.Error("A is a trigger key")
+	}
+}
+
 func TestDedicatedUsageIsNoTriggerKey(t *testing.T) {
 	for key, usage := range Usages {
 		if usage == DedicatedUsage {
@@ -157,27 +185,33 @@ func TestDedicatedUsageIsNoTriggerKey(t *testing.T) {
 	}
 }
 
-func TestObserveReportsAppliedMappings(t *testing.T) {
+func TestObserveReportsResolvedTriggers(t *testing.T) {
 	store := newStore()
 	remapper, _ := newRemapper(t, store)
 
-	var got []Applied
+	var got []Resolved
 
-	remapper.Observe(func(applied []Applied) { got = applied })
+	remapper.Observe(func(resolved []Resolved) { got = resolved })
 
-	apply(t, remapper, caps(config.TriggerModeDedicated, config.Keyboards{}))
+	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
+	apply(t, remapper, config.Trigger{
+		Default:   caps(config.TriggerModeDedicated),
+		Keyboards: map[string]config.KeyboardTrigger{magicID: insert},
+	})
 
-	silenced := Mapping{Src: capsLock, Dst: DedicatedUsage}
-
-	want := []Applied{{Vendor: 0x046d, Product: 0xc33f, Location: 3, Mapping: silenced}}
+	want := []Resolved{
+		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, HasGlobe: true, Trigger: config.GlobeTrigger},
+		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, HasGlobe: true, Trigger: insert},
+		{Vendor: 0x046d, Product: 0xc33f, Location: 3, Trigger: caps(config.TriggerModeDedicated), Applied: true},
+	}
 	if !slices.Equal(got, want) {
-		t.Errorf("applied = %+v, want %+v", got, want)
+		t.Errorf("resolved = %+v, want %+v", got, want)
 	}
 
 	restore(t, remapper)
 
-	if len(got) != 0 {
-		t.Errorf("applied after restore = %+v, want none", got)
+	if got != nil {
+		t.Errorf("resolved after restore = %+v, want none", got)
 	}
 }
 
@@ -208,23 +242,33 @@ func TestApplyRemapsKeyboardsWithoutGlobe(t *testing.T) {
 	assertNoState(t, path)
 }
 
-func TestApplyScopes(t *testing.T) {
+func TestApplyPerKeyboard(t *testing.T) {
+	capsToF24 := Mapping{Src: capsLock, Dst: DedicatedUsage}
+	commandToFn := Mapping{Src: rightCommand, Dst: GlobeUsage}
+
 	tests := []struct {
-		name      string
-		keyboards config.Keyboards
-		remapped  []uint64
+		name    string
+		trigger config.Trigger
+		want    map[uint64][]Mapping
 	}{
-		{"all", config.Keyboards{ApplyTo: config.KeyboardsAll}, []uint64{1, 2, 3}},
-		{
-			"apple keyboard included",
-			config.Keyboards{Overrides: map[string]bool{"004c:029c": true}},
-			[]uint64{2, 3},
-		},
-		{
-			"third-party keyboard excluded",
-			config.Keyboards{ApplyTo: config.KeyboardsAll, Overrides: map[string]bool{"046d:c33f": false}},
-			[]uint64{1, 2},
-		},
+		{"every keyboard", everywhere(caps(config.TriggerModeFn)), map[uint64][]Mapping{
+			1: {capsToGlobe}, 2: {capsToGlobe}, 3: {capsToGlobe},
+		}},
+		{"apple keyboard listed", config.Trigger{
+			Default:   caps(config.TriggerModeFn),
+			Keyboards: map[string]config.KeyboardTrigger{magicID: caps(config.TriggerModeFn)},
+		}, map[uint64][]Mapping{2: {capsToGlobe}, 3: {capsToGlobe}}},
+		{"third-party keyboard listed as Globe", config.Trigger{
+			Default:   caps(config.TriggerModeFn),
+			Keyboards: map[string]config.KeyboardTrigger{logitechID: config.GlobeTrigger},
+		}, map[uint64][]Mapping{}},
+		{"a key and mode per keyboard", config.Trigger{
+			Default: config.GlobeTrigger,
+			Keyboards: map[string]config.KeyboardTrigger{
+				magicID:    {Key: "right_command", Mode: config.TriggerModeFn},
+				logitechID: caps(config.TriggerModeDedicated),
+			},
+		}, map[uint64][]Mapping{2: {commandToFn}, 3: {capsToF24}}},
 	}
 
 	for _, test := range tests {
@@ -232,15 +276,10 @@ func TestApplyScopes(t *testing.T) {
 			store := newStore()
 			remapper, _ := newRemapper(t, store)
 
-			apply(t, remapper, caps(config.TriggerModeFn, test.keyboards))
+			apply(t, remapper, test.trigger)
 
 			for _, keyboard := range store.keyboards {
-				want := []Mapping(nil)
-				if slices.Contains(test.remapped, keyboard.ID) {
-					want = []Mapping{capsToGlobe}
-				}
-
-				assertMappings(t, store, keyboard.ID, want...)
+				assertMappings(t, store, keyboard.ID, test.want[keyboard.ID]...)
 			}
 		})
 	}
@@ -250,7 +289,7 @@ func TestApplyDedicatedMapsToDedicatedKey(t *testing.T) {
 	store := newStore()
 	remapper, _ := newRemapper(t, store)
 
-	apply(t, remapper, caps(config.TriggerModeDedicated, config.Keyboards{ApplyTo: config.KeyboardsAll}))
+	apply(t, remapper, everywhere(caps(config.TriggerModeDedicated)))
 
 	for _, keyboard := range store.keyboards {
 		assertMappings(t, store, keyboard.ID, Mapping{Src: capsLock, Dst: DedicatedUsage})
@@ -346,20 +385,21 @@ func TestApplySwitchesKeys(t *testing.T) {
 	remapper, _ := newRemapper(t, store)
 
 	apply(t, remapper, capsGlobe)
-	apply(t, remapper, config.Trigger{
-		Key:       "right_command",
-		Mode:      config.TriggerModeFn,
-		Keyboards: config.Keyboards{ApplyTo: config.KeyboardsWithoutGlobe},
-	})
+
+	rightCommandFn := config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeFn}
+	apply(t, remapper, config.Trigger{Default: rightCommandFn})
 
 	assertMappings(t, store, 3, userMapping, Mapping{Src: rightCommand, Dst: GlobeUsage})
 }
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
 	for name, trigger := range map[string]config.Trigger{
-		"globe":        {Key: config.TriggerGlobe, Mode: config.TriggerModeFn},
-		"pass-through": {Key: "right_command", Mode: config.TriggerModePassThrough},
-		"out of scope": caps(config.TriggerModeFn, config.Keyboards{Overrides: map[string]bool{"046d:c33f": false}}),
+		"globe":        {Default: config.GlobeTrigger},
+		"pass-through": {Default: config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModePassThrough}},
+		"listed as Globe": {
+			Default:   caps(config.TriggerModeFn),
+			Keyboards: map[string]config.KeyboardTrigger{logitechID: config.GlobeTrigger},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := newStore(userMapping)
@@ -455,7 +495,7 @@ func TestApplyErrors(t *testing.T) {
 		store.writeErr = map[uint64]error{3: boom}
 		remapper, path := newRemapper(t, store)
 
-		all := caps(config.TriggerModeFn, config.Keyboards{ApplyTo: config.KeyboardsAll})
+		all := everywhere(caps(config.TriggerModeFn))
 		if err := remapper.Apply(all); !errors.Is(err, boom) {
 			t.Errorf("err = %v, want %v", err, boom)
 		}
@@ -471,13 +511,6 @@ func TestApplyErrors(t *testing.T) {
 		restore(t, remapper)
 		assertMappings(t, store, 1)
 		assertNoState(t, path)
-	})
-
-	t.Run("unknown key", func(t *testing.T) {
-		remapper, _ := newRemapper(t, newStore())
-		if err := remapper.Apply(config.Trigger{Key: "fn", Mode: config.TriggerModeFn}); err == nil {
-			t.Error("Apply accepted an unknown key")
-		}
 	})
 
 	t.Run("corrupt state", func(t *testing.T) {
@@ -553,7 +586,8 @@ func TestKeyboards(t *testing.T) {
 	}
 
 	logitech := statuses[2]
-	if !logitech.InScope || logitech.Ours == nil || *logitech.Ours != capsToGlobe {
+	if logitech.Trigger != caps(config.TriggerModeFn) || logitech.Listed || logitech.Ours == nil ||
+		*logitech.Ours != capsToGlobe {
 		t.Errorf("logitech = %+v, want our caps lock mapping", logitech)
 	}
 
@@ -561,7 +595,7 @@ func TestKeyboards(t *testing.T) {
 		t.Errorf("logitech = %+v, want the user's mapping once", logitech)
 	}
 
-	if statuses[0].InScope || statuses[0].Ours != nil {
+	if statuses[0].Trigger != config.GlobeTrigger || statuses[0].Ours != nil {
 		t.Errorf("built-in = %+v, want out of scope", statuses[0])
 	}
 

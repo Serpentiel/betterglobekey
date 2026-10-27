@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
+	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
+	"github.com/Serpentiel/betterglobekey/internal/infra/control"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
@@ -47,25 +50,79 @@ func logRawInput(logger *logging.Logger) func(keyboard.RawInputState, int32) {
 	}
 }
 
-// watchDedicatedKeys points the event tap's raw input at the keys the remapper
-// silenced for a dedicated trigger.
-func watchDedicatedKeys(applied []keymap.Applied) {
-	keys := make([]keyboard.DedicatedKey, 0, len(applied))
+// watchTriggers points the event tap at every connected keyboard's trigger:
+// the Globe key while any keyboard switches with it (its own, or a key
+// remapped to fn), and raw input for dedicated and passed-through keys.
+func watchTriggers(resolved []keymap.Resolved) {
+	globe := len(resolved) == 0
+	keys := make([]keyboard.RawKey, 0, len(resolved))
 
-	for _, a := range applied {
-		if a.Mapping.Dst != keymap.DedicatedUsage {
-			continue
+	for _, r := range resolved {
+		trigger := r.Trigger
+
+		switch {
+		case trigger.Globe():
+			globe = globe || r.HasGlobe
+		case trigger.Fn():
+			globe = globe || r.Applied
+		case trigger.PassThrough() || (trigger.Dedicated() && r.Applied):
+			keys = append(keys, keyboard.RawKey{
+				Vendor:   r.Vendor,
+				Product:  r.Product,
+				Location: r.Location,
+				Usage:    keymap.KeyUsage(keymap.Usages[trigger.Key]),
+				Key:      trigger.Key,
+			})
 		}
-
-		keys = append(keys, keyboard.DedicatedKey{
-			Vendor:   a.Vendor,
-			Product:  a.Product,
-			Location: a.Location,
-			Usage:    keymap.KeyUsage(a.Mapping.Src),
-		})
 	}
 
-	keyboard.SetDedicatedKeys(keys)
+	keyboard.SetGlobe(globe)
+	keyboard.SetRawKeys(keys)
+}
+
+// readsRawInput reports whether any trigger is read from raw input, which needs
+// Input Monitoring.
+func readsRawInput(trigger domainconfig.Trigger) bool {
+	if trigger.Default.Raw() {
+		return true
+	}
+
+	for _, keyboard := range trigger.Keyboards {
+		if keyboard.Raw() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// keyboardsPort adapts the remapper and raw key recording to the control
+// server's Keyboards port.
+type keyboardsPort struct {
+	remapper *keymap.Remapper
+}
+
+func (p keyboardsPort) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error) {
+	return p.remapper.Keyboards(trigger)
+}
+
+func (keyboardsPort) Record(ctx context.Context, keyboardID string) (control.RecordedKey, error) {
+	key, err := keyboard.Record(ctx, func(key keyboard.RecordedKey) bool {
+		return keyboardID == "" || domainconfig.KeyboardID(key.Vendor, key.Product) == keyboardID
+	})
+
+	var rawErr *keyboard.RawInputError
+	if errors.As(err, &rawErr) {
+		code := uint32(rawErr.Status) //nolint:gosec // an IOReturn, reinterpreted as unsigned
+
+		return control.RecordedKey{}, fmt.Errorf("%w (%#x)", control.ErrRawInput, code)
+	}
+
+	if err != nil {
+		return control.RecordedKey{}, err
+	}
+
+	return control.RecordedKey{KeyboardID: domainconfig.KeyboardID(key.Vendor, key.Product), Usage: key.Usage}, nil
 }
 
 // hidStore adapts pkg/hidkeymap to the remapper's Store port.

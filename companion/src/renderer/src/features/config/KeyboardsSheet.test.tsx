@@ -2,9 +2,11 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { Config, Keyboard, KeyboardReport } from '../../../../shared/types'
+import type { Config, Keyboard, KeyboardReport, KeyboardTrigger } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
 import { KeyboardsSheet } from './KeyboardsSheet'
+
+vi.mock('../../lib/api', () => ({ api: {} }))
 
 const config: Config = {
   logger: { path: '/tmp/betterglobekey.log', level: 'info', retentionDays: 7, retentionFiles: 3 },
@@ -12,9 +14,11 @@ const config: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'caps_lock', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'caps_lock', mode: 'fn', keyboards: {} },
 }
 
+const globe: KeyboardTrigger = { key: 'globe', mode: 'fn' }
+const capsFn: KeyboardTrigger = { key: 'caps_lock', mode: 'fn' }
 const capsToFn = { src: 0x700000039, dst: 0xff00000003, srcName: 'Caps Lock', dstName: 'fn' }
 const graveToEscape = { src: 0x700000035, dst: 0x700000029, srcName: 'Grave Accent', dstName: 'Escape' }
 
@@ -24,7 +28,8 @@ const builtIn: Keyboard = {
   transport: 'SPI',
   builtIn: true,
   hasGlobe: true,
-  inScope: false,
+  trigger: globe,
+  listed: false,
   triggerMapping: null,
   otherMappings: [],
 }
@@ -35,42 +40,115 @@ const logitech: Keyboard = {
   transport: 'USB',
   builtIn: false,
   hasGlobe: false,
-  inScope: true,
+  trigger: capsFn,
+  listed: false,
   triggerMapping: capsToFn,
   otherMappings: [graveToEscape],
 }
 
 const report: KeyboardReport = { keyboards: [builtIn, logitech], systemMappings: [graveToEscape] }
 
-function renderSheet(overrides: Partial<Config['trigger']> = {}, state: KeyboardsState = { report, error: null }) {
+function renderSheet(trigger: Partial<Config['trigger']> = {}, state: KeyboardsState = { report, error: null }) {
   const onChange = vi.fn()
   const onClose = vi.fn()
-  const trigger = { ...config.trigger, ...overrides }
+  const merged = { ...config.trigger, ...trigger }
 
   render(
-    <KeyboardsSheet open config={{ ...config, trigger }} keyboards={state} onChange={onChange} onClose={onClose} />,
+    <KeyboardsSheet
+      open
+      config={{ ...config, trigger: merged }}
+      keyboards={state}
+      onChange={onChange}
+      onClose={onClose}
+    />,
   )
 
-  return { onChange, onClose, trigger }
+  return { onChange, onClose, trigger: merged }
 }
 
-const toggle = (name: string): HTMLButtonElement =>
-  screen.getByRole('switch', { name: `Remap Caps Lock on ${name}` }) as HTMLButtonElement
+function chooseKeyboard(name: string): void {
+  fireEvent.click(screen.getByRole('combobox', { name: 'Select keyboard' }))
+  fireEvent.click(screen.getByRole('option', { name }))
+}
 
 afterEach(cleanup)
 
 describe('KeyboardsSheet', () => {
-  it('lists keyboards with where the key is remapped', () => {
+  it('shows the first keyboard using the Globe key by default', () => {
     renderSheet()
 
     expect(screen.getByRole('dialog', { name: 'Keyboards' })).toBeTruthy()
     expect(screen.getByText('Built-in · 05ac:0281 · has Globe key')).toBeTruthy()
-    expect(screen.getByText('USB · 046d:c33f')).toBeTruthy()
-    expect(screen.getByText('Caps Lock → fn')).toBeTruthy()
-    expect(screen.getByText('Caps Lock unchanged')).toBeTruthy()
+    expect(screen.getByText('🌐 Globe')).toBeTruthy()
+    expect(screen.getByText('Uses the default: the Globe key.')).toBeTruthy()
+    expect((screen.getByRole('combobox', { name: 'Trigger mode' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Use Default' })).toBeNull()
+  })
 
-    expect(toggle('Apple Internal Keyboard').getAttribute('aria-checked')).toBe('false')
-    expect(toggle('Logitech K120').getAttribute('aria-checked')).toBe('true')
+  it('shows another keyboard with its applied mapping', () => {
+    renderSheet()
+
+    chooseKeyboard('Logitech K120')
+
+    expect(screen.getByText('USB · 046d:c33f')).toBeTruthy()
+    expect(screen.getByText('⇪ Caps Lock')).toBeTruthy()
+    expect(screen.getByText('Uses the default: Caps Lock, act as fn.')).toBeTruthy()
+    expect(screen.getByText('Caps Lock → fn.')).toBeTruthy()
+  })
+
+  it('sets a keyboard its own mode', () => {
+    const { onChange, trigger } = renderSheet()
+
+    chooseKeyboard('Logitech K120')
+    fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Only this key switches' }))
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...config,
+      trigger: { ...trigger, keyboards: { '046d:c33f': { key: 'caps_lock', mode: 'dedicated' } } },
+    })
+  })
+
+  it('puts a listed keyboard back on the default', () => {
+    const insert = { key: 'insert', mode: 'pass_through' }
+    const { onChange, trigger } = renderSheet({ keyboards: { '05ac:0281': insert } })
+
+    expect(screen.getByText('Insert')).toBeTruthy()
+    expect(screen.getByText('Set for this keyboard.')).toBeTruthy()
+    expect(screen.getByText('Applies once saved.')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use Default' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
+  it('notes that the Globe key still switches while another keyboard switches with it', () => {
+    renderSheet({ keyboards: { '05ac:0281': { key: 'caps_lock', mode: 'dedicated' } } })
+
+    expect(screen.getByText(/The Globe key still switches here/)).toBeTruthy()
+  })
+
+  it('shows a silenced key', () => {
+    const silenced = {
+      ...logitech,
+      trigger: { key: 'caps_lock', mode: 'dedicated' },
+      triggerMapping: { ...capsToFn, dst: 0x700000073, dstName: 'F24' },
+    }
+    renderSheet(
+      { keyboards: { '046d:c33f': { key: 'caps_lock', mode: 'dedicated' } } },
+      { report: { keyboards: [silenced], systemMappings: [] }, error: null },
+    )
+
+    expect(screen.getByText('Caps Lock silenced.')).toBeTruthy()
+  })
+
+  it('lists and forgets keyboards set here that are not connected', () => {
+    const { onChange, trigger } = renderSheet({ keyboards: { '1234:5678': { key: 'insert', mode: 'fn' } } })
+
+    chooseKeyboard('1234:5678 (not connected)')
+    expect(screen.getByText('Insert, act as fn')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
   it('shows other tools’ mappings behind a disclosure', () => {
@@ -81,91 +159,6 @@ describe('KeyboardsSheet', () => {
     expect(screen.getByText('Every keyboard')).toBeTruthy()
   })
 
-  it('includes an Apple keyboard with an override', () => {
-    const { onChange, trigger } = renderSheet()
-
-    fireEvent.click(toggle('Apple Internal Keyboard'))
-
-    expect(onChange).toHaveBeenCalledWith({
-      ...config,
-      trigger: { ...trigger, keyboards: { applyTo: 'without_globe', overrides: { '05ac:0281': true } } },
-    })
-  })
-
-  it('drops an override that matches the default, and resets one', () => {
-    const { onChange, trigger } = renderSheet({
-      keyboards: { applyTo: 'without_globe', overrides: { '046d:c33f': false } },
-    })
-
-    expect(screen.getByText('Caps Lock → fn, undone once saved')).toBeTruthy()
-
-    fireEvent.click(toggle('Logitech K120'))
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
-
-    const reset = { ...config, trigger: { ...trigger, keyboards: { applyTo: 'without_globe', overrides: {} } } }
-    expect(onChange).toHaveBeenNthCalledWith(1, reset)
-    expect(onChange).toHaveBeenNthCalledWith(2, reset)
-  })
-
-  it('sets the default for other keyboards', () => {
-    const { onChange, trigger } = renderSheet()
-
-    fireEvent.click(screen.getByRole('combobox'))
-    fireEvent.click(screen.getByRole('option', { name: 'Always remap' }))
-
-    expect(onChange).toHaveBeenCalledWith({
-      ...config,
-      trigger: { ...trigger, keyboards: { applyTo: 'all', overrides: {} } },
-    })
-  })
-
-  it('shows a mapping still to apply', () => {
-    renderSheet({ mode: 'dedicated', keyboards: { applyTo: 'all', overrides: {} } })
-
-    expect(screen.getByText('Caps Lock silenced once saved')).toBeTruthy()
-  })
-
-  it('shows a silenced key', () => {
-    const silenced = { ...logitech, triggerMapping: { ...capsToFn, dst: 0x700000073, dstName: 'F24' } }
-    renderSheet({ mode: 'dedicated' }, { report: { keyboards: [builtIn, silenced], systemMappings: [] }, error: null })
-
-    expect(screen.getByText('Caps Lock silenced')).toBeTruthy()
-  })
-
-  it('warns when a dedicated trigger reaches no keyboard', () => {
-    renderSheet(
-      { mode: 'dedicated', keyboards: { applyTo: 'without_globe', overrides: {} } },
-      { report: { keyboards: [builtIn], systemMappings: [] }, error: null },
-    )
-
-    expect(screen.getByText(/No connected keyboard remaps the trigger key/)).toBeTruthy()
-  })
-
-  it('lists and forgets overrides of disconnected keyboards', () => {
-    const { onChange, trigger } = renderSheet({
-      keyboards: { applyTo: 'without_globe', overrides: { '1234:5678': true } },
-    })
-
-    expect(screen.getByText('Not connected')).toBeTruthy()
-    expect(screen.getByText('Always remapped')).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
-
-    expect(onChange).toHaveBeenCalledWith({
-      ...config,
-      trigger: { ...trigger, keyboards: { applyTo: 'without_globe', overrides: {} } },
-    })
-  })
-
-  it('disables the controls when the key is not remapped', () => {
-    renderSheet({ key: 'right_command', mode: 'pass_through' })
-
-    expect(
-      (screen.getByRole('switch', { name: 'Remap Right Command on Logitech K120' }) as HTMLButtonElement).disabled,
-    ).toBe(true)
-    expect((screen.getByRole('combobox') as HTMLButtonElement).disabled).toBe(true)
-  })
-
   it('shows a report error and closes with Done', () => {
     const { onClose } = renderSheet({}, { report: null, error: 'unknown method ListKeyboards' })
 
@@ -173,5 +166,11 @@ describe('KeyboardsSheet', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('says when no keyboard is connected', () => {
+    renderSheet({}, { report: { keyboards: [], systemMappings: [] }, error: null })
+
+    expect(screen.getByText('No keyboards connected.')).toBeTruthy()
   })
 })

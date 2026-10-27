@@ -24,16 +24,15 @@ export interface Hud {
   showCollection: boolean
 }
 
-export interface Keyboards {
-  applyTo: string
-  /** overrides include (true) or exclude (false) keyboards by vendor:product ID. */
-  overrides: Record<string, boolean>
-}
-
-export interface Trigger {
+export interface KeyboardTrigger {
   key: string
   mode: string
-  keyboards: Keyboards
+}
+
+/** Trigger is the default trigger of keyboards without a Globe key, plus the
+ * triggers of single keyboards by vendor:product ID. */
+export interface Trigger extends KeyboardTrigger {
+  keyboards: Record<string, KeyboardTrigger>
 }
 
 export interface Collection {
@@ -68,7 +67,9 @@ export interface Keyboard {
   transport: string
   builtIn: boolean
   hasGlobe: boolean
-  inScope: boolean
+  /** trigger is the keyboard's trigger, and listed whether it is set for the keyboard rather than a default. */
+  trigger: KeyboardTrigger
+  listed: boolean
   /** triggerMapping is the daemon's own mapping, or absent when it has none. */
   triggerMapping?: KeyMapping | null
   otherMappings: KeyMapping[]
@@ -77,6 +78,13 @@ export interface Keyboard {
 export interface KeyboardReport {
   keyboards: Keyboard[]
   systemMappings: KeyMapping[]
+}
+
+export interface RecordedKey {
+  /** key is the trigger key pressed, or empty when the key cannot be a trigger. */
+  key: string
+  keyName: string
+  keyboardId: string
 }
 
 export interface Version {
@@ -91,6 +99,7 @@ export interface Api {
   applyConfig: (config: Config) => Promise<void>
   listInputSources: () => Promise<InputSource[]>
   listKeyboards: () => Promise<KeyboardReport>
+  recordKey: (keyboardId: string) => Promise<RecordedKey>
   getVersion: () => Promise<Version>
   getCompanionVersion: () => Promise<string>
 }

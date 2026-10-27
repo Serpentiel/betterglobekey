@@ -7,13 +7,15 @@ import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
 import { TriggerSection } from './TriggerSection'
 
+vi.mock('../../lib/api', () => ({ api: {} }))
+
 const config: Config = {
   logger: { path: '/tmp/betterglobekey.log', level: 'info', retentionDays: 7, retentionFiles: 3 },
   doublePress: { enabled: true, maximumDelay: '250ms' },
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'caps_lock', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'caps_lock', mode: 'fn', keyboards: {} },
 }
 
 const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
@@ -24,7 +26,8 @@ const keyboard = (id: string, hasGlobe: boolean): Keyboard => ({
   transport: 'USB',
   builtIn: false,
   hasGlobe,
-  inScope: false,
+  trigger: { key: 'globe', mode: 'fn' },
+  listed: false,
   triggerMapping: null,
   otherMappings: [],
 })
@@ -35,23 +38,28 @@ const twoKeyboards: KeyboardsState = {
 }
 
 function renderSection(trigger: Partial<Config['trigger']> = {}, keyboards: KeyboardsState = twoKeyboards) {
+  const onChange = vi.fn()
+  const merged = { ...config.trigger, ...trigger }
+
   render(
     <TriggerSection
-      config={{ ...config, trigger: { ...config.trigger, ...trigger } }}
+      config={{ ...config, trigger: merged }}
       errors={noErrors}
       keyboards={keyboards}
-      onChange={vi.fn()}
+      onChange={onChange}
     />,
   )
+
+  return { onChange, trigger: merged }
 }
 
 afterEach(cleanup)
 
 describe('TriggerSection', () => {
-  it('summarizes where the key is remapped and opens the sheet', () => {
-    renderSection()
+  it('summarizes the keyboards and opens the sheet', () => {
+    renderSection({ keyboards: { '046d:c33f': { key: 'insert', mode: 'pass_through' } } })
 
-    expect(screen.getByText('Remapped on 1 of 2 keyboards.')).toBeTruthy()
+    expect(screen.getByText('2 keyboards connected; 1 set their own trigger key.')).toBeTruthy()
     expect(screen.queryByRole('dialog')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Keyboards…' }))
@@ -61,16 +69,21 @@ describe('TriggerSection', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('warns in the summary when a dedicated trigger reaches no keyboard', () => {
-    renderSection({ mode: 'dedicated', keyboards: { applyTo: 'without_globe', overrides: { '046d:c33f': false } } })
+  it('sets the default mode', () => {
+    const { onChange, trigger } = renderSection()
 
-    expect(screen.getByText('Not remapped on any keyboard (2 connected), so nothing switches.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Only this key switches' }))
+
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, mode: 'dedicated' } })
   })
 
-  it('counts keyboards when the key is not remapped', () => {
-    renderSection({ key: 'globe' })
+  it('falls back to fn mode for a key that cannot keep its mode', () => {
+    const { onChange, trigger } = renderSection({ key: 'insert', mode: 'pass_through' })
 
-    expect(screen.getByText('2 keyboards connected.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
+
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, key: 'globe', mode: 'fn' } })
   })
 
   it('reports loading and errors', () => {
@@ -81,5 +94,11 @@ describe('TriggerSection', () => {
 
     renderSection({}, { report: null, error: 'daemon gone' })
     expect(screen.getByText('Unavailable: daemon gone')).toBeTruthy()
+  })
+
+  it('counts a single keyboard', () => {
+    renderSection({}, { report: { keyboards: [keyboard('046d:c33f', false)], systemMappings: [] }, error: null })
+
+    expect(screen.getByText('1 keyboard connected.')).toBeTruthy()
   })
 })

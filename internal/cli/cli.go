@@ -187,7 +187,7 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 
 	root := cmd.Root()
 	if err = startControlServer(
-		ctx, path, controller, remapper, logger, root.Version, root.Annotations["commit"],
+		ctx, path, controller, keyboardsPort{remapper}, logger, root.Version, root.Annotations["commit"],
 	); err != nil {
 		return err
 	}
@@ -215,20 +215,19 @@ func newSwitcherBuilder(
 	remapper *keymap.Remapper,
 	logger *logging.Logger,
 ) func(domainconfig.Config) *switcher.Switcher {
-	remapper.Observe(watchDedicatedKeys)
+	remapper.Observe(watchTriggers)
 	keyboard.OnRawInput(logRawInput(logger))
 
 	return func(c domainconfig.Config) *switcher.Switcher {
 		keyboard.SetReverseModifier(c.Reverse.Modifier)
-		keyboard.SetTrigger(c.Trigger)
 
-		if c.Trigger.Dedicated() && !inputmonitoring.Granted() {
-			logger.Error("input monitoring permission not granted; the dedicated trigger key is ignored until it " +
-				"is enabled in System Settings > Privacy & Security > Input Monitoring")
+		if readsRawInput(c.Trigger) && !inputmonitoring.Granted() {
+			logger.Error("input monitoring permission not granted; dedicated and passed-through trigger keys are " +
+				"ignored until it is enabled in System Settings > Privacy & Security > Input Monitoring")
 		}
 
 		if err := remapper.Apply(c.Trigger); err != nil {
-			logger.Error("remapping the trigger key failed", "key", c.Trigger.Key, "error", err)
+			logger.Error("remapping the trigger keys failed", "error", err)
 		}
 
 		hud.SetDuration(c.HUD.Duration)
@@ -368,31 +367,29 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// triggerStatus describes how the trigger key is detected.
+// triggerStatus describes the default trigger and how many keyboards set their own.
 func triggerStatus(trigger domainconfig.Trigger) string {
-	if trigger.Key == domainconfig.TriggerGlobe {
-		return trigger.Key
+	status := describeTrigger(trigger.Default) + " on keyboards without a Globe key"
+
+	if listed := len(trigger.Keyboards); listed > 0 {
+		status += fmt.Sprintf("; %d keyboard(s) set their own", listed)
 	}
 
-	if trigger.PassThrough() {
-		return trigger.Key + " (passed through)"
-	}
+	return status
+}
 
-	scope := "keyboards without a Globe key"
-	if trigger.Keyboards.ApplyTo == domainconfig.KeyboardsAll {
-		scope = "all keyboards"
+// describeTrigger renders a keyboard trigger: its key and how it is detected.
+func describeTrigger(trigger domainconfig.KeyboardTrigger) string {
+	switch {
+	case trigger.Globe():
+		return "Globe key"
+	case trigger.Fn():
+		return trigger.Key + " (remapped to fn)"
+	case trigger.Dedicated():
+		return trigger.Key + " (silenced, read directly)"
+	default:
+		return trigger.Key + " (passed through, read directly)"
 	}
-
-	if overrides := len(trigger.Keyboards.Overrides); overrides > 0 {
-		scope += fmt.Sprintf(", %d override(s)", overrides)
-	}
-
-	if trigger.Dedicated() {
-		return fmt.Sprintf("%s (silenced on %s and watched directly while the daemon runs; "+
-			"the Globe key does not switch)", trigger.Key, scope)
-	}
-
-	return fmt.Sprintf("%s (remapped to fn on %s while the daemon runs)", trigger.Key, scope)
 }
 
 // reportKeyboards lists the connected keyboards and their key mappings.
@@ -404,7 +401,7 @@ func reportKeyboards(out io.Writer, trigger domainconfig.Trigger) {
 		return
 	}
 
-	for _, line := range keyboardLines(trigger, statuses, systemWide) {
+	for _, line := range keyboardLines(statuses, systemWide) {
 		fmt.Fprintln(out, line)
 	}
 }
@@ -420,16 +417,11 @@ func listKeyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapp
 }
 
 // keyboardLines renders the doctor's keyboard report.
-func keyboardLines(trigger domainconfig.Trigger, statuses []keymap.Status, systemWide []keymap.Mapping) []string {
+func keyboardLines(statuses []keymap.Status, systemWide []keymap.Mapping) []string {
 	lines := make([]string, 0, len(statuses)+1)
-	inScope := 0
 
 	for _, status := range statuses {
 		lines = append(lines, keyboardLine(status))
-
-		if status.InScope {
-			inScope++
-		}
 	}
 
 	if len(systemWide) > 0 {
@@ -441,15 +433,11 @@ func keyboardLines(trigger domainconfig.Trigger, statuses []keymap.Status, syste
 		lines = append(lines, "system-wide:   "+strings.Join(described, "; "))
 	}
 
-	if trigger.Dedicated() && inScope == 0 {
-		lines = append(lines, "warning:       no connected keyboard remaps the trigger key and the Globe key "+
-			"does not switch; include a keyboard or set trigger.keyboards.apply_to: all")
-	}
-
 	return lines
 }
 
-// keyboardLine renders one keyboard: its identity and its key mappings.
+// keyboardLine renders one keyboard: its identity, its trigger, and its key
+// mappings.
 func keyboardLine(status keymap.Status) string {
 	details := []string{status.KeyboardID()}
 
@@ -463,21 +451,22 @@ func keyboardLine(status keymap.Status) string {
 		details = append(details, "has Globe key")
 	}
 
-	var mappings []string
+	trigger := "trigger " + describeTrigger(status.Trigger)
+	if status.Listed {
+		trigger += ", set for this keyboard"
+	}
+
+	mappings := []string{trigger}
 
 	switch {
 	case status.Ours != nil:
 		mappings = append(mappings, describeMapping(*status.Ours))
-	case status.InScope:
+	case status.Trigger.Remapped():
 		mappings = append(mappings, "not remapped yet (is the service running?)")
 	}
 
 	for _, other := range status.Others {
 		mappings = append(mappings, describeMapping(other)+" (other tool)")
-	}
-
-	if len(mappings) == 0 {
-		mappings = append(mappings, "no mappings")
 	}
 
 	return fmt.Sprintf("keyboard:      %s (%s): %s",

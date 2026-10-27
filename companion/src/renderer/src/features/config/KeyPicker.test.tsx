@@ -1,89 +1,101 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { Api, RecordedKey } from '../../../../shared/types'
+import { api } from '../../lib/api'
 import { KeyPicker } from './KeyPicker'
+
+vi.mock('../../lib/api', () => ({ api: {} }))
 
 afterEach(cleanup)
 
-function press(code: string, key = code, type: 'keydown' | 'keyup' = 'keydown'): void {
-  act(() => {
-    window.dispatchEvent(new KeyboardEvent(type, { code, key, bubbles: true, cancelable: true }))
-  })
+function recordKey(result: Promise<RecordedKey>): Api['recordKey'] {
+  const fake = vi.fn<Api['recordKey']>(() => result)
+  Object.assign(api, { recordKey: fake })
+
+  return fake
 }
 
 describe('KeyPicker', () => {
   it('shows the current key', () => {
-    render(<KeyPicker value="right_command" remapped={false} onChange={vi.fn()} />)
+    render(<KeyPicker value="right_command" onChange={vi.fn()} />)
 
     expect(screen.getByText('Right ⌘ Command')).toBeTruthy()
   })
 
-  it('records the next supported key', () => {
+  it('records the next key on the chosen keyboard through the daemon', async () => {
+    const fake = recordKey(Promise.resolve({ key: 'insert', keyName: 'Insert', keyboardId: '046d:c33f' }))
     const onChange = vi.fn()
-    render(<KeyPicker value="globe" remapped={false} onChange={onChange} />)
+    render(<KeyPicker value="globe" keyboardId="046d:c33f" keyboardName="Logitech K120" onChange={onChange} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('Press a key…')).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toBe('Press a key on Logitech K120.')
 
-    press('MetaRight', 'Meta')
-    expect(onChange).toHaveBeenCalledWith('right_command')
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('insert'))
+    expect(fake).toHaveBeenCalledWith('046d:c33f')
     expect(screen.queryByText('Press a key…')).toBeNull()
   })
 
-  it('takes Caps Lock from its key-up too', () => {
-    const onChange = vi.fn()
-    render(<KeyPicker value="globe" remapped={false} onChange={onChange} />)
+  it('records from any keyboard without one chosen', async () => {
+    const fake = recordKey(Promise.resolve({ key: 'caps_lock', keyName: 'Caps Lock', keyboardId: '046d:c33f' }))
+    render(<KeyPicker value="globe" onChange={vi.fn()} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    press('KeyA', 'a', 'keyup')
+    expect(screen.getByRole('status').textContent).toBe('Press a key on any keyboard.')
+
+    await waitFor(() => expect(fake).toHaveBeenCalledWith(''))
+  })
+
+  it('rejects a key that cannot be a trigger', async () => {
+    recordKey(Promise.resolve({ key: '', keyName: 'A', keyboardId: '046d:c33f' }))
+    const onChange = vi.fn()
+    render(<KeyPicker value="globe" onChange={onChange} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toBe("A can't switch input sources. Try another key."),
+    )
     expect(onChange).not.toHaveBeenCalled()
-
-    press('CapsLock', 'CapsLock', 'keyup')
-    expect(onChange).toHaveBeenCalledWith('caps_lock')
   })
 
-  it('rejects unsupported keys and keeps recording', () => {
-    const onChange = vi.fn()
-    render(<KeyPicker value="globe" remapped={false} onChange={onChange} />)
+  it('shows why recording failed', async () => {
+    recordKey(Promise.reject(new Error('enable Input Monitoring')))
+    render(<KeyPicker value="globe" onChange={vi.fn()} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    press('KeyA', 'a')
 
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('enable Input Monitoring'))
+  })
+
+  it('ignores a key pressed after cancelling', async () => {
+    let resolve: (key: RecordedKey) => void = () => undefined
+    recordKey(new Promise((done) => (resolve = done)))
+    const onChange = vi.fn()
+    render(<KeyPicker value="globe" onChange={onChange} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    resolve({ key: 'insert', keyName: 'Insert', keyboardId: '' })
+
+    await Promise.resolve()
     expect(onChange).not.toHaveBeenCalled()
-    expect(screen.getByRole('status').textContent).toContain("a can't switch input sources")
-
-    press('F13')
-    expect(onChange).toHaveBeenCalledWith('f13')
+    expect(screen.getByText('🌐 Globe')).toBeTruthy()
   })
 
-  it('cancels with Escape', () => {
+  it('switches back to the Globe key', () => {
     const onChange = vi.fn()
-    render(<KeyPicker value="f13" remapped={false} onChange={onChange} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    press('Escape')
-
-    expect(onChange).not.toHaveBeenCalled()
-    expect(screen.getByText('F13')).toBeTruthy()
-  })
-
-  it('explains that a remapped key cannot be recorded', () => {
-    render(<KeyPicker value="caps_lock" remapped onChange={vi.fn()} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-
-    expect(screen.getByRole('status').textContent).toContain('Caps Lock is remapped right now')
-  })
-
-  it('resets to Globe, which cannot be recorded', () => {
-    const onChange = vi.fn()
-    const { rerender } = render(<KeyPicker value="f13" remapped={false} onChange={onChange} />)
+    render(<KeyPicker value="caps_lock" onChange={onChange} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
     expect(onChange).toHaveBeenCalledWith('globe')
+  })
 
-    rerender(<KeyPicker value="globe" remapped={false} onChange={onChange} />)
-    expect((screen.getByRole('button', { name: 'Use Globe' }) as HTMLButtonElement).disabled).toBe(true)
+  it('disables recording', () => {
+    render(<KeyPicker value="caps_lock" disabled onChange={vi.fn()} />)
+
+    expect((screen.getByRole('button', { name: 'Record' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

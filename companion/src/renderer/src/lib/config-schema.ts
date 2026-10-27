@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { Config } from '../../../shared/types'
-import { allowedModes, KEYBOARD_ID, KEYBOARD_SCOPES, TRIGGER_KEY_VALUES, TRIGGER_MODES } from './trigger-keys'
+import { allowedModes, KEYBOARD_ID, TRIGGER_KEY_VALUES, TRIGGER_MODES } from './trigger-keys'
 
 // GO_DURATION matches a Go time.Duration string (e.g. "250ms", "1m30s").
 const GO_DURATION = /^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$/
@@ -89,10 +89,10 @@ export const configSchema = z
     trigger: z.object({
       key: z.enum(TRIGGER_KEY_VALUES),
       mode: z.enum(TRIGGER_MODES),
-      keyboards: z.object({
-        applyTo: z.enum(KEYBOARD_SCOPES),
-        overrides: z.record(z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'), z.boolean()),
-      }),
+      keyboards: z.record(
+        z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'),
+        z.object({ key: z.enum(TRIGGER_KEY_VALUES), mode: z.enum(TRIGGER_MODES) }),
+      ),
     }),
   })
   .superRefine((config, ctx) => {
@@ -102,6 +102,16 @@ export const configSchema = z
         path: ['trigger', 'mode'],
         message: 'This key can only be remapped',
       })
+    }
+
+    for (const [id, keyboard] of Object.entries(config.trigger.keyboards)) {
+      if (!allowedModes(keyboard.key).includes(keyboard.mode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['trigger', 'keyboards', id],
+          message: 'This key can only be remapped',
+        })
+      }
     }
 
     const seen = new Set<string>()

@@ -73,7 +73,6 @@ func WriteDefault(path string, sources []string) error {
 	schema.HUD.ShowCollection = boolPtr(true)
 	schema.Trigger.Key = defaultTriggerKey
 	schema.Trigger.Mode = defaultTriggerMode
-	schema.Trigger.Keyboards.ApplyTo = defaultKeyboardScope
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -141,14 +140,7 @@ func toDomain(schema schemaV2) (config.Config, error) {
 			Duration:       duration,
 			ShowCollection: boolOr(schema.HUD.ShowCollection, true),
 		},
-		Trigger: config.Trigger{
-			Key:  schema.Trigger.Key,
-			Mode: schema.Trigger.Mode,
-			Keyboards: config.Keyboards{
-				ApplyTo:   schema.Trigger.Keyboards.ApplyTo,
-				Overrides: schema.Trigger.Keyboards.Overrides,
-			},
-		},
+		Trigger:     triggerToDomain(schema),
 		Collections: make([]config.Collection, 0, len(schema.Collections)),
 	}
 
@@ -157,6 +149,20 @@ func toDomain(schema schemaV2) (config.Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// triggerToDomain converts the parsed trigger section.
+func triggerToDomain(schema schemaV2) config.Trigger {
+	trigger := config.Trigger{Default: config.KeyboardTrigger{Key: schema.Trigger.Key, Mode: schema.Trigger.Mode}}
+
+	if len(schema.Trigger.Keyboards) > 0 {
+		trigger.Keyboards = make(map[string]config.KeyboardTrigger, len(schema.Trigger.Keyboards))
+		for id, keyboard := range schema.Trigger.Keyboards {
+			trigger.Keyboards[id] = config.KeyboardTrigger{Key: keyboard.Key, Mode: keyboard.Mode}
+		}
+	}
+
+	return trigger
 }
 
 // applySchemaDefaults fills empty string fields with their defaults so a
@@ -186,8 +192,11 @@ func applySchemaDefaults(schema *schemaV2) {
 		schema.Trigger.Mode = defaultTriggerMode
 	}
 
-	if schema.Trigger.Keyboards.ApplyTo == "" {
-		schema.Trigger.Keyboards.ApplyTo = defaultKeyboardScope
+	for id, trigger := range schema.Trigger.Keyboards {
+		if trigger.Mode == "" {
+			trigger.Mode = defaultTriggerMode
+			schema.Trigger.Keyboards[id] = trigger
+		}
 	}
 }
 

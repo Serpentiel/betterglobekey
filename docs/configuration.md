@@ -39,8 +39,6 @@ hud:
 trigger:
   key: globe
   mode: fn
-  keyboards:
-    apply_to: without_globe
 
 collections:
   - name: primary
@@ -57,67 +55,63 @@ All options other than `collections` are optional and fall back to the defaults 
 
 ## Trigger Key
 
-`trigger.key` selects the key that switches input sources. The default, `globe`, is the Globe key on Apple
-keyboards. For a keyboard without one, pick another key:
+Every keyboard has its own trigger key. A keyboard with a Globe key of its own, such as a MacBook's or a Magic
+Keyboard, uses it. Any other keyboard uses `trigger.key` and `trigger.mode`, and `trigger.keyboards` sets single
+keyboards apart, by the vendor and product ID that `betterglobekey doctor` and the companion show:
 
-| Key                                           | `trigger.key`                                                            |
+```yaml
+trigger:
+  key: caps_lock # keyboards without a Globe key
+  mode: fn
+  keyboards:
+    "046d:c33f": # a Logitech keyboard
+      key: insert
+      mode: pass_through
+    "05ac:0281": # the MacBook's own keyboard
+      key: caps_lock
+      mode: dedicated
+```
+
+The default `trigger.key`, `globe`, leaves keyboards without a Globe key without a trigger. The keys:
+
+| Key                                           | `key`                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------ |
 | Globe                                         | `globe`                                                                  |
 | Caps Lock                                     | `caps_lock`                                                              |
 | Right or left Command, Option, Control, Shift | `right_command`, `left_option`, `right_control`, `left_shift`, and so on |
 | F13 through F20                               | `f13` … `f20`                                                            |
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
+| Insert, Print Screen, Scroll Lock, Pause      | `insert`, `print_screen`, `scroll_lock`, `pause`                         |
 
 The Globe key, labeled fn on some keyboards, does two things: tapped alone it switches input sources, and held it is the
-fn modifier. How a key other than the Globe key is used depends on `trigger.mode`:
+fn modifier. How a key other than the Globe key is used depends on `mode`:
 
-| `trigger.mode` | The key                                                   | Globe key also switches | Per keyboard |
-| -------------- | --------------------------------------------------------- | ----------------------- | ------------ |
-| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | yes                     | yes          |
-| `dedicated`    | is **silenced** and read straight from the keyboard       | no                      | yes          |
-| `pass_through` | **keeps its normal function**                             | no                      | no           |
+| `mode`         | The key                                                   | Needs Input Monitoring |
+| -------------- | --------------------------------------------------------- | ---------------------- |
+| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | no                     |
+| `dedicated`    | is **silenced** and read straight from the keyboard       | yes                    |
+| `pass_through` | **keeps its normal function** and is read from it         | yes                    |
 
-- `fn` and `dedicated` remap the key at the hardware level while the service runs, the same way
+- `fn` and `dedicated` remap the key on its keyboard while the service runs, the same way
   `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
 - `dedicated` remaps the key to F24, which macOS has no key code for, so the key produces no event at all and nothing
-  else can react to it. The service reads the keyboard's raw input instead, which needs **Input Monitoring** (_System
-  Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a restart
-  after you grant it). The Globe key keeps only what macOS does with it.
-- `pass_through` watches the key directly: pressing it on its own switches input sources; using it in a combination
-  (such as Right Command + C) does not. Caps Lock cannot be passed through.
+  else can react to it.
+- `pass_through` switches input sources when the key is pressed on its own; in a combination (such as Right Command +
+  C) the key works as usual. Caps Lock cannot be passed through.
+- `dedicated` and `pass_through` read the key from the keyboard's raw input, which needs **Input Monitoring** (_System
+  Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a restart after
+  you grant it).
+- The Globe key cannot tell keyboards apart: while any keyboard switches with it (its own Globe key, or a key in `fn`
+  mode), the Globe key switches on every keyboard.
 
-### Keyboards
-
-A remapped key applies per keyboard. `trigger.keyboards.apply_to` picks the default:
-
-- `without_globe` (the default): only keyboards without a Globe key of their own, that is, anything but Apple's built-in
-  and Magic keyboards. Caps Lock on a MacBook stays Caps Lock while an external keyboard's Caps Lock becomes fn.
-- `all`: every keyboard.
-
-`trigger.keyboards.overrides` includes (`true`) or excludes (`false`) single keyboards by vendor and product ID, as
-`betterglobekey doctor` and the companion show them:
-
-```yaml
-trigger:
-  key: caps_lock
-  mode: dedicated
-  keyboards:
-    apply_to: without_globe
-    overrides:
-      "05ac:029c": true # this Magic Keyboard too
-      "046d:c33f": false # but not this one
-```
-
-Keyboards plugged in while the service runs are remapped within two seconds.
-
-Things to know about remapping:
+Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping:
 
 - Each keyboard's own key mapping table is edited without touching other entries, and an entry it replaced for the same
   key is restored when the service stops. If the service is killed, the next start cleans up.
 - It does not apply to keyboards that Karabiner-Elements has taken over; use Karabiner to map the key instead.
 - It sits on top of _System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys_. Leave the chosen key set to
   itself there.
-- `betterglobekey doctor` lists every connected keyboard with its mappings, including other tools'.
+- `betterglobekey doctor` lists every connected keyboard with its trigger and mappings, including other tools'.
 - To undo every remapping on a keyboard by hand:
   `hidutil property --matching '{"VendorID":0x046d,"ProductID":0xc33f}' --set '{"UserKeyMapping":[]}'`.
 

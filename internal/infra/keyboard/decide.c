@@ -67,11 +67,22 @@ int bgkDecide(const bgkTrigger *trigger, uint64_t reverseMask, bgkState *state, 
 	return bgkNoPress;
 }
 
-// HID usage pages and Keyboard/Keypad page usages bgkRawEvent distinguishes.
+// HID usage pages and usages raw input distinguishes.
 #define bgkPageKeyboard 0x07
 #define bgkPageConsumer 0x0C
+#define bgkPageAppleTopCase 0xFF
 #define bgkUsageFirstKey 0x04
 #define bgkUsageFirstModifier 0xE0
+#define bgkUsageLastModifier 0xE7
+#define bgkUsageGlobe 0x03
+
+int bgkIsRecordable(uint32_t page, uint32_t usage) {
+	if (page == bgkPageKeyboard) {
+		return usage >= bgkUsageFirstKey && usage <= bgkUsageLastModifier;
+	}
+
+	return page == bgkPageAppleTopCase && usage == bgkUsageGlobe;
+}
 
 bgkEvent bgkRawEvent(uint32_t page, uint32_t usage, int64_t value, int own, uint64_t flags) {
 	bgkEvent event = {.type = bgkEventOther, .keycode = -1, .flags = flags};

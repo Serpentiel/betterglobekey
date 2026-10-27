@@ -18,6 +18,10 @@ extern void goHandleTriggerRelease(int reverse);
 // or closed (state -1).
 extern void goRawInput(int state, int status);
 
+// goRecordedKey is implemented in Go (see callback.go) and receives each key
+// pressed while recording.
+extern void goRecordedKey(uint32_t vendor, uint32_t product, uint32_t location, uint32_t page, uint32_t usage);
+
 static CFMachPortRef bgkTap = NULL;
 static CFRunLoopRef bgkRunLoop = NULL;
 static CFRunLoopSourceRef bgkSource = NULL;
@@ -48,19 +52,22 @@ static uint64_t bgkReverseMask = kCGEventFlagMaskShift;
 
 static bgkState bgkPressState = {0};
 
-// bgkMaxRawKeys caps the silenced trigger keys watched in raw HID input.
+// bgkMaxRawKeys caps the trigger keys read from raw HID input.
 #define bgkMaxRawKeys 64
 
-// bgkRawKeys are the silenced trigger keys, one per keyboard; none outside
-// dedicated mode. bgkRawState tracks their presses, and bgkRawTrigger is the
-// descriptor raw presses are decided against.
+// bgkRawKeys are the trigger keys read from raw input, at most one per
+// keyboard. bgkRawState tracks their presses, and bgkRawTrigger is the
+// descriptor raw presses are decided against, with the pressed key's flags.
 static bgkRawKey bgkRawKeys[bgkMaxRawKeys];
 static int bgkRawKeyCount = 0;
 static bgkState bgkRawState = {0};
 static const bgkTrigger bgkRawTrigger = {.kind = bgkKindKey, .keycode = bgkRawTriggerCode};
 
-// bgkHID reads raw keyboard input while there are raw keys, which needs Input
-// Monitoring. It lives on the tap's run loop.
+// bgkRecording reports keys pressed in raw input to goRecordedKey.
+static int bgkRecording = 0;
+
+// bgkHID reads raw keyboard input while there are raw keys or a recording,
+// which needs Input Monitoring. It lives on the tap's run loop.
 static IOHIDManagerRef bgkHID = NULL;
 static int bgkHIDOpen = 0;
 
@@ -95,44 +102,57 @@ static uint32_t bgkDeviceNumber(IOHIDDeviceRef device, CFStringRef key) {
 	return (uint32_t)number;
 }
 
-// bgkIsRawKey reports whether usage on device is a silenced trigger key. The
-// caller holds bgkLock.
-static int bgkIsRawKey(IOHIDDeviceRef device, uint32_t usage) {
-	if (device == NULL || bgkRawKeyCount == 0) {
-		return 0;
-	}
-
-	uint32_t vendor = bgkDeviceNumber(device, CFSTR(kIOHIDVendorIDKey));
-	uint32_t product = bgkDeviceNumber(device, CFSTR(kIOHIDProductIDKey));
-	uint32_t location = bgkDeviceNumber(device, CFSTR(kIOHIDLocationIDKey));
-
+// bgkFindRawKey returns the raw trigger key with usage on the identified
+// keyboard, or NULL. The caller holds bgkLock.
+static const bgkRawKey *bgkFindRawKey(uint32_t vendor, uint32_t product, uint32_t location, uint32_t usage) {
 	for (int i = 0; i < bgkRawKeyCount; i++) {
 		const bgkRawKey *key = &bgkRawKeys[i];
 		if (key->usage == usage && key->vendor == vendor && key->product == product && key->location == location) {
-			return 1;
+			return key;
 		}
 	}
 
-	return 0;
+	return NULL;
 }
 
-// bgkHIDValue handles raw input: presses of a silenced trigger key, and any
-// other key or media key that makes such a press a combination.
+// bgkHIDValue handles raw input: presses of a raw trigger key, any other key or
+// media key that makes such a press a combination, and keys being recorded.
 static void bgkHIDValue(void *context, IOReturn status, void *sender, IOHIDValueRef value) {
 	IOHIDElementRef element = IOHIDValueGetElement(value);
+	IOHIDDeviceRef device = IOHIDElementGetDevice(element);
 	uint32_t page = IOHIDElementGetUsagePage(element);
 	uint32_t usage = IOHIDElementGetUsage(element);
 	CFIndex pressed = IOHIDValueGetIntegerValue(value);
 	uint64_t flags = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
 
+	uint32_t vendor = 0, product = 0, location = 0;
+	if (device != NULL) {
+		vendor = bgkDeviceNumber(device, CFSTR(kIOHIDVendorIDKey));
+		product = bgkDeviceNumber(device, CFSTR(kIOHIDProductIDKey));
+		location = bgkDeviceNumber(device, CFSTR(kIOHIDLocationIDKey));
+	}
+
 	pthread_mutex_lock(&bgkLock);
-	int own = page == kHIDPage_KeyboardOrKeypad && bgkIsRawKey(IOHIDElementGetDevice(element), usage);
-	bgkEvent event = bgkRawEvent(page, usage, pressed, own, flags);
-	int reverse = bgkRawKeyCount > 0 ? bgkDecide(&bgkRawTrigger, bgkReverseMask, &bgkRawState, &event) : bgkNoPress;
+	const bgkRawKey *key =
+	    page == kHIDPage_KeyboardOrKeypad && device != NULL ? bgkFindRawKey(vendor, product, location, usage) : NULL;
+
+	bgkTrigger trigger = bgkRawTrigger;
+	if (key != NULL) {
+		trigger.familyFlag = key->familyFlag;
+		trigger.otherSideFlag = key->otherSideFlag;
+	}
+
+	bgkEvent event = bgkRawEvent(page, usage, pressed, key != NULL, flags);
+	int reverse = bgkRawKeyCount > 0 ? bgkDecide(&trigger, bgkReverseMask, &bgkRawState, &event) : bgkNoPress;
+	int record = bgkRecording && device != NULL && pressed != 0 && bgkIsRecordable(page, usage);
 	pthread_mutex_unlock(&bgkLock);
 
 	if (reverse != bgkNoPress) {
 		goHandleTriggerRelease(reverse);
+	}
+
+	if (record) {
+		goRecordedKey(vendor, product, location, page, usage);
 	}
 }
 
@@ -151,12 +171,12 @@ static CFDictionaryRef bgkMatching(int page, int usage) {
 	return matching;
 }
 
-// bgkSyncHID opens the HID manager while there are raw keys and closes it
-// otherwise. It runs on the tap's run loop, and retries an open that failed for
-// want of Input Monitoring each time the raw keys are set.
+// bgkSyncHID opens the HID manager while there are raw keys or a recording, and
+// closes it otherwise. It runs on the tap's run loop, and retries an open that
+// failed for want of Input Monitoring each time the raw keys are set.
 static void bgkSyncHID(void) {
 	pthread_mutex_lock(&bgkLock);
-	int want = bgkRawKeyCount > 0;
+	int want = bgkRawKeyCount > 0 || bgkRecording;
 	pthread_mutex_unlock(&bgkLock);
 
 	if (want && !bgkHIDOpen) {
@@ -195,7 +215,25 @@ static void bgkHIDPerform(void *info) {
 	bgkSyncHID();
 }
 
-// bgkSetRawKeys sets the silenced trigger keys, dropping a raw press in progress
+// bgkSignalHID runs bgkSyncHID on the tap's run loop, once it runs.
+static void bgkSignalHID(void) {
+	pthread_mutex_lock(&bgkLock);
+	pthread_mutex_unlock(&bgkLock);
+
+	bgkSignalHID();
+}
+
+// bgkSetRecording turns reporting pressed keys to goRecordedKey on or off,
+// opening raw input while it is on.
+void bgkSetRecording(int on) {
+	pthread_mutex_lock(&bgkLock);
+	bgkRecording = on;
+	pthread_mutex_unlock(&bgkLock);
+
+	bgkSignalHID();
+}
+
+// bgkSetRawKeys sets the raw trigger keys, dropping a raw press in progress
 // when they change, and opens or closes raw input to match.
 void bgkSetRawKeys(const bgkRawKey *keys, int count) {
 	if (keys == NULL || count < 0) {
@@ -212,14 +250,9 @@ void bgkSetRawKeys(const bgkRawKey *keys, int count) {
 		bgkRawKeyCount = count;
 		bgkRawState = (bgkState){0};
 	}
-	CFRunLoopRef runLoop = bgkRunLoop;
-	CFRunLoopSourceRef signal = bgkHIDSignal;
 	pthread_mutex_unlock(&bgkLock);
 
-	if (runLoop != NULL && signal != NULL) {
-		CFRunLoopSourceSignal(signal);
-		CFRunLoopWakeUp(runLoop);
-	}
+	bgkSignalHID();
 }
 
 // bgkIsMediaKeyDown reports whether a system-defined event is a media key press.

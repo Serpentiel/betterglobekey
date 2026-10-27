@@ -23,11 +23,11 @@ service, so building collections is a matter of picking from a list rather than 
 
 1. Make sure the **betterglobekey** service is running (see [Getting Started](getting-started.md)).
 2. Launch the companion application.
-3. Edit your settings. Under **Trigger Key**, **Record** picks the [trigger key](configuration.md#trigger-key) from the
-   next key you press, and **Use Globe** goes back to the Globe key (which the app cannot record). **Trigger mode** makes
-   the key act as fn, the only key that switches (the Globe key untouched), or keep its normal function. **Keyboards…** opens a
-   sheet listing every connected keyboard with a switch to remap the key on it, a default for other keyboards, and the
-   key mappings other tools have set.
+3. Edit your settings. Under **Trigger Key**, pick the trigger key of keyboards without a Globe key, and how it works:
+   act as fn, be the only key that switches (the Globe key untouched), or keep its normal function. **Keyboards…**
+   opens a sheet that sets a single keyboard's own trigger key, lists the key mappings other tools have set, and puts a
+   keyboard back on the default with **Use Default**. **Record** reads the next key you press straight from the
+   keyboard, so a remapped key records as itself; it needs Input Monitoring. **Use Globe** goes back to the Globe key.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing

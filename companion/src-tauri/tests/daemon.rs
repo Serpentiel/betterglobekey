@@ -59,10 +59,19 @@ impl ConfigService for Stub {
         &self,
         _: Request<ListKeyboardsRequest>,
     ) -> Result<Response<ListKeyboardsResponse>, Status> {
-        let keyboard =
-            Keyboard { id: "046d:c33f".into(), name: "Logitech".into(), in_scope: true, ..Default::default() };
+        let keyboard = Keyboard { id: "046d:c33f".into(), name: "Logitech".into(), listed: true, ..Default::default() };
 
         Ok(Response::new(ListKeyboardsResponse { keyboards: vec![keyboard], system_mappings: vec![] }))
+    }
+
+    async fn record_key(&self, request: Request<RecordKeyRequest>) -> Result<Response<RecordKeyResponse>, Status> {
+        let keyboard_id = request.into_inner().keyboard_id;
+
+        if keyboard_id.is_empty() {
+            return Err(Status::failed_precondition("reading raw keyboard input failed"));
+        }
+
+        Ok(Response::new(RecordKeyResponse { key: "insert".into(), key_name: "Insert".into(), keyboard_id }))
     }
 
     async fn get_status(&self, _: Request<GetStatusRequest>) -> Result<Response<GetStatusResponse>, Status> {
@@ -93,9 +102,13 @@ async fn reads_config_sources_and_version() {
     // The stub predates the trigger, so the Globe default fills it in.
     let trigger = config.trigger.unwrap();
     assert_eq!((trigger.key.as_str(), trigger.mode.as_str()), ("globe", "fn"));
-    assert_eq!(trigger.keyboards.unwrap().apply_to, "without_globe");
+    assert!(trigger.keyboards.is_empty());
 
     assert_eq!(daemon.list_keyboards().await.unwrap().keyboards[0].name, "Logitech");
+
+    let recorded = daemon.record_key("046d:c33f".into()).await.unwrap();
+    assert_eq!((recorded.key.as_str(), recorded.keyboard_id.as_str()), ("insert", "046d:c33f"));
+    assert_eq!(daemon.record_key(String::new()).await.unwrap_err(), "reading raw keyboard input failed");
 
     assert_eq!(daemon.list_input_sources().await.unwrap()[0].name, "U.S.");
     assert_eq!(daemon.get_version().await.unwrap().version, "4.0.1");

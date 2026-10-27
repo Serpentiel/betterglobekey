@@ -1,5 +1,7 @@
 // The keys that can switch input sources, mirroring the daemon's TriggerKeys.
 
+import type { KeyboardTrigger, Trigger } from '../../../shared/types'
+
 export interface TriggerKey {
   /** value is the config name, e.g. right_command. */
   value: string
@@ -7,8 +9,6 @@ export interface TriggerKey {
   label: string
   /** name is how the key is named inside a sentence, e.g. "Right Command". */
   name: string
-  /** code is the KeyboardEvent.code a key press reports, or null for Globe, which web views never see. */
-  code: string | null
   /** passThrough reports whether the key can keep its normal function while it triggers. */
   passThrough: boolean
 }
@@ -24,10 +24,8 @@ export const MODE_DEDICATED = 'dedicated'
 export const MODE_PASS_THROUGH = 'pass_through'
 export const TRIGGER_MODES = [MODE_FN, MODE_DEDICATED, MODE_PASS_THROUGH] as const
 
-/** Keyboard scopes, mirroring the daemon's KeyboardScopes. */
-export const KEYBOARDS_WITHOUT_GLOBE = 'without_globe'
-export const KEYBOARDS_ALL = 'all'
-export const KEYBOARD_SCOPES = [KEYBOARDS_WITHOUT_GLOBE, KEYBOARDS_ALL] as const
+/** GLOBE_TRIGGER is the trigger of a keyboard with a Globe key of its own, unless it is listed. */
+export const GLOBE_TRIGGER: KeyboardTrigger = { key: GLOBE, mode: MODE_FN }
 
 /** KEYBOARD_ID matches a vendor:product keyboard ID. */
 export const KEYBOARD_ID = /^[0-9a-f]{4}:[0-9a-f]{4}$/
@@ -36,23 +34,26 @@ const functionKeys: TriggerKey[] = [13, 14, 15, 16, 17, 18, 19, 20].map((number)
   value: `f${number}`,
   label: `F${number}`,
   name: `F${number}`,
-  code: `F${number}`,
   passThrough: true,
 }))
 
 export const TRIGGER_KEYS: readonly TriggerKey[] = [
-  { value: GLOBE, label: '🌐 Globe', name: 'Globe', code: null, passThrough: false },
-  { value: 'caps_lock', label: '⇪ Caps Lock', name: 'Caps Lock', code: 'CapsLock', passThrough: false },
-  { value: 'right_command', label: 'Right ⌘ Command', name: 'Right Command', code: 'MetaRight', passThrough: true },
-  { value: 'right_option', label: 'Right ⌥ Option', name: 'Right Option', code: 'AltRight', passThrough: true },
-  { value: 'right_control', label: 'Right ⌃ Control', name: 'Right Control', code: 'ControlRight', passThrough: true },
-  { value: 'right_shift', label: 'Right ⇧ Shift', name: 'Right Shift', code: 'ShiftRight', passThrough: true },
-  { value: 'left_command', label: 'Left ⌘ Command', name: 'Left Command', code: 'MetaLeft', passThrough: true },
-  { value: 'left_option', label: 'Left ⌥ Option', name: 'Left Option', code: 'AltLeft', passThrough: true },
-  { value: 'left_control', label: 'Left ⌃ Control', name: 'Left Control', code: 'ControlLeft', passThrough: true },
-  { value: 'left_shift', label: 'Left ⇧ Shift', name: 'Left Shift', code: 'ShiftLeft', passThrough: true },
+  { value: GLOBE, label: '🌐 Globe', name: 'Globe', passThrough: false },
+  { value: 'caps_lock', label: '⇪ Caps Lock', name: 'Caps Lock', passThrough: false },
+  { value: 'right_command', label: 'Right ⌘ Command', name: 'Right Command', passThrough: true },
+  { value: 'right_option', label: 'Right ⌥ Option', name: 'Right Option', passThrough: true },
+  { value: 'right_control', label: 'Right ⌃ Control', name: 'Right Control', passThrough: true },
+  { value: 'right_shift', label: 'Right ⇧ Shift', name: 'Right Shift', passThrough: true },
+  { value: 'left_command', label: 'Left ⌘ Command', name: 'Left Command', passThrough: true },
+  { value: 'left_option', label: 'Left ⌥ Option', name: 'Left Option', passThrough: true },
+  { value: 'left_control', label: 'Left ⌃ Control', name: 'Left Control', passThrough: true },
+  { value: 'left_shift', label: 'Left ⇧ Shift', name: 'Left Shift', passThrough: true },
   ...functionKeys,
-  { value: 'menu', label: '▤ Menu', name: 'Menu', code: 'ContextMenu', passThrough: true },
+  { value: 'menu', label: '▤ Menu', name: 'Menu', passThrough: true },
+  { value: 'insert', label: 'Insert', name: 'Insert', passThrough: true },
+  { value: 'print_screen', label: 'Print Screen', name: 'Print Screen', passThrough: true },
+  { value: 'scroll_lock', label: 'Scroll Lock', name: 'Scroll Lock', passThrough: true },
+  { value: 'pause', label: 'Pause', name: 'Pause', passThrough: true },
 ]
 
 export const TRIGGER_KEY_VALUES = TRIGGER_KEYS.map((key) => key.value) as [string, ...string[]]
@@ -62,14 +63,14 @@ export function triggerKey(value: string): TriggerKey | undefined {
   return TRIGGER_KEYS.find((key) => key.value === value)
 }
 
-/** triggerKeyForCode returns the trigger key a KeyboardEvent.code belongs to. */
-export function triggerKeyForCode(code: string): TriggerKey | undefined {
-  return TRIGGER_KEYS.find((key) => key.code === code)
-}
-
 /** triggerLabel names the key, falling back to its config name. */
 export function triggerLabel(value: string): string {
   return triggerKey(value)?.label ?? value
+}
+
+/** triggerName names the key inside a sentence, falling back to its config name. */
+export function triggerName(value: string): string {
+  return triggerKey(value)?.name ?? value
 }
 
 /** allowedModes lists the modes a key can use: every mode but pass-through for
@@ -78,27 +79,22 @@ export function allowedModes(value: string): string[] {
   return TRIGGER_MODES.filter((mode) => !(mode === MODE_PASS_THROUGH && triggerKey(value)?.passThrough === false))
 }
 
-/** remappedTrigger reports whether the trigger key is remapped at the HID level,
- * mirroring the daemon's Trigger.Remapped. */
-export function remappedTrigger(trigger: { key: string; mode: string }): boolean {
+/** remapped reports whether a trigger key is remapped at the HID level, mirroring the daemon's KeyboardTrigger.Remapped. */
+export function remapped(trigger: KeyboardTrigger): boolean {
   return trigger.key !== GLOBE && trigger.mode !== MODE_PASS_THROUGH
 }
 
-/** includesKeyboard reports whether a keyboard is in scope, mirroring the daemon's Keyboards.Includes. */
-export function includesKeyboard(
-  keyboards: { applyTo: string; overrides: Record<string, boolean> },
-  id: string,
-  hasGlobe: boolean,
-): boolean {
-  const override = keyboards.overrides[id]
-  if (override !== undefined) {
-    return override
+/** triggerFor returns a keyboard's trigger and whether it is listed, mirroring the daemon's Trigger.For. */
+export function triggerFor(trigger: Trigger, id: string, hasGlobe: boolean): [KeyboardTrigger, boolean] {
+  const listed = trigger.keyboards[id]
+  if (listed) {
+    return [listed, true]
   }
 
-  return keyboards.applyTo === KEYBOARDS_ALL || !hasGlobe
+  return [hasGlobe ? GLOBE_TRIGGER : { key: trigger.key, mode: trigger.mode }, false]
 }
 
-/** triggerName names the key inside a sentence, falling back to its config name. */
-export function triggerName(value: string): string {
-  return triggerKey(value)?.name ?? value
+/** withKey sets a trigger's key, falling back to fn mode for a key that cannot use its mode. */
+export function withKey(trigger: KeyboardTrigger, key: string): KeyboardTrigger {
+  return { key, mode: allowedModes(key).includes(trigger.mode) ? trigger.mode : MODE_FN }
 }

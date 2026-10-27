@@ -10,7 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
-    trigger: { key: 'globe', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
+    trigger: { key: 'globe', mode: 'fn', keyboards: {} },
   }
 }
 
@@ -50,9 +50,9 @@ describe('validateConfig', () => {
     expect(validateConfig(validConfig()).valid).toBe(true)
   })
 
-  it('accepts every trigger mode and keyboard scope', () => {
+  it('accepts every trigger mode and per-keyboard triggers', () => {
     const config = validConfig()
-    const keyboards = { applyTo: 'all', overrides: { '046d:c33f': false } }
+    const keyboards = { '046d:c33f': { key: 'insert', mode: 'pass_through' } }
 
     config.trigger = { key: 'caps_lock', mode: 'fn', keyboards }
     expect(validateConfig(config).valid).toBe(true)
@@ -64,9 +64,17 @@ describe('validateConfig', () => {
     expect(validateConfig(config).valid).toBe(true)
   })
 
-  it('rejects an invalid keyboard override', () => {
+  it('rejects an invalid keyboard ID', () => {
     const config = validConfig()
-    config.trigger.keyboards.overrides = { Logitech: true }
+    config.trigger.keyboards = { Logitech: { key: 'insert', mode: 'fn' } }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.keyboards).toBeDefined()
+  })
+
+  it('rejects passing Caps Lock through on a keyboard', () => {
+    const config = validConfig()
+    config.trigger.keyboards = { '046d:c33f': { key: 'caps_lock', mode: 'pass_through' } }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()

@@ -29,10 +29,16 @@ service ConfigService {
   // that of whatever launched the caller.
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
 
-  // ListKeyboards reports every connected keyboard, whether the trigger key is
-  // remapped on it, and its key mappings, plus the system-wide key mappings.
-  // It reports against the configuration on disk.
+  // ListKeyboards reports every connected keyboard, its trigger, and its key
+  // mappings, plus the system-wide key mappings. It reports against the
+  // configuration on disk.
   rpc ListKeyboards(ListKeyboardsRequest) returns (ListKeyboardsResponse);
+
+  // RecordKey returns the next key pressed, read from raw keyboard input, which
+  // needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
+  // a key before any remapping, so a remapped key records as itself. It waits
+  // until the caller's deadline, or 30 seconds.
+  rpc RecordKey(RecordKeyRequest) returns (RecordKeyResponse);
 }
 
 // Config mirrors the daemon's resolved configuration.
@@ -58,34 +64,36 @@ message Config {
   Trigger trigger = 6;
 }
 
-// Trigger selects the key that switches input sources.
+// Trigger selects the key that switches input sources on each keyboard. A
+// keyboard with a Globe key of its own uses it, unless it is listed in
+// keyboards; one without uses key and mode, unless it is listed.
 message Trigger {
-  reserved 2;
+  reserved 2, 4;
   reserved "pass_through";
 
-  // key is the trigger key: globe, caps_lock, right_command, right_option,
-  // right_control, right_shift, left_command, left_option, left_control,
-  // left_shift, f13 through f20, or menu.
+  // key is the trigger key of keyboards without a Globe key: globe (none),
+  // caps_lock, right_command, right_option, right_control, right_shift,
+  // left_command, left_option, left_control, left_shift, f13 through f20,
+  // menu, insert, print_screen, scroll_lock, or pause.
   string key = 1;
 
   // mode is how a key other than globe is detected: fn (remapped to fn, the
-  // Globe key's usage; the default when empty), dedicated (silenced and watched
-  // in raw input, so the Globe key no longer switches; needs Input Monitoring), or
-  // pass_through (keeps its function; not allowed for caps_lock).
+  // Globe key's usage; the default when empty), dedicated (silenced and read
+  // from raw input; needs Input Monitoring), or pass_through (keeps its
+  // function and is read from raw input; needs Input Monitoring; not allowed
+  // for caps_lock).
   string mode = 3;
 
-  // keyboards selects the keyboards a remapped key applies to.
-  Keyboards keyboards = 4;
+  // keyboards are the triggers of single keyboards, by ID: the vendor and
+  // product IDs as four lower-case hex digits each ("05ac:029c").
+  map<string, KeyboardTrigger> keyboards = 5;
 }
 
-// Keyboards selects the keyboards a remapped trigger key applies to.
-message Keyboards {
-  // apply_to is without_globe (the default when empty) or all.
-  string apply_to = 1;
-
-  // overrides include (true) or exclude (false) keyboards by ID, the vendor
-  // and product IDs as four lower-case hex digits each ("05ac:029c").
-  map<string, bool> overrides = 2;
+// KeyboardTrigger is one keyboard's trigger key and how it is detected, as in
+// Trigger.
+message KeyboardTrigger {
+  string key = 1;
+  string mode = 2;
 }
 
 // Logger holds the logging configuration.
@@ -220,14 +228,19 @@ message Keyboard {
   // has_globe reports whether the keyboard has a Globe key of its own.
   bool has_globe = 5;
 
-  // in_scope reports whether the configured trigger remaps a key on it.
-  bool in_scope = 6;
+  reserved 6;
+  reserved "in_scope";
 
   // trigger_mapping is the daemon's mapping on the keyboard, if any.
   KeyMapping trigger_mapping = 7;
 
   // other_mappings are the keyboard's mappings set by other tools.
   repeated KeyMapping other_mappings = 8;
+
+  // trigger is the keyboard's trigger, and listed whether it is set for the
+  // keyboard rather than a default.
+  KeyboardTrigger trigger = 9;
+  bool listed = 10;
 }
 
 // KeyMapping remaps one HID usage to another.
@@ -240,4 +253,21 @@ message KeyMapping {
   // src_name and dst_name name the keys, or give the usage in hex.
   string src_name = 3;
   string dst_name = 4;
+}
+
+message RecordKeyRequest {
+  // keyboard_id limits recording to one keyboard ("05ac:029c"); empty records
+  // a key from any keyboard.
+  string keyboard_id = 1;
+}
+
+message RecordKeyResponse {
+  // key is the trigger key pressed, or empty when the key cannot be a trigger.
+  string key = 1;
+
+  // key_name names the key pressed.
+  string key_name = 2;
+
+  // keyboard_id is the keyboard the key was pressed on.
+  string keyboard_id = 3;
 }

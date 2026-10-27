@@ -114,20 +114,25 @@ func (x *Config) GetTrigger() *Trigger {
 	return nil
 }
 
-// Trigger selects the key that switches input sources.
+// Trigger selects the key that switches input sources on each keyboard. A
+// keyboard with a Globe key of its own uses it, unless it is listed in
+// keyboards; one without uses key and mode, unless it is listed.
 type Trigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// key is the trigger key: globe, caps_lock, right_command, right_option,
-	// right_control, right_shift, left_command, left_option, left_control,
-	// left_shift, f13 through f20, or menu.
+	// key is the trigger key of keyboards without a Globe key: globe (none),
+	// caps_lock, right_command, right_option, right_control, right_shift,
+	// left_command, left_option, left_control, left_shift, f13 through f20,
+	// menu, insert, print_screen, scroll_lock, or pause.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// mode is how a key other than globe is detected: fn (remapped to fn, the
-	// Globe key's usage; the default when empty), dedicated (silenced and watched
-	// in raw input, so the Globe key no longer switches; needs Input Monitoring), or
-	// pass_through (keeps its function; not allowed for caps_lock).
+	// Globe key's usage; the default when empty), dedicated (silenced and read
+	// from raw input; needs Input Monitoring), or pass_through (keeps its
+	// function and is read from raw input; needs Input Monitoring; not allowed
+	// for caps_lock).
 	Mode string `protobuf:"bytes,3,opt,name=mode,proto3" json:"mode,omitempty"`
-	// keyboards selects the keyboards a remapped key applies to.
-	Keyboards     *Keyboards `protobuf:"bytes,4,opt,name=keyboards,proto3" json:"keyboards,omitempty"`
+	// keyboards are the triggers of single keyboards, by ID: the vendor and
+	// product IDs as four lower-case hex digits each ("05ac:029c").
+	Keyboards     map[string]*KeyboardTrigger `protobuf:"bytes,5,rep,name=keyboards,proto3" json:"keyboards,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -176,39 +181,37 @@ func (x *Trigger) GetMode() string {
 	return ""
 }
 
-func (x *Trigger) GetKeyboards() *Keyboards {
+func (x *Trigger) GetKeyboards() map[string]*KeyboardTrigger {
 	if x != nil {
 		return x.Keyboards
 	}
 	return nil
 }
 
-// Keyboards selects the keyboards a remapped trigger key applies to.
-type Keyboards struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// apply_to is without_globe (the default when empty) or all.
-	ApplyTo string `protobuf:"bytes,1,opt,name=apply_to,json=applyTo,proto3" json:"apply_to,omitempty"`
-	// overrides include (true) or exclude (false) keyboards by ID, the vendor
-	// and product IDs as four lower-case hex digits each ("05ac:029c").
-	Overrides     map[string]bool `protobuf:"bytes,2,rep,name=overrides,proto3" json:"overrides,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+// KeyboardTrigger is one keyboard's trigger key and how it is detected, as in
+// Trigger.
+type KeyboardTrigger struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Mode          string                 `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Keyboards) Reset() {
-	*x = Keyboards{}
+func (x *KeyboardTrigger) Reset() {
+	*x = KeyboardTrigger{}
 	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Keyboards) String() string {
+func (x *KeyboardTrigger) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Keyboards) ProtoMessage() {}
+func (*KeyboardTrigger) ProtoMessage() {}
 
-func (x *Keyboards) ProtoReflect() protoreflect.Message {
+func (x *KeyboardTrigger) ProtoReflect() protoreflect.Message {
 	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -220,23 +223,23 @@ func (x *Keyboards) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Keyboards.ProtoReflect.Descriptor instead.
-func (*Keyboards) Descriptor() ([]byte, []int) {
+// Deprecated: Use KeyboardTrigger.ProtoReflect.Descriptor instead.
+func (*KeyboardTrigger) Descriptor() ([]byte, []int) {
 	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Keyboards) GetApplyTo() string {
+func (x *KeyboardTrigger) GetKey() string {
 	if x != nil {
-		return x.ApplyTo
+		return x.Key
 	}
 	return ""
 }
 
-func (x *Keyboards) GetOverrides() map[string]bool {
+func (x *KeyboardTrigger) GetMode() string {
 	if x != nil {
-		return x.Overrides
+		return x.Mode
 	}
-	return nil
+	return ""
 }
 
 // Logger holds the logging configuration.
@@ -1123,12 +1126,14 @@ type Keyboard struct {
 	BuiltIn bool `protobuf:"varint,4,opt,name=built_in,json=builtIn,proto3" json:"built_in,omitempty"`
 	// has_globe reports whether the keyboard has a Globe key of its own.
 	HasGlobe bool `protobuf:"varint,5,opt,name=has_globe,json=hasGlobe,proto3" json:"has_globe,omitempty"`
-	// in_scope reports whether the configured trigger remaps a key on it.
-	InScope bool `protobuf:"varint,6,opt,name=in_scope,json=inScope,proto3" json:"in_scope,omitempty"`
 	// trigger_mapping is the daemon's mapping on the keyboard, if any.
 	TriggerMapping *KeyMapping `protobuf:"bytes,7,opt,name=trigger_mapping,json=triggerMapping,proto3" json:"trigger_mapping,omitempty"`
 	// other_mappings are the keyboard's mappings set by other tools.
 	OtherMappings []*KeyMapping `protobuf:"bytes,8,rep,name=other_mappings,json=otherMappings,proto3" json:"other_mappings,omitempty"`
+	// trigger is the keyboard's trigger, and listed whether it is set for the
+	// keyboard rather than a default.
+	Trigger       *KeyboardTrigger `protobuf:"bytes,9,opt,name=trigger,proto3" json:"trigger,omitempty"`
+	Listed        bool             `protobuf:"varint,10,opt,name=listed,proto3" json:"listed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1198,13 +1203,6 @@ func (x *Keyboard) GetHasGlobe() bool {
 	return false
 }
 
-func (x *Keyboard) GetInScope() bool {
-	if x != nil {
-		return x.InScope
-	}
-	return false
-}
-
 func (x *Keyboard) GetTriggerMapping() *KeyMapping {
 	if x != nil {
 		return x.TriggerMapping
@@ -1217,6 +1215,20 @@ func (x *Keyboard) GetOtherMappings() []*KeyMapping {
 		return x.OtherMappings
 	}
 	return nil
+}
+
+func (x *Keyboard) GetTrigger() *KeyboardTrigger {
+	if x != nil {
+		return x.Trigger
+	}
+	return nil
+}
+
+func (x *Keyboard) GetListed() bool {
+	if x != nil {
+		return x.Listed
+	}
+	return false
 }
 
 // KeyMapping remaps one HID usage to another.
@@ -1291,6 +1303,115 @@ func (x *KeyMapping) GetDstName() string {
 	return ""
 }
 
+type RecordKeyRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// keyboard_id limits recording to one keyboard ("05ac:029c"); empty records
+	// a key from any keyboard.
+	KeyboardId    string `protobuf:"bytes,1,opt,name=keyboard_id,json=keyboardId,proto3" json:"keyboard_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordKeyRequest) Reset() {
+	*x = RecordKeyRequest{}
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordKeyRequest) ProtoMessage() {}
+
+func (x *RecordKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordKeyRequest.ProtoReflect.Descriptor instead.
+func (*RecordKeyRequest) Descriptor() ([]byte, []int) {
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RecordKeyRequest) GetKeyboardId() string {
+	if x != nil {
+		return x.KeyboardId
+	}
+	return ""
+}
+
+type RecordKeyResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the trigger key pressed, or empty when the key cannot be a trigger.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// key_name names the key pressed.
+	KeyName string `protobuf:"bytes,2,opt,name=key_name,json=keyName,proto3" json:"key_name,omitempty"`
+	// keyboard_id is the keyboard the key was pressed on.
+	KeyboardId    string `protobuf:"bytes,3,opt,name=keyboard_id,json=keyboardId,proto3" json:"keyboard_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordKeyResponse) Reset() {
+	*x = RecordKeyResponse{}
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordKeyResponse) ProtoMessage() {}
+
+func (x *RecordKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_betterglobekey_control_v1_control_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordKeyResponse.ProtoReflect.Descriptor instead.
+func (*RecordKeyResponse) Descriptor() ([]byte, []int) {
+	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RecordKeyResponse) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *RecordKeyResponse) GetKeyName() string {
+	if x != nil {
+		return x.KeyName
+	}
+	return ""
+}
+
+func (x *RecordKeyResponse) GetKeyboardId() string {
+	if x != nil {
+		return x.KeyboardId
+	}
+	return ""
+}
+
 var File_betterglobekey_control_v1_control_proto protoreflect.FileDescriptor
 
 const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
@@ -1302,17 +1423,17 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\areverse\x18\x03 \x01(\v2\".betterglobekey.control.v1.ReverseR\areverse\x120\n" +
 	"\x03hud\x18\x04 \x01(\v2\x1e.betterglobekey.control.v1.HudR\x03hud\x12G\n" +
 	"\vcollections\x18\x05 \x03(\v2%.betterglobekey.control.v1.CollectionR\vcollections\x12<\n" +
-	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\x87\x01\n" +
+	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\x84\x02\n" +
 	"\aTrigger\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
-	"\x04mode\x18\x03 \x01(\tR\x04mode\x12B\n" +
-	"\tkeyboards\x18\x04 \x01(\v2$.betterglobekey.control.v1.KeyboardsR\tkeyboardsJ\x04\b\x02\x10\x03R\fpass_through\"\xb7\x01\n" +
-	"\tKeyboards\x12\x19\n" +
-	"\bapply_to\x18\x01 \x01(\tR\aapplyTo\x12Q\n" +
-	"\toverrides\x18\x02 \x03(\v23.betterglobekey.control.v1.Keyboards.OverridesEntryR\toverrides\x1a<\n" +
-	"\x0eOverridesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"\x82\x01\n" +
+	"\x04mode\x18\x03 \x01(\tR\x04mode\x12O\n" +
+	"\tkeyboards\x18\x05 \x03(\v21.betterglobekey.control.v1.Trigger.KeyboardsEntryR\tkeyboards\x1ah\n" +
+	"\x0eKeyboardsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
+	"\x05value\x18\x02 \x01(\v2*.betterglobekey.control.v1.KeyboardTriggerR\x05value:\x028\x01J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05R\fpass_through\"7\n" +
+	"\x0fKeyboardTrigger\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04mode\x18\x02 \x01(\tR\x04mode\"\x82\x01\n" +
 	"\x06Logger\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x14\n" +
 	"\x05level\x18\x02 \x01(\tR\x05level\x12%\n" +
@@ -1355,22 +1476,32 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x14ListKeyboardsRequest\"\xaa\x01\n" +
 	"\x15ListKeyboardsResponse\x12A\n" +
 	"\tkeyboards\x18\x01 \x03(\v2#.betterglobekey.control.v1.KeyboardR\tkeyboards\x12N\n" +
-	"\x0fsystem_mappings\x18\x02 \x03(\v2%.betterglobekey.control.v1.KeyMappingR\x0esystemMappings\"\xbd\x02\n" +
+	"\x0fsystem_mappings\x18\x02 \x03(\v2%.betterglobekey.control.v1.KeyMappingR\x0esystemMappings\"\x90\x03\n" +
 	"\bKeyboard\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
 	"\ttransport\x18\x03 \x01(\tR\ttransport\x12\x19\n" +
 	"\bbuilt_in\x18\x04 \x01(\bR\abuiltIn\x12\x1b\n" +
-	"\thas_globe\x18\x05 \x01(\bR\bhasGlobe\x12\x19\n" +
-	"\bin_scope\x18\x06 \x01(\bR\ainScope\x12N\n" +
+	"\thas_globe\x18\x05 \x01(\bR\bhasGlobe\x12N\n" +
 	"\x0ftrigger_mapping\x18\a \x01(\v2%.betterglobekey.control.v1.KeyMappingR\x0etriggerMapping\x12L\n" +
-	"\x0eother_mappings\x18\b \x03(\v2%.betterglobekey.control.v1.KeyMappingR\rotherMappings\"f\n" +
+	"\x0eother_mappings\x18\b \x03(\v2%.betterglobekey.control.v1.KeyMappingR\rotherMappings\x12D\n" +
+	"\atrigger\x18\t \x01(\v2*.betterglobekey.control.v1.KeyboardTriggerR\atrigger\x12\x16\n" +
+	"\x06listed\x18\n" +
+	" \x01(\bR\x06listedJ\x04\b\x06\x10\aR\bin_scope\"f\n" +
 	"\n" +
 	"KeyMapping\x12\x10\n" +
 	"\x03src\x18\x01 \x01(\x04R\x03src\x12\x10\n" +
 	"\x03dst\x18\x02 \x01(\x04R\x03dst\x12\x19\n" +
 	"\bsrc_name\x18\x03 \x01(\tR\asrcName\x12\x19\n" +
-	"\bdst_name\x18\x04 \x01(\tR\adstName2\xa9\x05\n" +
+	"\bdst_name\x18\x04 \x01(\tR\adstName\"3\n" +
+	"\x10RecordKeyRequest\x12\x1f\n" +
+	"\vkeyboard_id\x18\x01 \x01(\tR\n" +
+	"keyboardId\"a\n" +
+	"\x11RecordKeyResponse\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x19\n" +
+	"\bkey_name\x18\x02 \x01(\tR\akeyName\x12\x1f\n" +
+	"\vkeyboard_id\x18\x03 \x01(\tR\n" +
+	"keyboardId2\x91\x06\n" +
 	"\rConfigService\x12f\n" +
 	"\tGetConfig\x12+.betterglobekey.control.v1.GetConfigRequest\x1a,.betterglobekey.control.v1.GetConfigResponse\x12l\n" +
 	"\vApplyConfig\x12-.betterglobekey.control.v1.ApplyConfigRequest\x1a..betterglobekey.control.v1.ApplyConfigResponse\x12{\n" +
@@ -1378,7 +1509,8 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"GetVersion\x12,.betterglobekey.control.v1.GetVersionRequest\x1a-.betterglobekey.control.v1.GetVersionResponse\x12f\n" +
 	"\tGetStatus\x12+.betterglobekey.control.v1.GetStatusRequest\x1a,.betterglobekey.control.v1.GetStatusResponse\x12r\n" +
-	"\rListKeyboards\x12/.betterglobekey.control.v1.ListKeyboardsRequest\x1a0.betterglobekey.control.v1.ListKeyboardsResponseBWZUgithub.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1b\x06proto3"
+	"\rListKeyboards\x12/.betterglobekey.control.v1.ListKeyboardsRequest\x1a0.betterglobekey.control.v1.ListKeyboardsResponse\x12f\n" +
+	"\tRecordKey\x12+.betterglobekey.control.v1.RecordKeyRequest\x1a,.betterglobekey.control.v1.RecordKeyResponseBWZUgithub.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1;controlv1b\x06proto3"
 
 var (
 	file_betterglobekey_control_v1_control_proto_rawDescOnce sync.Once
@@ -1392,11 +1524,11 @@ func file_betterglobekey_control_v1_control_proto_rawDescGZIP() []byte {
 	return file_betterglobekey_control_v1_control_proto_rawDescData
 }
 
-var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_betterglobekey_control_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*Config)(nil),                   // 0: betterglobekey.control.v1.Config
 	(*Trigger)(nil),                  // 1: betterglobekey.control.v1.Trigger
-	(*Keyboards)(nil),                // 2: betterglobekey.control.v1.Keyboards
+	(*KeyboardTrigger)(nil),          // 2: betterglobekey.control.v1.KeyboardTrigger
 	(*Logger)(nil),                   // 3: betterglobekey.control.v1.Logger
 	(*DoublePress)(nil),              // 4: betterglobekey.control.v1.DoublePress
 	(*Reverse)(nil),                  // 5: betterglobekey.control.v1.Reverse
@@ -1417,7 +1549,9 @@ var file_betterglobekey_control_v1_control_proto_goTypes = []any{
 	(*ListKeyboardsResponse)(nil),    // 20: betterglobekey.control.v1.ListKeyboardsResponse
 	(*Keyboard)(nil),                 // 21: betterglobekey.control.v1.Keyboard
 	(*KeyMapping)(nil),               // 22: betterglobekey.control.v1.KeyMapping
-	nil,                              // 23: betterglobekey.control.v1.Keyboards.OverridesEntry
+	(*RecordKeyRequest)(nil),         // 23: betterglobekey.control.v1.RecordKeyRequest
+	(*RecordKeyResponse)(nil),        // 24: betterglobekey.control.v1.RecordKeyResponse
+	nil,                              // 25: betterglobekey.control.v1.Trigger.KeyboardsEntry
 }
 var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	3,  // 0: betterglobekey.control.v1.Config.logger:type_name -> betterglobekey.control.v1.Logger
@@ -1426,32 +1560,35 @@ var file_betterglobekey_control_v1_control_proto_depIdxs = []int32{
 	6,  // 3: betterglobekey.control.v1.Config.hud:type_name -> betterglobekey.control.v1.Hud
 	7,  // 4: betterglobekey.control.v1.Config.collections:type_name -> betterglobekey.control.v1.Collection
 	1,  // 5: betterglobekey.control.v1.Config.trigger:type_name -> betterglobekey.control.v1.Trigger
-	2,  // 6: betterglobekey.control.v1.Trigger.keyboards:type_name -> betterglobekey.control.v1.Keyboards
-	23, // 7: betterglobekey.control.v1.Keyboards.overrides:type_name -> betterglobekey.control.v1.Keyboards.OverridesEntry
-	0,  // 8: betterglobekey.control.v1.GetConfigResponse.config:type_name -> betterglobekey.control.v1.Config
-	0,  // 9: betterglobekey.control.v1.ApplyConfigRequest.config:type_name -> betterglobekey.control.v1.Config
-	8,  // 10: betterglobekey.control.v1.ListInputSourcesResponse.sources:type_name -> betterglobekey.control.v1.InputSource
-	21, // 11: betterglobekey.control.v1.ListKeyboardsResponse.keyboards:type_name -> betterglobekey.control.v1.Keyboard
-	22, // 12: betterglobekey.control.v1.ListKeyboardsResponse.system_mappings:type_name -> betterglobekey.control.v1.KeyMapping
-	22, // 13: betterglobekey.control.v1.Keyboard.trigger_mapping:type_name -> betterglobekey.control.v1.KeyMapping
-	22, // 14: betterglobekey.control.v1.Keyboard.other_mappings:type_name -> betterglobekey.control.v1.KeyMapping
-	9,  // 15: betterglobekey.control.v1.ConfigService.GetConfig:input_type -> betterglobekey.control.v1.GetConfigRequest
-	11, // 16: betterglobekey.control.v1.ConfigService.ApplyConfig:input_type -> betterglobekey.control.v1.ApplyConfigRequest
-	13, // 17: betterglobekey.control.v1.ConfigService.ListInputSources:input_type -> betterglobekey.control.v1.ListInputSourcesRequest
-	15, // 18: betterglobekey.control.v1.ConfigService.GetVersion:input_type -> betterglobekey.control.v1.GetVersionRequest
-	17, // 19: betterglobekey.control.v1.ConfigService.GetStatus:input_type -> betterglobekey.control.v1.GetStatusRequest
-	19, // 20: betterglobekey.control.v1.ConfigService.ListKeyboards:input_type -> betterglobekey.control.v1.ListKeyboardsRequest
-	10, // 21: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
-	12, // 22: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
-	14, // 23: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
-	16, // 24: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
-	18, // 25: betterglobekey.control.v1.ConfigService.GetStatus:output_type -> betterglobekey.control.v1.GetStatusResponse
-	20, // 26: betterglobekey.control.v1.ConfigService.ListKeyboards:output_type -> betterglobekey.control.v1.ListKeyboardsResponse
-	21, // [21:27] is the sub-list for method output_type
-	15, // [15:21] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	25, // 6: betterglobekey.control.v1.Trigger.keyboards:type_name -> betterglobekey.control.v1.Trigger.KeyboardsEntry
+	0,  // 7: betterglobekey.control.v1.GetConfigResponse.config:type_name -> betterglobekey.control.v1.Config
+	0,  // 8: betterglobekey.control.v1.ApplyConfigRequest.config:type_name -> betterglobekey.control.v1.Config
+	8,  // 9: betterglobekey.control.v1.ListInputSourcesResponse.sources:type_name -> betterglobekey.control.v1.InputSource
+	21, // 10: betterglobekey.control.v1.ListKeyboardsResponse.keyboards:type_name -> betterglobekey.control.v1.Keyboard
+	22, // 11: betterglobekey.control.v1.ListKeyboardsResponse.system_mappings:type_name -> betterglobekey.control.v1.KeyMapping
+	22, // 12: betterglobekey.control.v1.Keyboard.trigger_mapping:type_name -> betterglobekey.control.v1.KeyMapping
+	22, // 13: betterglobekey.control.v1.Keyboard.other_mappings:type_name -> betterglobekey.control.v1.KeyMapping
+	2,  // 14: betterglobekey.control.v1.Keyboard.trigger:type_name -> betterglobekey.control.v1.KeyboardTrigger
+	2,  // 15: betterglobekey.control.v1.Trigger.KeyboardsEntry.value:type_name -> betterglobekey.control.v1.KeyboardTrigger
+	9,  // 16: betterglobekey.control.v1.ConfigService.GetConfig:input_type -> betterglobekey.control.v1.GetConfigRequest
+	11, // 17: betterglobekey.control.v1.ConfigService.ApplyConfig:input_type -> betterglobekey.control.v1.ApplyConfigRequest
+	13, // 18: betterglobekey.control.v1.ConfigService.ListInputSources:input_type -> betterglobekey.control.v1.ListInputSourcesRequest
+	15, // 19: betterglobekey.control.v1.ConfigService.GetVersion:input_type -> betterglobekey.control.v1.GetVersionRequest
+	17, // 20: betterglobekey.control.v1.ConfigService.GetStatus:input_type -> betterglobekey.control.v1.GetStatusRequest
+	19, // 21: betterglobekey.control.v1.ConfigService.ListKeyboards:input_type -> betterglobekey.control.v1.ListKeyboardsRequest
+	23, // 22: betterglobekey.control.v1.ConfigService.RecordKey:input_type -> betterglobekey.control.v1.RecordKeyRequest
+	10, // 23: betterglobekey.control.v1.ConfigService.GetConfig:output_type -> betterglobekey.control.v1.GetConfigResponse
+	12, // 24: betterglobekey.control.v1.ConfigService.ApplyConfig:output_type -> betterglobekey.control.v1.ApplyConfigResponse
+	14, // 25: betterglobekey.control.v1.ConfigService.ListInputSources:output_type -> betterglobekey.control.v1.ListInputSourcesResponse
+	16, // 26: betterglobekey.control.v1.ConfigService.GetVersion:output_type -> betterglobekey.control.v1.GetVersionResponse
+	18, // 27: betterglobekey.control.v1.ConfigService.GetStatus:output_type -> betterglobekey.control.v1.GetStatusResponse
+	20, // 28: betterglobekey.control.v1.ConfigService.ListKeyboards:output_type -> betterglobekey.control.v1.ListKeyboardsResponse
+	24, // 29: betterglobekey.control.v1.ConfigService.RecordKey:output_type -> betterglobekey.control.v1.RecordKeyResponse
+	23, // [23:30] is the sub-list for method output_type
+	16, // [16:23] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_betterglobekey_control_v1_control_proto_init() }
@@ -1465,7 +1602,7 @@ func file_betterglobekey_control_v1_control_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_betterglobekey_control_v1_control_proto_rawDesc), len(file_betterglobekey_control_v1_control_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest'
 import {
   allowedModes,
   GLOBE,
-  includesKeyboard,
+  triggerFor,
+  withKey,
   TRIGGER_KEYS,
   triggerKey,
-  triggerKeyForCode,
   triggerLabel,
   triggerName,
 } from './trigger-keys'
@@ -33,15 +33,11 @@ describe('trigger keys', () => {
       'f19',
       'f20',
       'menu',
+      'insert',
+      'print_screen',
+      'scroll_lock',
+      'pause',
     ])
-  })
-
-  it('maps key codes to keys', () => {
-    expect(triggerKeyForCode('MetaRight')?.value).toBe('right_command')
-    expect(triggerKeyForCode('CapsLock')?.value).toBe('caps_lock')
-    expect(triggerKeyForCode('F13')?.value).toBe('f13')
-    expect(triggerKeyForCode('ContextMenu')?.value).toBe('menu')
-    expect(triggerKeyForCode('KeyA')).toBeUndefined()
   })
 
   it('only lets keys other than the Globe key and Caps Lock pass through', () => {
@@ -55,13 +51,18 @@ describe('trigger keys', () => {
     expect(allowedModes('f20')).toEqual(['fn', 'dedicated', 'pass_through'])
   })
 
-  it('scopes keyboards like the daemon', () => {
-    const withoutGlobe = { applyTo: 'without_globe', overrides: { '004c:029c': true, '046d:c33f': false } }
-    expect(includesKeyboard(withoutGlobe, '1234:5678', false)).toBe(true)
-    expect(includesKeyboard(withoutGlobe, '05ac:0281', true)).toBe(false)
-    expect(includesKeyboard(withoutGlobe, '004c:029c', true)).toBe(true)
-    expect(includesKeyboard(withoutGlobe, '046d:c33f', false)).toBe(false)
-    expect(includesKeyboard({ applyTo: 'all', overrides: {} }, '05ac:0281', true)).toBe(true)
+  it('resolves keyboard triggers like the daemon', () => {
+    const insert = { key: 'insert', mode: 'pass_through' }
+    const trigger = { key: 'caps_lock', mode: 'fn', keyboards: { '046d:c33f': insert } }
+
+    expect(triggerFor(trigger, '046d:c33f', false)).toEqual([insert, true])
+    expect(triggerFor(trigger, '05ac:0281', true)).toEqual([{ key: 'globe', mode: 'fn' }, false])
+    expect(triggerFor(trigger, '1234:5678', false)).toEqual([{ key: 'caps_lock', mode: 'fn' }, false])
+  })
+
+  it('keeps a mode the new key allows', () => {
+    expect(withKey({ key: 'insert', mode: 'pass_through' }, 'f13')).toEqual({ key: 'f13', mode: 'pass_through' })
+    expect(withKey({ key: 'insert', mode: 'pass_through' }, 'caps_lock')).toEqual({ key: 'caps_lock', mode: 'fn' })
   })
 
   it('names keys, falling back to the config name', () => {

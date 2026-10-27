@@ -1,7 +1,7 @@
-// Package keymap remaps the configured trigger key on each keyboard's own HID key
-// mapping table: to fn (the Globe key's usage), so a keyboard without a Globe
-// key drives the daemon through its existing Globe key handling, or to a key
-// that produces no event, for a dedicated trigger the daemon reads raw.
+// Package keymap remaps each keyboard's trigger key on that keyboard's own HID
+// key mapping table: to fn (the Globe key's usage), so the key drives the
+// daemon through its existing Globe key handling, or to a key that produces no
+// event, for a dedicated trigger the daemon reads from raw input.
 //
 // The tables are shared with hidutil and other tools, so the remapper only ever
 // touches its own entries: it merges into a keyboard's current table, remembers
@@ -61,6 +61,10 @@ const (
 	usageF19          = keyboardPage | 0x6E
 	usageF20          = keyboardPage | 0x6F
 	usageApplication  = keyboardPage | 0x65
+	usagePrintScreen  = keyboardPage | 0x46
+	usageScrollLock   = keyboardPage | 0x47
+	usagePause        = keyboardPage | 0x48
+	usageInsert       = keyboardPage | 0x49
 	usageLeftControl  = keyboardPage | 0xE0
 	usageLeftShift    = keyboardPage | 0xE1
 	usageLeftOption   = keyboardPage | 0xE2
@@ -91,6 +95,26 @@ var Usages = map[string]uint64{
 	"f19":                  usageF19,
 	"f20":                  usageF20,
 	"menu":                 usageApplication,
+	"insert":               usageInsert,
+	"print_screen":         usagePrintScreen,
+	"scroll_lock":          usageScrollLock,
+	"pause":                usagePause,
+}
+
+// TriggerKeyFor returns the trigger key with the given usage, or false when the
+// key cannot be a trigger.
+func TriggerKeyFor(usage uint64) (string, bool) {
+	if usage == GlobeUsage {
+		return config.TriggerGlobe, true
+	}
+
+	for key, keyUsage := range Usages {
+		if keyUsage == usage {
+			return key, true
+		}
+	}
+
+	return "", false
 }
 
 // Mapping remaps the HID usage Src to Dst.
@@ -173,7 +197,7 @@ type Remapper struct {
 	statePath string
 	trigger   config.Trigger
 	active    bool
-	observer  func([]Applied)
+	observer  func([]Resolved)
 }
 
 // New returns a Remapper that edits store and records its entries at statePath.
@@ -240,23 +264,29 @@ func (r *Remapper) Run(ctx context.Context, interval time.Duration, onError func
 	}
 }
 
-// target returns the mapping the trigger wants, and false when it wants none.
-func (r *Remapper) target() (Mapping, bool, error) {
-	if !r.active || !r.trigger.Remapped() {
-		return Mapping{}, false, nil
+// wantFor returns the mapping keyboard's trigger wants, and false when it wants
+// none: while inactive, or for a trigger that is not remapped.
+func (r *Remapper) wantFor(keyboard Keyboard) (Mapping, bool) {
+	if !r.active {
+		return Mapping{}, false
 	}
 
-	src, ok := Usages[r.trigger.Key]
+	trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+	if !trigger.Remapped() {
+		return Mapping{}, false
+	}
+
+	src, ok := Usages[trigger.Key]
 	if !ok {
-		return Mapping{}, false, fmt.Errorf("trigger key %q cannot be remapped", r.trigger.Key)
+		return Mapping{}, false
 	}
 
 	dst := GlobeUsage
-	if r.trigger.Dedicated() {
+	if trigger.Dedicated() {
 		dst = DedicatedUsage
 	}
 
-	return Mapping{Src: src, Dst: dst}, true, nil
+	return Mapping{Src: src, Dst: dst}, true
 }
 
 // change is a keyboard table sync rewrites: next replaces it, and the entry
@@ -278,11 +308,6 @@ type plan struct {
 
 // sync brings every connected keyboard in line with the trigger.
 func (r *Remapper) sync() error {
-	want, wanted, err := r.target()
-	if err != nil {
-		return err
-	}
-
 	previous, err := r.load()
 	if err != nil {
 		return err
@@ -299,14 +324,7 @@ func (r *Remapper) sync() error {
 		return fmt.Errorf("listing keyboards: %w", err)
 	}
 
-	var include func(Keyboard) bool
-	if wanted {
-		include = func(keyboard Keyboard) bool {
-			return r.trigger.Keyboards.Includes(keyboard.KeyboardID(), keyboard.HasGlobe())
-		}
-	}
-
-	p := planSync(previous.Entries, keyboards, want, include, r.active)
+	p := planSync(previous.Entries, keyboards, r.wantFor, r.active)
 
 	// Record every entry that may exist before writing any table, and forget an
 	// entry only after it is gone, so a crash in between never leaves one the
@@ -332,16 +350,15 @@ func (r *Remapper) sync() error {
 		}
 	}
 
-	r.notify(final)
+	r.notify(keyboards, final)
 
 	return errors.Join(append(errs, r.save(final))...)
 }
 
-// planSync works out how to map want on the keyboards include accepts (none
-// when include is nil), replacing the entries recorded. While active, entries
-// of keyboards not listed are kept, in case a listing missed one; a keyboard
-// that reconnects comes back without them.
-func planSync(recorded []entry, keyboards []Keyboard, want Mapping, include func(Keyboard) bool, active bool) plan {
+// planSync works out the mapping want returns for each keyboard, replacing the
+// entries recorded. While active, entries of keyboards not listed are kept, in
+// case a listing missed one; a keyboard that reconnects comes back without them.
+func planSync(recorded []entry, keyboards []Keyboard, want func(Keyboard) (Mapping, bool), active bool) plan {
 	var p plan
 
 	connected := make(map[identity]bool, len(keyboards))
@@ -361,7 +378,7 @@ func planSync(recorded []entry, keyboards []Keyboard, want Mapping, include func
 	}
 
 	for _, keyboard := range keyboards {
-		c := planKeyboard(keyboard, byIdentity, want, include)
+		c := planKeyboard(keyboard, byIdentity, want)
 
 		for _, e := range []*entry{c.before, c.after} {
 			if e != nil {
@@ -381,8 +398,8 @@ func planSync(recorded []entry, keyboards []Keyboard, want Mapping, include func
 }
 
 // planKeyboard works out a keyboard's new table: the recorded entry released,
-// and want claimed when include accepts the keyboard.
-func planKeyboard(keyboard Keyboard, recorded map[identity]entry, want Mapping, include func(Keyboard) bool) change {
+// and the mapping want returns for it claimed.
+func planKeyboard(keyboard Keyboard, recorded map[identity]entry, want func(Keyboard) (Mapping, bool)) change {
 	c := change{keyboard: keyboard}
 
 	if e, ok := recorded[identityOf(keyboard)]; ok {
@@ -391,8 +408,8 @@ func planKeyboard(keyboard Keyboard, recorded map[identity]entry, want Mapping, 
 
 	c.next = release(keyboard.Mappings, c.before)
 
-	if include != nil && include(keyboard) {
-		c.next, c.after = claim(c.next, want)
+	if mapping, ok := want(keyboard); ok {
+		c.next, c.after = claim(c.next, mapping)
 		c.after.identity = identityOf(keyboard)
 	}
 
@@ -511,46 +528,82 @@ func (r *Remapper) save(entries []entry) error {
 	return nil
 }
 
-// Applied is a mapping the remapper keeps on a keyboard.
-type Applied struct {
+// Resolved is a connected keyboard's trigger as the remapper applies it.
+type Resolved struct {
 	// Vendor, Product, and Location identify the keyboard.
 	Vendor, Product, Location uint32
-	Mapping                   Mapping
+	// HasGlobe reports whether the keyboard has a Globe key of its own.
+	HasGlobe bool
+	// Trigger is the keyboard's trigger.
+	Trigger config.KeyboardTrigger
+	// Applied reports whether the trigger's mapping is in place, for a trigger
+	// that is remapped.
+	Applied bool
 }
 
-// Observe registers fn to receive the mappings in effect after every sync.
-func (r *Remapper) Observe(fn func([]Applied)) {
+// Observe registers fn to receive every connected keyboard's trigger after
+// each sync, or none once the remapper is restored.
+func (r *Remapper) Observe(fn func([]Resolved)) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.observer = fn
 }
 
-// notify reports the entries in effect to the observer.
-func (r *Remapper) notify(entries []entry) {
+// notify reports the connected keyboards' triggers, with the entries in effect,
+// to the observer.
+func (r *Remapper) notify(keyboards []Keyboard, entries []entry) {
 	if r.observer == nil {
 		return
 	}
 
-	applied := make([]Applied, 0, len(entries))
+	if !r.active {
+		r.observer(nil)
+
+		return
+	}
+
+	applied := make(map[identity]Mapping, len(entries))
 	for _, e := range entries {
-		applied = append(applied, Applied{
-			Vendor:   e.Vendor,
-			Product:  e.Product,
-			Location: e.Location,
-			Mapping:  e.Mapping,
+		applied[e.identity] = e.Mapping
+	}
+
+	resolved := make([]Resolved, 0, len(keyboards))
+	seen := make(map[identity]bool, len(keyboards))
+
+	for _, keyboard := range keyboards {
+		id := identityOf(keyboard)
+		if seen[id] {
+			continue
+		}
+
+		seen[id] = true
+
+		trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+		want, wanted := r.wantFor(keyboard)
+		mapping, ok := applied[id]
+
+		resolved = append(resolved, Resolved{
+			Vendor:   keyboard.Vendor,
+			Product:  keyboard.Product,
+			Location: keyboard.Location,
+			HasGlobe: keyboard.HasGlobe(),
+			Trigger:  trigger,
+			Applied:  wanted && ok && mapping == want,
 		})
 	}
 
-	r.observer(applied)
+	r.observer(resolved)
 }
 
 // Status is a connected keyboard as the remapper sees it.
 type Status struct {
 	Keyboard
 
-	// InScope reports whether trigger's remap applies to the keyboard.
-	InScope bool
+	// Trigger is the keyboard's trigger, and Listed whether it is set for the
+	// keyboard rather than a default.
+	Trigger config.KeyboardTrigger
+	Listed  bool
 	// Ours is the remapper's entry on the keyboard, if any.
 	Ours *Mapping
 	// Others are the keyboard's other mappings, set by other tools.
@@ -596,10 +649,9 @@ func (r *Remapper) Keyboards(trigger config.Trigger) ([]Status, []Mapping, error
 			i = len(statuses)
 			index[id] = i
 
-			statuses = append(statuses, Status{
-				Keyboard: keyboard,
-				InScope:  trigger.Remapped() && trigger.Keyboards.Includes(keyboard.KeyboardID(), keyboard.HasGlobe()),
-			})
+			resolved, listed := trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+
+			statuses = append(statuses, Status{Keyboard: keyboard, Trigger: resolved, Listed: listed})
 			statuses[i].Mappings = nil
 		}
 

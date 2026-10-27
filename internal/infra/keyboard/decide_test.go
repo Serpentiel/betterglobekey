@@ -1,18 +1,12 @@
 package keyboard
 
-import (
-	"testing"
-
-	"github.com/Serpentiel/betterglobekey/internal/domain/config"
-)
+import "testing"
 
 // CoreGraphics flags (kCGEventFlagMask*) and the extra kVK_* key codes the cases use.
 const (
-	flagShift   = 0x00020000
-	flagCommand = 0x00100000
-	flagFn      = 0x00800000
+	flagShift = 0x00020000
+	flagFn    = 0x00800000
 
-	keyC  = 8
 	keyF1 = 122
 )
 
@@ -35,95 +29,38 @@ var (
 
 	globeDown = flags(keyFunction, flagFn)
 	globeUp   = flags(keyFunction, 0)
-
-	rightCommandDown = flags(keyRightCommand, flagCommand|deviceRightCommand)
-	rightCommandUp   = flags(keyRightCommand, 0)
 )
 
 func TestDecide(t *testing.T) {
-	globe := config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeFn}
-	remapped := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeFn}
-	dedicated := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated}
-	rightCommand := config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough}
-	rightShift := config.Trigger{Key: "right_shift", Mode: config.TriggerModePassThrough}
-	f13 := config.Trigger{Key: "f13", Mode: config.TriggerModePassThrough}
-
 	tests := []struct {
-		name    string
-		trigger config.Trigger
-		events  []tapEvent
-		want    []press // one outcome per tap completed, in order
+		name   string
+		globe  bool
+		events []tapEvent
+		want   []press // one outcome per tap completed, in order
 	}{
-		{"globe tap", globe, []tapEvent{globeDown, globeUp}, []press{{fired: true}}},
+		{"globe tap", true, []tapEvent{globeDown, globeUp}, []press{{fired: true}}},
 		{
-			"globe tap with shift reverses", globe,
+			"globe tap with shift reverses", true,
 			[]tapEvent{flags(keyFunction, flagFn|flagShift), globeUp},
 			[]press{{fired: true, reverse: true}},
 		},
-		{"remapped key arrives as globe", remapped, []tapEvent{globeDown, globeUp}, []press{{fired: true}}},
-		{"globe does nothing in dedicated mode", dedicated, []tapEvent{globeDown, globeUp}, nil},
-		{"f20 does nothing in dedicated mode", dedicated, []tapEvent{keyDown(keyF20, 0), keyUp(keyF20, 0)}, nil},
-		{"globe + f1 media", globe, []tapEvent{globeDown, media, globeUp}, nil},
-		{"globe + f1 key", globe, []tapEvent{globeDown, keyDown(keyF1, flagFn), keyUp(keyF1, flagFn), globeUp}, nil},
+		{"globe not watched", false, []tapEvent{globeDown, globeUp}, nil},
+		{"globe + f1 media", true, []tapEvent{globeDown, media, globeUp}, nil},
+		{"globe + f1 key", true, []tapEvent{globeDown, keyDown(keyF1, flagFn), keyUp(keyF1, flagFn), globeUp}, nil},
 		{
-			"globe ignores duplicate flags", globe,
+			"globe ignores duplicate flags", true,
 			[]tapEvent{globeDown, globeDown, globeUp, globeUp},
 			[]press{{fired: true}},
 		},
-		{"right command tap", rightCommand, []tapEvent{rightCommandDown, rightCommandUp}, []press{{fired: true}}},
+		{"stray system event while held", true, []tapEvent{globeDown, other, globeUp}, []press{{fired: true}}},
 		{
-			"right command + c", rightCommand,
-			[]tapEvent{rightCommandDown, keyDown(keyC, flagCommand), keyUp(keyC, flagCommand), rightCommandUp},
-			nil,
-		},
-		{"right command + volume", rightCommand, []tapEvent{rightCommandDown, media, rightCommandUp}, nil},
-		{
-			"right command + fn + volume", rightCommand,
-			[]tapEvent{
-				rightCommandDown, flags(keyFunction, flagCommand|deviceRightCommand|flagFn), media, rightCommandUp,
-			},
-			nil,
-		},
-		{
-			"right command watches only its own device flag", rightCommand,
-			[]tapEvent{flags(55, flagCommand|deviceLeftCommand), flags(55, 0)},
-			nil,
-		},
-		{"globe is not watched while passing through", rightCommand, []tapEvent{globeDown, globeUp}, nil},
-		{
-			"right shift trigger is not reverse by itself", rightShift,
-			[]tapEvent{flags(keyRightShift, flagShift|deviceRightShift), flags(keyRightShift, 0)},
-			[]press{{fired: true}},
-		},
-		{
-			"right shift trigger with left shift reverses", rightShift,
-			[]tapEvent{
-				flags(keyShift, flagShift|deviceLeftShift),
-				flags(keyRightShift, flagShift|deviceLeftShift|deviceRightShift),
-				flags(keyRightShift, flagShift|deviceLeftShift),
-			},
-			[]press{{fired: true, reverse: true}},
-		},
-		{
-			"f13 tap fires once despite autorepeat", f13,
-			[]tapEvent{
-				keyDown(keyF13, 0),
-				{kind: eventKeyDown, keycode: keyF13, autorepeat: true},
-				{kind: eventKeyDown, keycode: keyF13, autorepeat: true},
-				keyUp(keyF13, 0),
-			},
-			[]press{{fired: true}},
-		},
-		{"f13 + c", f13, []tapEvent{keyDown(keyF13, 0), keyDown(keyC, 0), keyUp(keyF13, 0)}, nil},
-		{"stray system event while held", globe, []tapEvent{globeDown, other, globeUp}, []press{{fired: true}}},
-		{
-			"modifier press while held", globe,
+			"modifier press while held", true,
 			[]tapEvent{globeDown, flags(keyRightShift, flagFn|flagShift), globeUp},
 			[]press{{fired: true}},
 		},
-		{"reset mid-press", globe, []tapEvent{globeDown, reset, globeUp}, nil},
+		{"reset mid-press", true, []tapEvent{globeDown, reset, globeUp}, nil},
 		{
-			"tap after a combination", globe,
+			"tap after a combination", true,
 			[]tapEvent{globeDown, media, globeUp, globeDown, globeUp},
 			[]press{{fired: true}},
 		},
@@ -131,7 +68,7 @@ func TestDecide(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d := newDecider(test.trigger, "shift")
+			d := newDecider(test.globe, "shift")
 
 			var got []press
 
@@ -141,16 +78,22 @@ func TestDecide(t *testing.T) {
 				}
 			}
 
-			if len(got) != len(test.want) {
-				t.Fatalf("presses = %+v, want %+v", got, test.want)
-			}
-
-			for i := range got {
-				if got[i] != test.want[i] {
-					t.Errorf("press %d = %+v, want %+v", i, got[i], test.want[i])
-				}
-			}
+			assertPresses(t, got, test.want)
 		})
+	}
+}
+
+func assertPresses(t *testing.T, got, want []press) {
+	t.Helper()
+
+	if len(got) != len(want) {
+		t.Fatalf("presses = %+v, want %+v", got, want)
+	}
+
+	for i := range got {
+		if got[i] != want[i] {
+			t.Errorf("press %d = %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }
 
@@ -161,6 +104,7 @@ const (
 	usageCapsLock = 0x39
 	usageA        = 0x04
 	usageLShift   = 0xE1
+	usageRShift   = 0xE5
 	usageVolumeUp = 0xE9
 )
 
@@ -179,35 +123,58 @@ func TestDecideRaw(t *testing.T) {
 	volumeUp := rawValue{page: pageConsumer, usage: usageVolumeUp, value: 1}
 	rollover := rawValue{page: pageKeyboard, usage: 0xFFFFFFFF, value: 1}
 
+	rightShift := func(value int64, flags uint64) rawValue {
+		return rawValue{page: pageKeyboard, usage: usageRShift, value: value, own: true, flags: flags}
+	}
+	rightShiftDown := rightShift(1, flagShift|deviceRightShift)
+	rightShiftUp := rightShift(0, 0)
+	leftShiftHeld := flagShift | deviceLeftShift | deviceRightShift
+
 	tests := []struct {
 		name   string
+		key    string
 		values []rawValue
 		want   []press
 	}{
-		{"tap", []rawValue{capsLock(true, true, 0), capsLock(false, true, 0)}, []press{{fired: true}}},
+		{"tap", "caps_lock", []rawValue{capsLock(true, true, 0), capsLock(false, true, 0)}, []press{{fired: true}}},
 		{
-			"tap with shift reverses",
+			"tap with shift reverses", "caps_lock",
 			[]rawValue{capsLock(true, true, flagShift), capsLock(false, true, flagShift)},
 			[]press{{fired: true, reverse: true}},
 		},
-		{"key while held", []rawValue{capsLock(true, true, 0), keyA, capsLock(false, true, 0)}, nil},
-		{"media key while held", []rawValue{capsLock(true, true, 0), volumeUp, capsLock(false, true, 0)}, nil},
+		{"key while held", "caps_lock", []rawValue{capsLock(true, true, 0), keyA, capsLock(false, true, 0)}, nil},
 		{
-			"modifier and rollover while held",
+			"media key while held", "caps_lock",
+			[]rawValue{capsLock(true, true, 0), volumeUp, capsLock(false, true, 0)}, nil,
+		},
+		{
+			"modifier and rollover while held", "caps_lock",
 			[]rawValue{capsLock(true, true, 0), shiftDown, rollover, capsLock(false, true, 0)},
 			[]press{{fired: true}},
 		},
-		{"same key on another keyboard", []rawValue{capsLock(true, false, 0), capsLock(false, false, 0)}, nil},
 		{
-			"same key on another keyboard while held",
+			"same key on another keyboard", "caps_lock",
+			[]rawValue{capsLock(true, false, 0), capsLock(false, false, 0)}, nil,
+		},
+		{
+			"same key on another keyboard while held", "caps_lock",
 			[]rawValue{capsLock(true, true, 0), capsLock(true, false, 0), capsLock(false, true, 0)},
 			nil,
+		},
+		{
+			"right shift is not reverse by itself", "right_shift",
+			[]rawValue{rightShiftDown, rightShiftUp}, []press{{fired: true}},
+		},
+		{
+			"right shift with left shift held reverses", "right_shift",
+			[]rawValue{rightShift(1, leftShiftHeld), rightShiftUp},
+			[]press{{fired: true, reverse: true}},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d := newRawDecider("shift")
+			d := newRawDecider(test.key, "shift")
 
 			var got []press
 
@@ -217,39 +184,17 @@ func TestDecideRaw(t *testing.T) {
 				}
 			}
 
-			if len(got) != len(test.want) {
-				t.Fatalf("presses = %+v, want %+v", got, test.want)
-			}
-
-			for i := range got {
-				if got[i] != test.want[i] {
-					t.Errorf("press %d = %+v, want %+v", i, got[i], test.want[i])
-				}
-			}
+			assertPresses(t, got, test.want)
 		})
 	}
 }
 
-func TestTriggerForFallsBackToGlobe(t *testing.T) {
-	for _, trigger := range []config.Trigger{
-		{Key: config.TriggerGlobe, Mode: config.TriggerModePassThrough},
-		{Key: config.TriggerGlobe, Mode: config.TriggerModeDedicated},
-		{Key: "right_command", Mode: config.TriggerModeFn},
-		{Key: "unknown", Mode: config.TriggerModePassThrough},
-	} {
-		if got := triggerFor(trigger); got != globeTrigger {
-			t.Errorf("triggerFor(%+v) is not the Globe trigger", trigger)
-		}
+func TestRawKeyFamilies(t *testing.T) {
+	if raw := rawKey(RawKey{Key: "right_shift"}); raw.familyFlag != flagShift || raw.otherSideFlag != deviceLeftShift {
+		t.Errorf("right shift = %+v, want the shift family", raw)
 	}
-}
 
-func TestPassThroughTriggersCoverKeys(t *testing.T) {
-	for _, key := range config.TriggerKeys {
-		_, ok := passThroughTriggers[key]
-		want := key != config.TriggerGlobe && key != config.TriggerCapsLock
-
-		if ok != want {
-			t.Errorf("passThroughTriggers[%q] present = %v, want %v", key, ok, want)
-		}
+	if raw := rawKey(RawKey{Key: "f13"}); raw.familyFlag != 0 || raw.otherSideFlag != 0 {
+		t.Errorf("f13 = %+v, want no family", raw)
 	}
 }

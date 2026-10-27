@@ -6,9 +6,11 @@ package control
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
@@ -30,12 +32,32 @@ type Sources interface {
 	Name(id string) string
 }
 
-// Keyboards is the keyboard port: the remapper's report on connected keyboards.
+// Keyboards is the keyboard port: the remapper's report on connected keyboards,
+// and recording keys from their raw input.
 type Keyboards interface {
 	// Keyboards reports every connected keyboard against trigger, and the
 	// system-wide key mappings.
 	Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error)
+	// Record returns the next key pressed on the keyboard with keyboardID, or
+	// on any keyboard when it is empty. It fails with an error wrapping
+	// ErrRawInput when raw input cannot be read.
+	Record(ctx context.Context, keyboardID string) (RecordedKey, error)
 }
+
+// RecordedKey is a key pressed while recording.
+type RecordedKey struct {
+	// KeyboardID is the keyboard it was pressed on (see domainconfig.KeyboardID).
+	KeyboardID string
+	// Usage is its HID usage, usage page included.
+	Usage uint64
+}
+
+// ErrRawInput reports that raw keyboard input cannot be read, typically for
+// want of Input Monitoring.
+var ErrRawInput = errors.New("reading raw keyboard input failed")
+
+// recordTimeout caps how long RecordKey waits for a key.
+const recordTimeout = 30 * time.Second
 
 // Permissions are the macOS permissions the daemon holds.
 type Permissions struct {
@@ -205,4 +227,32 @@ func (s *Server) ListKeyboards(
 	}
 
 	return keyboardsToProto(statuses, systemWide), nil
+}
+
+// RecordKey returns the next key pressed, as a trigger key when it can be one.
+func (s *Server) RecordKey(
+	ctx context.Context,
+	req *controlv1.RecordKeyRequest,
+) (*controlv1.RecordKeyResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, recordTimeout)
+	defer cancel()
+
+	key, err := s.keyboards.Record(ctx, req.GetKeyboardId())
+
+	switch {
+	case errors.Is(err, ErrRawInput):
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"%v; enable betterglobekey under System Settings > Privacy & Security > Input Monitoring", err)
+	case err != nil:
+		return nil, status.FromContextError(err).Err()
+	}
+
+	trigger, _ := keymap.TriggerKeyFor(key.Usage)
+
+	name := keymap.UsageName(key.Usage)
+	if trigger == domainconfig.TriggerGlobe {
+		name = "Globe"
+	}
+
+	return &controlv1.RecordKeyResponse{Key: trigger, KeyName: name, KeyboardId: key.KeyboardID}, nil
 }

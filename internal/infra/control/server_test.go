@@ -6,17 +6,39 @@ import (
 	"net"
 	"path/filepath"
 	"testing"
+	"time"
 
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
-// fakeKeyboards reports a built-in keyboard and a remapped third-party one.
-type fakeKeyboards struct{ err error }
+// fakeKeyboards reports a built-in keyboard and a remapped third-party one,
+// and records the keys in recorded.
+type fakeKeyboards struct {
+	err       error
+	recorded  RecordedKey
+	recordErr error
+}
+
+func (f fakeKeyboards) Record(ctx context.Context, keyboardID string) (RecordedKey, error) {
+	if f.recordErr != nil {
+		return RecordedKey{}, f.recordErr
+	}
+
+	if f.recorded.KeyboardID == "" || (keyboardID != "" && keyboardID != f.recorded.KeyboardID) {
+		<-ctx.Done()
+
+		return RecordedKey{}, ctx.Err()
+	}
+
+	return f.recorded, nil
+}
 
 func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error) {
 	if f.err != nil {
@@ -30,7 +52,7 @@ func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 			{Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true}},
 			{
 				Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
-				InScope:  trigger.Remapped(),
+				Trigger:  trigger.Default,
 				Ours:     &capsToGlobe,
 				Others:   []keymap.Mapping{escape},
 			},
@@ -94,9 +116,8 @@ func sampleProtoConfig() *controlv1.Config {
 		Trigger: &controlv1.Trigger{
 			Key:  "right_command",
 			Mode: "dedicated",
-			Keyboards: &controlv1.Keyboards{
-				ApplyTo:   "all",
-				Overrides: map[string]bool{"046d:c33f": false},
+			Keyboards: map[string]*controlv1.KeyboardTrigger{
+				"046d:c33f": {Key: "insert", Mode: "pass_through"},
 			},
 		},
 		Collections: []*controlv1.Collection{
@@ -136,9 +157,11 @@ func TestApplyThenGetConfig(t *testing.T) {
 	}
 
 	trigger := cfg.GetTrigger()
+
+	logitech := trigger.GetKeyboards()["046d:c33f"]
 	if trigger.GetKey() != "right_command" || trigger.GetMode() != "dedicated" ||
-		trigger.GetKeyboards().GetApplyTo() != "all" || len(trigger.GetKeyboards().GetOverrides()) != 1 {
-		t.Errorf("trigger = %+v, want dedicated right_command on all but one keyboard", trigger)
+		logitech.GetKey() != "insert" || logitech.GetMode() != "pass_through" {
+		t.Errorf("trigger = %+v, want dedicated right_command and Insert passed through on one keyboard", trigger)
 	}
 
 	if len(cfg.GetCollections()) != 2 {
@@ -168,8 +191,7 @@ func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
 	}
 
 	trigger := got.GetConfig().GetTrigger()
-	if trigger.GetKey() != "globe" || trigger.GetMode() != "fn" ||
-		trigger.GetKeyboards().GetApplyTo() != "without_globe" {
+	if trigger.GetKey() != "globe" || trigger.GetMode() != "fn" || len(trigger.GetKeyboards()) != 0 {
 		t.Errorf("trigger = %+v, want globe", trigger)
 	}
 }
@@ -261,12 +283,12 @@ func TestListKeyboards(t *testing.T) {
 	}
 
 	builtIn, logitech := got.GetKeyboards()[0], got.GetKeyboards()[1]
-	if builtIn.GetId() != "05ac:0281" || !builtIn.GetHasGlobe() || !builtIn.GetBuiltIn() || builtIn.GetInScope() ||
+	if builtIn.GetId() != "05ac:0281" || !builtIn.GetHasGlobe() || !builtIn.GetBuiltIn() ||
 		builtIn.GetTriggerMapping() != nil {
 		t.Errorf("built-in = %+v", builtIn)
 	}
 
-	if logitech.GetId() != "046d:c33f" || logitech.GetHasGlobe() || !logitech.GetInScope() ||
+	if logitech.GetId() != "046d:c33f" || logitech.GetHasGlobe() || logitech.GetTrigger().GetKey() != "caps_lock" ||
 		logitech.GetTransport() != "USB" {
 		t.Errorf("logitech = %+v", logitech)
 	}
@@ -306,4 +328,66 @@ func TestListKeyboardsErrors(t *testing.T) {
 			t.Error("ListKeyboards hid the keyboard error")
 		}
 	})
+}
+
+func TestRecordKey(t *testing.T) {
+	insert := RecordedKey{KeyboardID: "046d:c33f", Usage: 0x7_0000_0049}
+	keyA := RecordedKey{KeyboardID: "046d:c33f", Usage: 0x7_0000_0004}
+	globe := RecordedKey{KeyboardID: "05ac:0281", Usage: keymap.GlobeUsage}
+
+	tests := []struct {
+		name     string
+		recorded RecordedKey
+		want     *controlv1.RecordKeyResponse
+	}{
+		{
+			"trigger key", insert,
+			&controlv1.RecordKeyResponse{Key: "insert", KeyName: "Insert", KeyboardId: "046d:c33f"},
+		},
+		{"other key", keyA, &controlv1.RecordKeyResponse{KeyName: "A", KeyboardId: "046d:c33f"}},
+		{"globe key", globe, &controlv1.RecordKeyResponse{Key: "globe", KeyName: "Globe", KeyboardId: "05ac:0281"}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := NewServer("", fakeSources{}, fakeKeyboards{recorded: test.recorded}, nil, "", "",
+				func() Permissions { return Permissions{} })
+
+			got, err := server.RecordKey(t.Context(), &controlv1.RecordKeyRequest{KeyboardId: test.recorded.KeyboardID})
+			if err != nil {
+				t.Fatalf("RecordKey: %v", err)
+			}
+
+			if got.GetKey() != test.want.GetKey() || got.GetKeyName() != test.want.GetKeyName() ||
+				got.GetKeyboardId() != test.want.GetKeyboardId() {
+				t.Errorf("RecordKey = %+v, want %+v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestRecordKeyErrors(t *testing.T) {
+	tests := []struct {
+		name      string
+		keyboards fakeKeyboards
+		want      codes.Code
+	}{
+		{"raw input", fakeKeyboards{recordErr: fmt.Errorf("%w (0xe00002e2)", ErrRawInput)}, codes.FailedPrecondition},
+		{"no key in time", fakeKeyboards{}, codes.DeadlineExceeded},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := NewServer("", fakeSources{}, test.keyboards, nil, "", "",
+				func() Permissions { return Permissions{} })
+
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Millisecond)
+			defer cancel()
+
+			_, err := server.RecordKey(ctx, &controlv1.RecordKeyRequest{})
+			if status.Code(err) != test.want {
+				t.Errorf("err = %v, want code %v", err, test.want)
+			}
+		})
+	}
 }

@@ -13,7 +13,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'globe', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'globe', mode: 'fn', keyboards: {} },
 }
 
 const sources: InputSource[] = [

@@ -64,15 +64,22 @@ typedef struct {
 // fed to bgkDecide as; no CoreGraphics key code is negative.
 #define bgkRawTriggerCode (-2)
 
-// bgkRawKey is a trigger key silenced on one keyboard: remapped to a usage that
-// produces no event, so it is watched in the keyboard's raw HID input instead.
+// bgkRawKey is a trigger key read from one keyboard's raw HID input: silenced
+// (dedicated) or keeping its function (passed through).
 typedef struct {
 	uint32_t vendor;
 	uint32_t product;
 	uint32_t location;
 	// usage is the key's usage on the Keyboard/Keypad page.
 	uint32_t usage;
+	// familyFlag and otherSideFlag are as in bgkTrigger, for a modifier key.
+	uint64_t familyFlag;
+	uint64_t otherSideFlag;
 } bgkRawKey;
+
+// bgkIsRecordable reports whether a raw HID usage names a key that recording
+// reports: a Keyboard/Keypad page key, or the Globe key.
+int bgkIsRecordable(uint32_t page, uint32_t usage);
 
 // bgkRawEvent classifies a raw HID value for bgkDecide. own reports that it is a
 // silenced trigger key; flags are the modifier flags at the time.

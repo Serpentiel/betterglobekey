@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager, State, Url, WebviewUrl, WebviewWindowBuilder, Wi
 use tauri_plugin_opener::OpenerExt;
 
 use daemon::Daemon;
-use daemon::proto::{Config, GetVersionResponse, InputSource, ListKeyboardsResponse};
+use daemon::proto::{Config, GetVersionResponse, InputSource, ListKeyboardsResponse, RecordKeyResponse};
 
 const MAIN_WINDOW: &str = "main";
 
@@ -31,6 +31,11 @@ async fn list_input_sources(daemon: State<'_, Daemon>) -> Result<Vec<InputSource
 #[tauri::command]
 async fn list_keyboards(daemon: State<'_, Daemon>) -> Result<ListKeyboardsResponse, String> {
     daemon.list_keyboards().await
+}
+
+#[tauri::command]
+async fn record_key(daemon: State<'_, Daemon>, keyboard_id: String) -> Result<RecordKeyResponse, String> {
+    daemon.record_key(keyboard_id).await
 }
 
 #[tauri::command]
@@ -107,6 +112,7 @@ pub fn run() {
             apply_config,
             list_input_sources,
             list_keyboards,
+            record_key,
             get_version
         ])
         .setup(|app| {

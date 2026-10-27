@@ -31,38 +31,25 @@ var TriggerKeys = []string{
 	"right_command", "right_option", "right_control", "right_shift",
 	"left_command", "left_option", "left_control", "left_shift",
 	"f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20",
-	"menu",
+	"menu", "insert", "print_screen", "scroll_lock", "pause",
 }
 
 // Trigger modes: how a trigger key other than the Globe key is detected.
 const (
 	// TriggerModeFn remaps the key to fn, the Globe key's usage, so it switches
-	// input sources and works in fn shortcuts (fn+arrows, fn+F-keys, ...); the
-	// Globe key keeps switching too.
+	// input sources and works in fn shortcuts (fn+arrows, fn+F-keys, ...).
 	TriggerModeFn = "fn"
 	// TriggerModeDedicated silences the key, remapping it to one macOS has no key
-	// code for, and watches its raw input instead: it is the only key that
-	// switches and the Globe key keeps just its macOS functions. Raw input
-	// needs Input Monitoring.
+	// code for, and reads it from the keyboard's raw input instead, which needs
+	// Input Monitoring.
 	TriggerModeDedicated = "dedicated"
-	// TriggerModePassThrough keeps the key's normal function and watches it
-	// directly, switching only when it is tapped on its own.
+	// TriggerModePassThrough keeps the key's normal function and reads it from
+	// the keyboard's raw input, switching only when it is tapped on its own.
 	TriggerModePassThrough = "pass_through"
 )
 
 // TriggerModes are the accepted trigger modes.
 var TriggerModes = []string{TriggerModeFn, TriggerModeDedicated, TriggerModePassThrough}
-
-// Keyboard scopes: which keyboards a remapped trigger key applies to.
-const (
-	// KeyboardsWithoutGlobe remaps the key on keyboards that lack a Globe key.
-	KeyboardsWithoutGlobe = "without_globe"
-	// KeyboardsAll remaps the key on every keyboard.
-	KeyboardsAll = "all"
-)
-
-// KeyboardScopes are the accepted keyboard scopes.
-var KeyboardScopes = []string{KeyboardsWithoutGlobe, KeyboardsAll}
 
 // keyboardIDPattern matches a keyboard ID: vendor and product IDs as four
 // lower-case hex digits each.
@@ -83,7 +70,7 @@ type Config struct {
 	Reverse Reverse
 	// HUD configures the on-screen overlay shown when the input source changes.
 	HUD HUD
-	// Trigger selects the key that switches input sources.
+	// Trigger selects the key that switches input sources on each keyboard.
 	Trigger Trigger
 	// Collections are the ordered input source collections the Globe key cycles through.
 	Collections []Collection
@@ -118,50 +105,74 @@ type Reverse struct {
 	Modifier string
 }
 
-// Trigger selects the key that switches input sources.
+// GlobeTrigger is the trigger of a keyboard with a Globe key of its own, unless
+// it is listed in Trigger.Keyboards.
+var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeFn}
+
+// Trigger selects the key that switches input sources on each keyboard.
 type Trigger struct {
-	// Key is the trigger key (see TriggerKeys).
-	Key string
-	// Mode is how a key other than the Globe key is detected (see TriggerModes). It has
-	// no effect for the Globe key.
-	Mode string
-	// Keyboards selects the keyboards a remapped key applies to.
-	Keyboards Keyboards
+	// Default is the trigger of keyboards without a Globe key that are not
+	// listed in Keyboards. Its key is the Globe key when they have no trigger.
+	Default KeyboardTrigger
+	// Keyboards are the triggers of single keyboards, by keyboard ID (see
+	// KeyboardID).
+	Keyboards map[string]KeyboardTrigger
 }
 
-// Keyboards selects the keyboards a remapped trigger key applies to.
-type Keyboards struct {
-	// ApplyTo is the default scope (see KeyboardScopes).
-	ApplyTo string
-	// Overrides include (true) or exclude (false) keyboards by keyboard ID
-	// (see KeyboardID), whatever ApplyTo says.
-	Overrides map[string]bool
-}
-
-// Includes reports whether the keyboard with the given ID, which has or lacks a
-// Globe key, is in scope.
-func (k Keyboards) Includes(id string, hasGlobe bool) bool {
-	if include, ok := k.Overrides[id]; ok {
-		return include
+// For returns the trigger of the keyboard with the given ID, which has or lacks
+// a Globe key, and whether it is listed in Keyboards.
+func (t Trigger) For(id string, hasGlobe bool) (KeyboardTrigger, bool) {
+	if trigger, ok := t.Keyboards[id]; ok {
+		return trigger, true
 	}
 
-	return k.ApplyTo == KeyboardsAll || !hasGlobe
+	if hasGlobe {
+		return GlobeTrigger, false
+	}
+
+	return t.Default, false
+}
+
+// KeyboardTrigger is one keyboard's trigger key and how it is detected.
+type KeyboardTrigger struct {
+	// Key is the trigger key (see TriggerKeys).
+	Key string
+	// Mode is how a key other than the Globe key is detected (see
+	// TriggerModes). It has no effect for the Globe key.
+	Mode string
+}
+
+// Globe reports whether the trigger is the Globe key itself.
+func (k KeyboardTrigger) Globe() bool {
+	return k.Key == TriggerGlobe
 }
 
 // Remapped reports whether the trigger key is remapped at the HID level.
-func (t Trigger) Remapped() bool {
-	return t.Key != TriggerGlobe && t.Mode != TriggerModePassThrough
+func (k KeyboardTrigger) Remapped() bool {
+	return !k.Globe() && k.Mode != TriggerModePassThrough
 }
 
-// Dedicated reports whether the trigger key is silenced and watched in raw
-// input, leaving Globe out of switching.
-func (t Trigger) Dedicated() bool {
-	return t.Key != TriggerGlobe && t.Mode == TriggerModeDedicated
+// Fn reports whether the trigger key is remapped to fn, so it arrives as the
+// Globe key.
+func (k KeyboardTrigger) Fn() bool {
+	return !k.Globe() && k.Mode == TriggerModeFn
 }
 
-// PassThrough reports whether the trigger key keeps its function and is watched directly.
-func (t Trigger) PassThrough() bool {
-	return t.Key != TriggerGlobe && t.Mode == TriggerModePassThrough
+// Dedicated reports whether the trigger key is silenced and read from raw input.
+func (k KeyboardTrigger) Dedicated() bool {
+	return !k.Globe() && k.Mode == TriggerModeDedicated
+}
+
+// PassThrough reports whether the trigger key keeps its function and is read
+// from raw input.
+func (k KeyboardTrigger) PassThrough() bool {
+	return !k.Globe() && k.Mode == TriggerModePassThrough
+}
+
+// Raw reports whether the trigger key is read from the keyboard's raw input,
+// which needs Input Monitoring.
+func (k KeyboardTrigger) Raw() bool {
+	return k.Dedicated() || k.PassThrough()
 }
 
 // HUD configures the on-screen overlay.
@@ -215,28 +226,37 @@ func (c Config) Validate() error {
 	return c.validateCollections()
 }
 
-// validate checks the trigger key, mode, and keyboard scope.
+// validate checks the default trigger and every keyboard's trigger.
 func (t Trigger) validate() error {
-	if !slices.Contains(TriggerKeys, t.Key) {
-		return fmt.Errorf("trigger key must be one of %v, got %q", TriggerKeys, t.Key)
+	if err := t.Default.validate("trigger"); err != nil {
+		return err
 	}
 
-	if !slices.Contains(TriggerModes, t.Mode) {
-		return fmt.Errorf("trigger mode must be one of %v, got %q", TriggerModes, t.Mode)
-	}
-
-	if t.Key == TriggerCapsLock && t.Mode == TriggerModePassThrough {
-		return fmt.Errorf("trigger key %q cannot be passed through", TriggerCapsLock)
-	}
-
-	if !slices.Contains(KeyboardScopes, t.Keyboards.ApplyTo) {
-		return fmt.Errorf("trigger keyboards apply_to must be one of %v, got %q", KeyboardScopes, t.Keyboards.ApplyTo)
-	}
-
-	for id := range t.Keyboards.Overrides {
+	for id, trigger := range t.Keyboards {
 		if !keyboardIDPattern.MatchString(id) {
-			return fmt.Errorf("trigger keyboard override %q must be vendor:product in hex, like 05ac:029c", id)
+			return fmt.Errorf("trigger keyboard %q must be vendor:product in hex, like 05ac:029c", id)
 		}
+
+		if err := trigger.validate(fmt.Sprintf("trigger for keyboard %s", id)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validate checks the trigger key and mode; name names the trigger in errors.
+func (k KeyboardTrigger) validate(name string) error {
+	if !slices.Contains(TriggerKeys, k.Key) {
+		return fmt.Errorf("%s key must be one of %v, got %q", name, TriggerKeys, k.Key)
+	}
+
+	if !slices.Contains(TriggerModes, k.Mode) {
+		return fmt.Errorf("%s mode must be one of %v, got %q", name, TriggerModes, k.Mode)
+	}
+
+	if k.Key == TriggerCapsLock && k.Mode == TriggerModePassThrough {
+		return fmt.Errorf("%s key %q cannot be passed through", name, TriggerCapsLock)
 	}
 
 	return nil

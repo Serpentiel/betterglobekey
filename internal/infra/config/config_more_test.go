@@ -90,8 +90,7 @@ func TestApplySchemaDefaults(t *testing.T) {
 		t.Errorf("duration = %q, want %q", empty.HUD.Duration, defaultHUDDuration)
 	}
 
-	if empty.Trigger.Key != defaultTriggerKey || empty.Trigger.Mode != defaultTriggerMode ||
-		empty.Trigger.Keyboards.ApplyTo != defaultKeyboardScope {
+	if empty.Trigger.Key != defaultTriggerKey || empty.Trigger.Mode != defaultTriggerMode {
 		t.Errorf("trigger = %+v, want the defaults", empty.Trigger)
 	}
 
@@ -103,12 +102,16 @@ func TestApplySchemaDefaults(t *testing.T) {
 	set.HUD.Duration = "2s"
 	set.Trigger.Key = "f13"
 	set.Trigger.Mode = "pass_through"
-	set.Trigger.Keyboards.ApplyTo = "all"
+	set.Trigger.Keyboards = map[string]keyboardTriggerV2{"046d:c33f": {Key: "insert"}}
 	applySchemaDefaults(&set)
+
+	if set.Trigger.Keyboards["046d:c33f"].Mode != defaultTriggerMode {
+		t.Errorf("keyboard trigger mode = %q, want %q", set.Trigger.Keyboards["046d:c33f"].Mode, defaultTriggerMode)
+	}
 
 	if set.Logger.Level != "debug" || set.DoublePress.MaximumDelay != "1s" ||
 		set.Reverse.Modifier != "command" || set.HUD.Duration != "2s" || set.Trigger.Key != "f13" ||
-		set.Trigger.Mode != "pass_through" || set.Trigger.Keyboards.ApplyTo != "all" {
+		set.Trigger.Mode != "pass_through" {
 		t.Errorf("applySchemaDefaults overwrote populated fields: %+v", set)
 	}
 }

@@ -19,7 +19,6 @@ const (
 	defaultHUDDuration      = "900ms"
 	defaultTriggerKey       = "globe"
 	defaultTriggerMode      = "fn"
-	defaultKeyboardScope    = "without_globe"
 	defaultCollectionName   = "primary"
 )
 
@@ -67,14 +66,17 @@ type schemaV2 struct {
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
 	Trigger struct {
-		Key       string `yaml:"key"`
-		Mode      string `yaml:"mode"`
-		Keyboards struct {
-			ApplyTo   string          `yaml:"apply_to"`
-			Overrides map[string]bool `yaml:"overrides,omitempty"`
-		} `yaml:"keyboards"`
+		Key       string                       `yaml:"key"`
+		Mode      string                       `yaml:"mode"`
+		Keyboards map[string]keyboardTriggerV2 `yaml:"keyboards,omitempty"`
 	} `yaml:"trigger"`
 	Collections []collectionV2 `yaml:"collections"`
+}
+
+// keyboardTriggerV2 is one keyboard's trigger in the v2 schema.
+type keyboardTriggerV2 struct {
+	Key  string `yaml:"key"`
+	Mode string `yaml:"mode,omitempty"`
 }
 
 // collectionV2 is a named, ordered set of input source IDs in the v2 schema.

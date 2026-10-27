@@ -18,7 +18,23 @@ func goHandleTriggerRelease(reverse C.int) {
 //
 //export goRawInput
 func goRawInput(state, status C.int) {
+	if RawInputState(state) == RawInputFailed {
+		rawInputFailed(&RawInputError{Status: int32(status)})
+	}
+
 	if handler := rawInputHandler.Load(); handler != nil {
 		(*handler)(RawInputState(state), int32(status))
 	}
+}
+
+// goRecordedKey is invoked from C for each key pressed while recording.
+//
+//export goRecordedKey
+func goRecordedKey(vendor, product, location, page, usage C.uint32_t) {
+	recorded(RecordedKey{
+		Vendor:   uint32(vendor),
+		Product:  uint32(product),
+		Location: uint32(location),
+		Usage:    uint64(page)<<32 | uint64(usage),
+	})
 }

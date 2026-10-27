@@ -1,81 +1,74 @@
 import { clsx } from 'clsx'
 import { Globe, Keyboard } from 'lucide-react'
-import { type ReactElement, useEffect, useState } from 'react'
+import { type ReactElement, useEffect, useRef, useState } from 'react'
 
-import { GLOBE, triggerKeyForCode, triggerLabel, triggerName } from '../../lib/trigger-keys'
+import { api } from '../../lib/api'
+import { toMessage } from '../../lib/errors'
+import { GLOBE, triggerLabel } from '../../lib/trigger-keys'
 import { Button } from '../../ui'
 import styles from './KeyPicker.module.css'
 
 interface Props {
   value: string
-  /** remapped reports whether value is currently remapped, so pressing it no longer reaches the page. */
-  remapped: boolean
   onChange: (key: string) => void
+  /** keyboardId records only from this keyboard; absent records from any keyboard. */
+  keyboardId?: string
+  /** keyboardName names the keyboard to press the key on. */
+  keyboardName?: string
+  /** disabled turns recording off, e.g. for a keyboard that is not connected. */
+  disabled?: boolean
   id?: string
 }
 
 /**
- * KeyPicker shows the trigger key and records a new one from the next key press.
- * The Globe key has its own button: web views never receive it.
+ * KeyPicker shows a trigger key and records a new one: the daemon reads the next
+ * key pressed straight from the keyboard, before any remapping, so a remapped
+ * key records as itself. The Globe key has its own button.
  */
-export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElement {
+export function KeyPicker({ value, onChange, keyboardId, keyboardName, disabled = false, id }: Props): ReactElement {
   const [recording, setRecording] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // attempt identifies the recording in progress, so a cancelled one is ignored.
+  const attempt = useRef(0)
 
-  useEffect(() => {
-    if (!recording) {
-      return undefined
-    }
+  useEffect(() => () => void attempt.current++, [])
 
-    const onKey = (event: KeyboardEvent): void => {
-      // Caps Lock reports its key-down only when locking, so take either edge.
-      if (event.type === 'keyup' && event.code !== 'CapsLock') {
-        return
-      }
+  const record = (): void => {
+    const current = ++attempt.current
+    setError(null)
+    setRecording(true)
 
-      event.preventDefault()
-      event.stopPropagation()
+    api
+      .recordKey(keyboardId ?? '')
+      .then((recorded) => {
+        if (attempt.current !== current) {
+          return
+        }
 
-      if (event.code === 'Escape') {
-        setRecording(false)
+        if (recorded.key) {
+          onChange(recorded.key)
+        } else {
+          setError(`${recorded.keyName} can't switch input sources. Try another key.`)
+        }
+      })
+      .catch((cause: unknown) => {
+        if (attempt.current === current) {
+          setError(toMessage(cause))
+        }
+      })
+      .finally(() => {
+        if (attempt.current === current) {
+          setRecording(false)
+        }
+      })
+  }
 
-        return
-      }
+  const cancel = (): void => {
+    attempt.current++
+    setRecording(false)
+  }
 
-      const key = triggerKeyForCode(event.code)
-      if (!key) {
-        setError(
-          `${event.key === ' ' ? 'Space' : event.key || event.code} can't switch input sources. Try another key.`,
-        )
-
-        return
-      }
-
-      onChange(key.value)
-      setError(null)
-      setRecording(false)
-    }
-
-    const stop = (): void => setRecording(false)
-
-    window.addEventListener('keydown', onKey, true)
-    window.addEventListener('keyup', onKey, true)
-    window.addEventListener('blur', stop)
-
-    return () => {
-      window.removeEventListener('keydown', onKey, true)
-      window.removeEventListener('keyup', onKey, true)
-      window.removeEventListener('blur', stop)
-    }
-  }, [recording, onChange])
-
-  const status = error
-    ? error
-    : recording
-      ? remapped
-        ? `Press a key, or Esc to cancel. ${triggerName(value)} is remapped right now, so pressing it won't register.`
-        : 'Press a key, or Esc to cancel.'
-      : null
+  const status = error ?? (recording ? `Press a key on ${keyboardName ?? 'any keyboard'}.` : null)
 
   return (
     <div className={styles.picker}>
@@ -86,10 +79,8 @@ export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElemen
         id={id}
         icon={Keyboard}
         aria-pressed={recording}
-        onClick={() => {
-          setError(null)
-          setRecording(!recording)
-        }}
+        disabled={disabled}
+        onClick={recording ? cancel : record}
       >
         {recording ? 'Cancel' : 'Record'}
       </Button>
@@ -98,8 +89,8 @@ export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElemen
         icon={Globe}
         disabled={value === GLOBE}
         onClick={() => {
+          cancel()
           setError(null)
-          setRecording(false)
           onChange(GLOBE)
         }}
       >

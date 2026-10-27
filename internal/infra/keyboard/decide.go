@@ -5,8 +5,6 @@ package keyboard
 */
 import "C"
 
-import "github.com/Serpentiel/betterglobekey/internal/domain/config"
-
 // eventType mirrors bgkEventType for tests, which cannot use cgo directly.
 type eventType int
 
@@ -40,8 +38,9 @@ type decider struct {
 	state       C.bgkState
 }
 
-func newDecider(trigger config.Trigger, reverseModifier string) *decider {
-	return &decider{trigger: triggerFor(trigger), reverseMask: modifierMasks[reverseModifier]}
+// newDecider returns a decider for the event tap, watching the Globe key or nothing.
+func newDecider(globe bool, reverseModifier string) *decider {
+	return &decider{trigger: tapTrigger(globe), reverseMask: modifierMasks[reverseModifier]}
 }
 
 func (d *decider) feed(event tapEvent) press {
@@ -73,10 +72,17 @@ type rawValue struct {
 	flags       uint64
 }
 
-// newRawDecider returns a decider for a dedicated trigger's raw presses.
-func newRawDecider(reverseModifier string) *decider {
+// newRawDecider returns a decider for raw presses of the trigger key named key.
+func newRawDecider(key, reverseModifier string) *decider {
+	raw := rawKey(RawKey{Key: key})
+
 	return &decider{
-		trigger:     C.bgkTrigger{kind: C.bgkKindKey, keycode: C.bgkRawTriggerCode},
+		trigger: C.bgkTrigger{
+			kind:          C.bgkKindKey,
+			keycode:       C.bgkRawTriggerCode,
+			familyFlag:    raw.familyFlag,
+			otherSideFlag: raw.otherSideFlag,
+		},
 		reverseMask: modifierMasks[reverseModifier],
 	}
 }

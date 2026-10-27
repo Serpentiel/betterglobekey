@@ -12,7 +12,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['com.apple.keylayout.US'] }],
-  trigger: { key: 'globe', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'globe', mode: 'fn', keyboards: {} },
 }
 
 const sources: InputSource[] = [
@@ -27,6 +27,7 @@ function mockApi(overrides: Partial<Api> = {}): Api {
     getConfig: vi.fn(() => Promise.resolve(validConfig)),
     listInputSources: vi.fn(() => Promise.resolve(sources)),
     listKeyboards: vi.fn(() => Promise.resolve({ keyboards: [], systemMappings: [] })),
+    recordKey: vi.fn(() => Promise.resolve({ key: 'caps_lock', keyName: 'Caps Lock', keyboardId: '' })),
     getVersion: vi.fn(() => Promise.resolve(version)),
     getCompanionVersion: vi.fn(() => Promise.resolve('4.1.0')),
     applyConfig: vi.fn(() => Promise.resolve()),
