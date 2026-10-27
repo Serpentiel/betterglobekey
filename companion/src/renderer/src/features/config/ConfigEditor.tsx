@@ -8,8 +8,8 @@ import { Banner, Button, Footer, Stack, Titlebar } from '../../ui'
 import { BehaviorSection } from './BehaviorSection'
 import { CollectionsSection } from './CollectionsSection'
 import { HudSection } from './HudSection'
-import { KeyboardsSection } from './KeyboardsSection'
 import { LoggingSection } from './LoggingSection'
+import { TriggerSection } from './TriggerSection'
 import styles from './ConfigEditor.module.css'
 
 interface Props {
@@ -76,8 +76,8 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
           {saveError ? <Banner tone="error">{saveError}</Banner> : null}
           {dirty && !validation.valid ? <Banner tone="info">Fix the highlighted fields to save.</Banner> : null}
 
+          <TriggerSection config={config} errors={validation.errors} keyboards={keyboards} onChange={update} />
           <BehaviorSection config={config} errors={validation.errors} onChange={update} />
-          <KeyboardsSection config={config} keyboards={keyboards} onChange={update} />
           <HudSection config={config} errors={validation.errors} onChange={update} />
           <CollectionsSection
             config={config}

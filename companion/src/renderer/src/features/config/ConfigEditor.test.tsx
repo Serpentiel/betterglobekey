@@ -54,7 +54,7 @@ describe('ConfigEditor', () => {
   it('renders every section and the version footer', () => {
     render(<ConfigEditor controller={makeController()} />)
 
-    for (const heading of ['Behavior', 'Keyboards', 'On-screen HUD', 'Collections', 'Logging']) {
+    for (const heading of ['Trigger Key', 'Behavior', 'On-screen HUD', 'Collections', 'Logging']) {
       expect(screen.getByText(heading)).toBeTruthy()
     }
 
@@ -152,13 +152,14 @@ describe('ConfigEditor', () => {
     expect(update).toHaveBeenCalledWith({ ...validConfig, hud: { ...validConfig.hud, enabled: false } })
   })
 
-  it('names the trigger key and keeps Globe from changing mode', () => {
+  it('names the trigger key and keeps Globe from changing mode', async () => {
     render(<ConfigEditor controller={makeController()} />)
+
+    expect(await screen.findByText('0 keyboards connected.')).toBeTruthy()
 
     expect(screen.getByText('How the Globe key responds to presses.')).toBeTruthy()
     expect(screen.getByText('Ordered groups of input sources the Globe key cycles through.')).toBeTruthy()
     expect((screen.getByRole('combobox', { name: 'Trigger mode' }) as HTMLButtonElement).disabled).toBe(true)
-    expect((screen.getByRole('combobox', { name: 'Remap on' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('switches the mode of a key that supports it', () => {
@@ -182,19 +183,6 @@ describe('ConfigEditor', () => {
       'Act as fn',
       'Only this key switches',
     ])
-  })
-
-  it('applies the remap to all keyboards', () => {
-    const update = vi.fn()
-    const config: Config = { ...validConfig, trigger: { ...validConfig.trigger, key: 'caps_lock' } }
-    render(<ConfigEditor controller={makeController({ config, update })} />)
-
-    fireEvent.click(screen.getByRole('combobox', { name: 'Remap on' }))
-    fireEvent.click(screen.getByRole('option', { name: 'All keyboards' }))
-    expect(update).toHaveBeenCalledWith({
-      ...config,
-      trigger: { ...config.trigger, keyboards: { applyTo: 'all', overrides: {} } },
-    })
   })
 
   it('falls back to Globe mode when switching to a key that cannot use the mode', () => {

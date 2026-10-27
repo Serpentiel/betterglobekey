@@ -82,6 +82,12 @@ export function allowedModes(value: string): string[] {
   )
 }
 
+/** remappedTrigger reports whether the trigger key is remapped at the HID level,
+ * mirroring the daemon's Trigger.Remapped. */
+export function remappedTrigger(trigger: { key: string; mode: string }): boolean {
+  return trigger.key !== GLOBE && trigger.mode !== MODE_PASS_THROUGH
+}
+
 /** includesKeyboard reports whether a keyboard is in scope, mirroring the daemon's Keyboards.Includes. */
 export function includesKeyboard(
   keyboards: { applyTo: string; overrides: Record<string, boolean> },
