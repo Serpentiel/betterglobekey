@@ -128,7 +128,7 @@ func TestDecideRaw(t *testing.T) {
 	}
 	rightShiftDown := rightShift(1, flagShift|deviceRightShift)
 	rightShiftUp := rightShift(0, 0)
-	leftShiftHeld := flagShift | deviceLeftShift | deviceRightShift
+	leftShiftHeld := uint64(flagShift | deviceLeftShift | deviceRightShift)
 
 	tests := []struct {
 		name   string
