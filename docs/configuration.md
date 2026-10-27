@@ -57,32 +57,32 @@ All options other than `collections` are optional and fall back to the defaults 
 
 ## Trigger Key
 
-`trigger.key` selects the key that switches input sources. The default, `globe`, is the Globe (fn) key on Apple
+`trigger.key` selects the key that switches input sources. The default, `globe`, is the Globe key on Apple
 keyboards. For a keyboard without one, pick another key:
 
 | Key                                           | `trigger.key`                                                            |
 | --------------------------------------------- | ------------------------------------------------------------------------ |
-| Globe (fn)                                    | `globe`                                                                  |
+| Globe                                         | `globe`                                                                  |
 | Caps Lock                                     | `caps_lock`                                                              |
 | Right or left Command, Option, Control, Shift | `right_command`, `left_option`, `right_control`, `left_shift`, and so on |
 | F13 through F20                               | `f13` … `f20`                                                            |
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 
-The Globe key is also the fn key: tapped alone it switches input sources, held it is the fn modifier. How a key other
-than Globe is used depends on `trigger.mode`:
+The Globe key, labeled fn on some keyboards, does two things: tapped alone it switches input sources, and held it is the
+fn modifier. How a key other than the Globe key is used depends on `trigger.mode`:
 
-| `trigger.mode` | The key                                                   | Globe also switches | Per keyboard |
-| -------------- | --------------------------------------------------------- | ------------------- | ------------ |
-| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | yes                 | yes          |
-| `dedicated`    | is **silenced** and read straight from the keyboard       | no                  | yes          |
-| `pass_through` | **keeps its normal function**                             | no                  | no           |
+| `trigger.mode` | The key                                                   | Globe key also switches | Per keyboard |
+| -------------- | --------------------------------------------------------- | ----------------------- | ------------ |
+| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | yes                     | yes          |
+| `dedicated`    | is **silenced** and read straight from the keyboard       | no                      | yes          |
+| `pass_through` | **keeps its normal function**                             | no                      | no           |
 
 - `fn` and `dedicated` remap the key at the hardware level while the service runs, the same way
   `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
 - `dedicated` remaps the key to F24, which macOS has no key code for, so the key produces no event at all and nothing
   else can react to it. The service reads the keyboard's raw input instead, which needs **Input Monitoring** (_System
   Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a restart
-  after you grant it). The Globe (fn) key keeps only what macOS does with it.
+  after you grant it). The Globe key keeps only what macOS does with it.
 - `pass_through` watches the key directly: pressing it on its own switches input sources; using it in a combination
   (such as Right Command + C) does not. Caps Lock cannot be passed through.
 

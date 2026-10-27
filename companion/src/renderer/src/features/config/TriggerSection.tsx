@@ -75,7 +75,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
 
   const keyHint =
     key === GLOBE
-      ? 'The Globe (fn) key on Apple keyboards. Record another key for a keyboard without one.'
+      ? 'The Globe key on Apple keyboards. Record another key for a keyboard without one.'
       : remapped
         ? `${name} loses its normal function while betterglobekey runs, on the chosen keyboards.`
         : `Pressing ${name} alone switches input sources; in combinations it still works as ${name}.`
@@ -83,10 +83,10 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
   const modeHint =
     errors.trigger.mode ??
     (key === GLOBE
-      ? 'Record a key other than Globe to choose how it works.'
+      ? 'Record a key other than the Globe key to choose how it works.'
       : {
-          [MODE_FN]: `${name} becomes an fn key, with the fn shortcuts (fn+arrows, fn+Delete, fn+E, …). Globe keeps switching too.`,
-          [MODE_DEDICATED]: `Only ${name} switches: it is silenced and read directly, which needs Input Monitoring. Globe (fn) keeps only its macOS functions.`,
+          [MODE_FN]: `${name} switches input sources and works as fn in shortcuts (fn+arrows, fn+Delete, fn+E, …). The Globe key keeps switching too.`,
+          [MODE_DEDICATED]: `Only ${name} switches: it is silenced and read directly, which needs Input Monitoring. The Globe key keeps only its macOS functions.`,
           [MODE_PASS_THROUGH]: `${name} keeps working as itself on every keyboard and switches only when pressed alone.`,
         }[mode])
 

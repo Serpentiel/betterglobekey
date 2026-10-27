@@ -22,7 +22,7 @@ static CFMachPortRef bgkTap = NULL;
 static CFRunLoopRef bgkRunLoop = NULL;
 static CFRunLoopSourceRef bgkSource = NULL;
 
-// bgkFnKeyCode is kVK_Function, the Globe/fn key.
+// bgkFnKeyCode is kVK_Function, the Globe key.
 static const int64_t bgkFnKeyCode = 63;
 
 // bgkSystemDefined is NSEventTypeSystemDefined, the type of media keys such as

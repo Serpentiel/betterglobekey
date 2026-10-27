@@ -68,9 +68,9 @@ message Trigger {
   // left_shift, f13 through f20, or menu.
   string key = 1;
 
-  // mode is how a key other than globe is detected: fn (remapped to the Globe
-  // (fn) key, the default when empty), dedicated (silenced and watched in raw
-  // input, so Globe no longer switches; needs Input Monitoring), or
+  // mode is how a key other than globe is detected: fn (remapped to fn, the
+  // Globe key's usage; the default when empty), dedicated (silenced and watched
+  // in raw input, so the Globe key no longer switches; needs Input Monitoring), or
   // pass_through (keeps its function; not allowed for caps_lock).
   string mode = 3;
 

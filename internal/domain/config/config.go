@@ -18,7 +18,7 @@ var LogLevels = []string{"debug", "info", "warn", "error"}
 // ReverseModifiers are the accepted modifier keys for a reverse press.
 var ReverseModifiers = []string{"shift", "option", "control", "command"}
 
-// TriggerGlobe is the default trigger key: the Globe (fn) key itself.
+// TriggerGlobe is the default trigger key: the Globe key itself.
 const TriggerGlobe = "globe"
 
 // TriggerCapsLock is the Caps Lock key, which can only be remapped, not passed through.
@@ -34,14 +34,15 @@ var TriggerKeys = []string{
 	"menu",
 }
 
-// Trigger modes: how a trigger key other than Globe is detected.
+// Trigger modes: how a trigger key other than the Globe key is detected.
 const (
-	// TriggerModeFn remaps the key to the Globe (fn) key, so it gains the fn
-	// shortcuts (fn+arrows, fn+F-keys, ...) and Globe keeps switching too.
+	// TriggerModeFn remaps the key to fn, the Globe key's usage, so it switches
+	// input sources and works in fn shortcuts (fn+arrows, fn+F-keys, ...); the
+	// Globe key keeps switching too.
 	TriggerModeFn = "fn"
 	// TriggerModeDedicated silences the key, remapping it to one macOS has no key
 	// code for, and watches its raw input instead: it is the only key that
-	// switches and the Globe (fn) key keeps just its macOS functions. Raw input
+	// switches and the Globe key keeps just its macOS functions. Raw input
 	// needs Input Monitoring.
 	TriggerModeDedicated = "dedicated"
 	// TriggerModePassThrough keeps the key's normal function and watches it
@@ -121,7 +122,7 @@ type Reverse struct {
 type Trigger struct {
 	// Key is the trigger key (see TriggerKeys).
 	Key string
-	// Mode is how a key other than Globe is detected (see TriggerModes). It has
+	// Mode is how a key other than the Globe key is detected (see TriggerModes). It has
 	// no effect for the Globe key.
 	Mode string
 	// Keyboards selects the keyboards a remapped key applies to.

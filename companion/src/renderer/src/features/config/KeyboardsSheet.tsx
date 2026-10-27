@@ -36,7 +36,7 @@ function details(keyboard: Keyboard): string {
   const parts = [keyboard.builtIn ? 'Built-in' : keyboard.transport || 'Keyboard', keyboard.id]
 
   if (keyboard.hasGlobe) {
-    parts.push('has Globe')
+    parts.push('has Globe key')
   }
 
   return parts.join(' · ')
@@ -108,8 +108,8 @@ export function KeyboardsSheet({ open, config, keyboards, onChange, onClose }: P
       {keyboards.error ? <Banner tone="error">{`Keyboards unavailable: ${keyboards.error}`}</Banner> : null}
       {mode === MODE_DEDICATED && remapped && keyboards.report && !connected.some(inScope) ? (
         <Banner tone="info">
-          No connected keyboard remaps the trigger key, and Globe does not switch in this mode. Turn on a keyboard
-          below.
+          No connected keyboard remaps the trigger key, and the Globe key does not switch in this mode. Turn on a
+          keyboard below.
         </Banner>
       ) : null}
 

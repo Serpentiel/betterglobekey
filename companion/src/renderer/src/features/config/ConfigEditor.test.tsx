@@ -167,7 +167,7 @@ describe('ConfigEditor', () => {
     const config: Config = { ...validConfig, trigger: { ...validConfig.trigger, key: 'right_command' } }
     render(<ConfigEditor controller={makeController({ config, update })} />)
 
-    expect(screen.getByText(/Right Command becomes an fn key/)).toBeTruthy()
+    expect(screen.getByText(/Right Command switches input sources and works as fn/)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
     fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))

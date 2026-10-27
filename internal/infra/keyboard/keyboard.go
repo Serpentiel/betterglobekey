@@ -1,6 +1,6 @@
 // Package keyboard listens for trigger key taps using a CoreGraphics event tap,
 // giving the application full control over detection without third-party
-// dependencies. The default trigger, the Globe/fn key, surfaces as a
+// dependencies. The default trigger, the Globe key, surfaces as a
 // flags-changed event with key code kVK_Function (63); a release (the fn flag
 // clearing) is treated as a press, and a held Shift marks it as a reverse press.
 // A passed-through trigger key is watched the same way: modifiers through their
@@ -90,7 +90,7 @@ const (
 	keyContextualMenu = 110
 )
 
-// globeTrigger is the Globe (fn) key, also used for a key remapped to fn.
+// globeTrigger is the Globe key, also used for a key remapped to fn.
 var globeTrigger = C.bgkTrigger{kind: C.bgkKindFlag, keycode: keyFunction, pressFlag: C.kCGEventFlagMaskSecondaryFn}
 
 // modifierTrigger describes a modifier key: its key code, its own device flag,
@@ -133,7 +133,7 @@ var passThroughTriggers = map[string]C.bgkTrigger{
 }
 
 // noTrigger matches no event: a dedicated trigger is silenced and watched in raw
-// HID input instead (see SetDedicatedKeys), and Globe does not switch.
+// HID input instead (see SetDedicatedKeys), and the Globe key does not switch.
 var noTrigger = C.bgkTrigger{kind: C.bgkKindKey, keycode: C.bgkRawTriggerCode}
 
 // triggerFor returns the descriptor the event tap watches for trigger: the key

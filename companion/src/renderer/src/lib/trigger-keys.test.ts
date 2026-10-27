@@ -44,7 +44,7 @@ describe('trigger keys', () => {
     expect(triggerKeyForCode('KeyA')).toBeUndefined()
   })
 
-  it('only lets keys other than Globe and Caps Lock pass through', () => {
+  it('only lets keys other than the Globe key and Caps Lock pass through', () => {
     const remapOnly = TRIGGER_KEYS.filter((key) => !key.passThrough).map((key) => key.value)
     expect(remapOnly).toEqual([GLOBE, 'caps_lock'])
   })

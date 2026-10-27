@@ -64,7 +64,7 @@ describe('KeyboardsSheet', () => {
     renderSheet()
 
     expect(screen.getByRole('dialog', { name: 'Keyboards' })).toBeTruthy()
-    expect(screen.getByText('Built-in · 05ac:0281 · has Globe')).toBeTruthy()
+    expect(screen.getByText('Built-in · 05ac:0281 · has Globe key')).toBeTruthy()
     expect(screen.getByText('USB · 046d:c33f')).toBeTruthy()
     expect(screen.getByText('Caps Lock → fn')).toBeTruthy()
     expect(screen.getByText('Caps Lock unchanged')).toBeTruthy()

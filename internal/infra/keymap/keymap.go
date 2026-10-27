@@ -1,7 +1,7 @@
 // Package keymap remaps the configured trigger key on each keyboard's own HID key
-// mapping table: to the Globe (fn) key, so a keyboard without one drives the
-// daemon through its existing Globe handling, or to a dedicated key only the
-// daemon watches.
+// mapping table: to fn (the Globe key's usage), so a keyboard without a Globe
+// key drives the daemon through its existing Globe key handling, or to a key
+// that produces no event, for a dedicated trigger the daemon reads raw.
 //
 // The tables are shared with hidutil and other tools, so the remapper only ever
 // touches its own entries: it merges into a keyboard's current table, remembers
@@ -28,7 +28,7 @@ import (
 // keyboardPage is the HID Keyboard/Keypad usage page, shifted into place.
 const keyboardPage = 0x07 << 32
 
-// GlobeUsage is the Globe (fn) key: usage 0x03 on the Apple vendor top-case page.
+// GlobeUsage is the Globe key: usage 0x03 on the Apple vendor top-case page.
 const GlobeUsage uint64 = 0xFF<<32 | 0x03
 
 // DedicatedUsage is the key a dedicated trigger is remapped to: F24, which
@@ -120,7 +120,7 @@ func (k Keyboard) KeyboardID() string {
 	return config.KeyboardID(k.Vendor, k.Product)
 }
 
-// HasGlobe reports whether the keyboard has a Globe (fn) key of its own: Apple
+// HasGlobe reports whether the keyboard has a Globe key of its own: Apple
 // keyboards do.
 func (k Keyboard) HasGlobe() bool {
 	return k.BuiltIn || k.Vendor == appleUSBVendor || k.Vendor == appleBluetoothVendor

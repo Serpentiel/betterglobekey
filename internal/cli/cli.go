@@ -378,7 +378,7 @@ func triggerStatus(trigger domainconfig.Trigger) string {
 		return trigger.Key + " (passed through)"
 	}
 
-	scope := "keyboards without Globe"
+	scope := "keyboards without a Globe key"
 	if trigger.Keyboards.ApplyTo == domainconfig.KeyboardsAll {
 		scope = "all keyboards"
 	}
@@ -388,8 +388,8 @@ func triggerStatus(trigger domainconfig.Trigger) string {
 	}
 
 	if trigger.Dedicated() {
-		return fmt.Sprintf("%s (silenced on %s and watched directly while the daemon runs; Globe does not switch)",
-			trigger.Key, scope)
+		return fmt.Sprintf("%s (silenced on %s and watched directly while the daemon runs; "+
+			"the Globe key does not switch)", trigger.Key, scope)
 	}
 
 	return fmt.Sprintf("%s (remapped to fn on %s while the daemon runs)", trigger.Key, scope)
@@ -442,8 +442,8 @@ func keyboardLines(trigger domainconfig.Trigger, statuses []keymap.Status, syste
 	}
 
 	if trigger.Dedicated() && inScope == 0 {
-		lines = append(lines, "warning:       no connected keyboard remaps the trigger key and Globe does not switch; "+
-			"include a keyboard or set trigger.keyboards.apply_to: all")
+		lines = append(lines, "warning:       no connected keyboard remaps the trigger key and the Globe key "+
+			"does not switch; include a keyboard or set trigger.keyboards.apply_to: all")
 	}
 
 	return lines
@@ -460,7 +460,7 @@ func keyboardLine(status keymap.Status) string {
 	}
 
 	if status.HasGlobe() {
-		details = append(details, "has Globe")
+		details = append(details, "has Globe key")
 	}
 
 	var mappings []string

@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * KeyPicker shows the trigger key and records a new one from the next key press.
- * Globe has its own button: web views never receive the Globe (fn) key.
+ * The Globe key has its own button: web views never receive it.
  */
 export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElement {
   const [recording, setRecording] = useState(false)
