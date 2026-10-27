@@ -216,6 +216,7 @@ func newSwitcherBuilder(
 	logger *logging.Logger,
 ) func(domainconfig.Config) *switcher.Switcher {
 	remapper.Observe(watchDedicatedKeys)
+	keyboard.OnRawInput(logRawInput(logger))
 
 	return func(c domainconfig.Config) *switcher.Switcher {
 		keyboard.SetReverseModifier(c.Reverse.Modifier)

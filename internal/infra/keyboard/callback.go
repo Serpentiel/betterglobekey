@@ -12,3 +12,13 @@ func goHandleTriggerRelease(reverse C.int) {
 		onPress(reverse != 0)
 	}
 }
+
+// goRawInput is invoked from C when raw input is opened, fails to open, or is
+// closed (see RawInputState).
+//
+//export goRawInput
+func goRawInput(state, status C.int) {
+	if handler := rawInputHandler.Load(); handler != nil {
+		(*handler)(RawInputState(state), int32(status))
+	}
+}

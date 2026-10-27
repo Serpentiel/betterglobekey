@@ -2,11 +2,50 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
+	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/Serpentiel/betterglobekey/pkg/hidkeymap"
 )
+
+// ioReturnNotPermitted is kIOReturnNotPermitted, what opening raw input fails
+// with while Input Monitoring is not granted.
+const ioReturnNotPermitted = 0xE00002E2
+
+// logRawInput returns a raw input handler that logs it opening and closing, and
+// each new reason it fails to open. Raw input is retried on every remapper sync,
+// so a failure repeats until its cause is fixed.
+func logRawInput(logger *logging.Logger) func(keyboard.RawInputState, int32) {
+	var lastFailure uint32
+
+	return func(state keyboard.RawInputState, status int32) {
+		switch state {
+		case keyboard.RawInputOpened:
+			lastFailure = 0
+
+			logger.Info("reading raw keyboard input for the dedicated trigger key")
+		case keyboard.RawInputClosed:
+			logger.Info("stopped reading raw keyboard input")
+		case keyboard.RawInputFailed:
+			code := uint32(status) //nolint:gosec // an IOReturn, reinterpreted as unsigned
+			if code == lastFailure {
+				return
+			}
+
+			lastFailure = code
+
+			reason := "unknown"
+			if code == ioReturnNotPermitted {
+				reason = "Input Monitoring not granted"
+			}
+
+			logger.Error("reading raw keyboard input failed; the dedicated trigger key is ignored",
+				"status", fmt.Sprintf("%#x", code), "reason", reason)
+		}
+	}
+}
 
 // watchDedicatedKeys points the event tap's raw input at the keys the remapper
 // silenced for a dedicated trigger.

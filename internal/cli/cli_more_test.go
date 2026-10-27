@@ -13,6 +13,7 @@ import (
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/spf13/cobra"
@@ -487,5 +488,37 @@ func TestKeyboardLines(t *testing.T) {
 	dedicated := domainconfig.Trigger{Key: "caps_lock", Mode: "dedicated"}
 	if lines := keyboardLines(dedicated, statuses[:1], nil); !strings.Contains(strings.Join(lines, "\n"), "warning") {
 		t.Errorf("no warning for a dedicated trigger no keyboard remaps: %v", lines)
+	}
+}
+
+func TestLogRawInput(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "raw.log")
+
+	logger := logging.New(domainconfig.Logger{Path: path, Level: "info"})
+
+	handle := logRawInput(logger)
+	handle(keyboard.RawInputFailed, -0x1FFFFD1E) // kIOReturnNotPermitted
+	handle(keyboard.RawInputFailed, -0x1FFFFD1E) // the same failure, retried
+	handle(keyboard.RawInputOpened, 0)
+	handle(keyboard.RawInputClosed, 0)
+
+	if err := logger.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	log := string(data)
+	if strings.Count(log, "Input Monitoring not granted") != 1 {
+		t.Errorf("want the failure logged once; got:\n%s", log)
+	}
+
+	for _, want := range []string{"0xe00002e2", "reading raw keyboard input for", "stopped reading raw keyboard input"} {
+		if !strings.Contains(log, want) {
+			t.Errorf("log missing %q; got:\n%s", want, log)
+		}
 	}
 }

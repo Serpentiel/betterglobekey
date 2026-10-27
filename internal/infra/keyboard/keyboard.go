@@ -27,6 +27,7 @@ import "C"
 
 import (
 	"runtime"
+	"sync/atomic"
 
 	"github.com/Serpentiel/betterglobekey/internal/domain/config"
 )
@@ -181,6 +182,26 @@ func SetDedicatedKeys(keys []DedicatedKey) {
 	}
 
 	C.bgkSetRawKeys(&raw[0], C.int(len(keys)))
+}
+
+// RawInputState is what happened to raw input (see OnRawInput).
+type RawInputState int
+
+// Raw input states.
+const (
+	RawInputClosed RawInputState = -1
+	RawInputFailed RawInputState = 0
+	RawInputOpened RawInputState = 1
+)
+
+// rawInputHandler receives raw input state changes.
+var rawInputHandler atomic.Pointer[func(state RawInputState, status int32)]
+
+// OnRawInput registers handler to receive raw input being opened, failing to
+// open (with the IOReturn status), or closed. It is called on the event tap's
+// thread, after every open attempt.
+func OnRawInput(handler func(state RawInputState, status int32)) {
+	rawInputHandler.Store(&handler)
 }
 
 // Listener delivers trigger key releases via a CoreGraphics event tap.

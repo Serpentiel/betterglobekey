@@ -13,6 +13,11 @@
 // the event-tap callback for each clean tap of the trigger key.
 extern void goHandleTriggerRelease(int reverse);
 
+// goRawInput is implemented in Go (see callback.go) and reports raw input being
+// opened (state 1, status 0), failing to open (state 0, status the IOReturn),
+// or closed (state -1).
+extern void goRawInput(int state, int status);
+
 static CFMachPortRef bgkTap = NULL;
 static CFRunLoopRef bgkRunLoop = NULL;
 static CFRunLoopSourceRef bgkSource = NULL;
@@ -58,6 +63,10 @@ static const bgkTrigger bgkRawTrigger = {.kind = bgkKindKey, .keycode = bgkRawTr
 // Monitoring. It lives on the tap's run loop.
 static IOHIDManagerRef bgkHID = NULL;
 static int bgkHIDOpen = 0;
+
+// bgkHIDSignal is a run-loop source on the tap's run loop that runs bgkSyncHID
+// there when another thread changes the raw keys.
+static CFRunLoopSourceRef bgkHIDSignal = NULL;
 
 // bgkSetReverseMask sets the modifier flag used to detect a reverse press.
 void bgkSetReverseMask(CGEventFlags mask) {
@@ -170,11 +179,20 @@ static void bgkSyncHID(void) {
 
 		// Shows the Input Monitoring prompt the first time; a no-op after.
 		IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
-		bgkHIDOpen = IOHIDManagerOpen(bgkHID, kIOHIDOptionsTypeNone) == kIOReturnSuccess;
+
+		IOReturn status = IOHIDManagerOpen(bgkHID, kIOHIDOptionsTypeNone);
+		bgkHIDOpen = status == kIOReturnSuccess;
+		goRawInput(bgkHIDOpen, bgkHIDOpen ? 0 : status);
 	} else if (!want && bgkHIDOpen) {
 		IOHIDManagerClose(bgkHID, kIOHIDOptionsTypeNone);
 		bgkHIDOpen = 0;
+		goRawInput(-1, 0);
 	}
+}
+
+// bgkHIDPerform is bgkHIDSignal's handler.
+static void bgkHIDPerform(void *info) {
+	bgkSyncHID();
 }
 
 // bgkSetRawKeys sets the silenced trigger keys, dropping a raw press in progress
@@ -195,12 +213,11 @@ void bgkSetRawKeys(const bgkRawKey *keys, int count) {
 		bgkRawState = (bgkState){0};
 	}
 	CFRunLoopRef runLoop = bgkRunLoop;
+	CFRunLoopSourceRef signal = bgkHIDSignal;
 	pthread_mutex_unlock(&bgkLock);
 
-	if (runLoop != NULL) {
-		CFRunLoopPerformBlock(runLoop, kCFRunLoopCommonModes, ^{
-		  bgkSyncHID();
-		});
+	if (runLoop != NULL && signal != NULL) {
+		CFRunLoopSourceSignal(signal);
 		CFRunLoopWakeUp(runLoop);
 	}
 }
@@ -286,8 +303,13 @@ int bgkStart(void) {
 
 	bgkSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, bgkTap, 0);
 
+	CFRunLoopSourceContext context = {.version = 0, .perform = bgkHIDPerform};
+	CFRunLoopSourceRef signal = CFRunLoopSourceCreate(kCFAllocatorDefault, 0, &context);
+	CFRunLoopAddSource(CFRunLoopGetCurrent(), signal, kCFRunLoopCommonModes);
+
 	pthread_mutex_lock(&bgkLock);
 	bgkRunLoop = CFRunLoopGetCurrent();
+	bgkHIDSignal = signal;
 	pthread_mutex_unlock(&bgkLock);
 
 	CFRunLoopAddSource(bgkRunLoop, bgkSource, kCFRunLoopCommonModes);
