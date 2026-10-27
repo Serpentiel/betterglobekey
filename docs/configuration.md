@@ -38,7 +38,7 @@ hud:
 
 trigger:
   key: globe
-  mode: globe
+  mode: fn
   keyboards:
     apply_to: without_globe
 
@@ -68,18 +68,19 @@ keyboards. For a keyboard without one, pick another key:
 | F13 through F20                               | `f13` … `f20`                                                            |
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 
-How a key other than Globe is used depends on `trigger.mode`:
+The Globe key is also the fn key: tapped alone it switches input sources, held it is the fn modifier. How a key other
+than Globe is used depends on `trigger.mode`:
 
-| `trigger.mode`    | The key                                                 | Globe also switches | Per keyboard |
-| ----------------- | ------------------------------------------------------- | ------------------- | ------------ |
-| `globe` (default) | is **remapped to Globe**: Globe+E, Globe+arrows, … work | yes                 | yes          |
-| `dedicated`       | is **remapped to F20**, which only the service watches  | no                  | yes          |
-| `pass_through`    | **keeps its normal function**                           | no                  | no           |
+| `trigger.mode` | The key                                                   | Globe also switches | Per keyboard |
+| -------------- | --------------------------------------------------------- | ------------------- | ------------ |
+| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | yes                 | yes          |
+| `dedicated`    | is **remapped to F20**, which only the service watches    | no                  | yes          |
+| `pass_through` | **keeps its normal function**                             | no                  | no           |
 
-- `globe` and `dedicated` remap the key at the hardware level while the service runs, the same way
+- `fn` and `dedicated` remap the key at the hardware level while the service runs, the same way
   `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
-  In `dedicated` mode Globe keeps only what macOS does with it. F20 is used because no Apple keyboard has it and macOS
-  binds nothing to it; F21 to F24 have no key codes on macOS.
+  In `dedicated` mode the Globe (fn) key keeps only what macOS does with it. F20 is used because no Apple keyboard
+  has it and macOS binds nothing to it; F21 to F24 have no key codes on macOS.
 - `pass_through` watches the key directly: pressing it on its own switches input sources; using it in a combination
   (such as Right Command + C) does not. Caps Lock cannot be passed through, and F20 cannot be `dedicated`.
 
@@ -88,7 +89,7 @@ How a key other than Globe is used depends on `trigger.mode`:
 A remapped key applies per keyboard. `trigger.keyboards.apply_to` picks the default:
 
 - `without_globe` (the default): only keyboards without a Globe key of their own, that is, anything but Apple's built-in
-  and Magic keyboards. Caps Lock on a MacBook stays Caps Lock while an external keyboard's Caps Lock becomes Globe.
+  and Magic keyboards. Caps Lock on a MacBook stays Caps Lock while an external keyboard's Caps Lock becomes fn.
 - `all`: every keyboard.
 
 `trigger.keyboards.overrides` includes (`true`) or excludes (`false`) single keyboards by vendor and product ID, as

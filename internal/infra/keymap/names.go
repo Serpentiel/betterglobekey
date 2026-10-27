@@ -4,7 +4,7 @@ import "fmt"
 
 // usageNames names the HID usages mappings commonly involve.
 var usageNames = map[uint64]string{
-	GlobeUsage:          "Globe",
+	GlobeUsage:          "fn",
 	usageCapsLock:       "Caps Lock",
 	usageApplication:    "Menu",
 	usageLeftControl:    "Left Control",

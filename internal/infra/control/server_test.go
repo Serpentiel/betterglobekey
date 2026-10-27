@@ -167,7 +167,7 @@ func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
 	}
 
 	trigger := got.GetConfig().GetTrigger()
-	if trigger.GetKey() != "globe" || trigger.GetMode() != "globe" ||
+	if trigger.GetKey() != "globe" || trigger.GetMode() != "fn" ||
 		trigger.GetKeyboards().GetApplyTo() != "without_globe" {
 		t.Errorf("trigger = %+v, want globe", trigger)
 	}
@@ -270,7 +270,7 @@ func TestListKeyboards(t *testing.T) {
 		t.Errorf("logitech = %+v", logitech)
 	}
 
-	if m := logitech.GetTriggerMapping(); m.GetSrcName() != "Caps Lock" || m.GetDstName() != "Globe" {
+	if m := logitech.GetTriggerMapping(); m.GetSrcName() != "Caps Lock" || m.GetDstName() != "fn" {
 		t.Errorf("trigger mapping = %+v", m)
 	}
 

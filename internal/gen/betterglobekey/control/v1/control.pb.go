@@ -121,9 +121,10 @@ type Trigger struct {
 	// right_control, right_shift, left_command, left_option, left_control,
 	// left_shift, f13 through f20, or menu.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// mode is how a key other than globe is detected: globe (remapped to Globe,
-	// the default when empty), dedicated (remapped to F20, so Globe no longer
-	// switches), or pass_through (keeps its function; not allowed for caps_lock).
+	// mode is how a key other than globe is detected: fn (remapped to the Globe
+	// (fn) key, the default when empty), dedicated (remapped to F20, so Globe no
+	// longer switches), or pass_through (keeps its function; not allowed for
+	// caps_lock).
 	Mode string `protobuf:"bytes,3,opt,name=mode,proto3" json:"mode,omitempty"`
 	// keyboards selects the keyboards a remapped key applies to.
 	Keyboards     *Keyboards `protobuf:"bytes,4,opt,name=keyboards,proto3" json:"keyboards,omitempty"`

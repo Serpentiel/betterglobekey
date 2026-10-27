@@ -87,7 +87,7 @@ const (
 	keyContextualMenu = 110
 )
 
-// globeTrigger is the Globe (fn) key, also used for a key remapped to Globe.
+// globeTrigger is the Globe (fn) key, also used for a key remapped to fn.
 var globeTrigger = C.bgkTrigger{kind: C.bgkKindFlag, keycode: keyFunction, pressFlag: C.kCGEventFlagMaskSecondaryFn}
 
 // modifierTrigger describes a modifier key: its key code, its own device flag,
@@ -134,7 +134,7 @@ var dedicatedTrigger = keyTrigger(keyF20)
 
 // triggerFor returns the descriptor the event tap watches for trigger: the key
 // itself when it is passed through, the dedicated key when it is remapped to
-// that, otherwise Globe (a key remapped to Globe arrives as Globe).
+// that, otherwise Globe (a key remapped to fn arrives as the Globe key).
 func triggerFor(trigger config.Trigger) C.bgkTrigger {
 	switch {
 	case trigger.Dedicated():

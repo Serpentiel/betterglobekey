@@ -110,7 +110,7 @@ export function KeyboardsSection({ config, keyboards, onChange }: Props): ReactE
                 ) : null}
                 {pending ? (
                   <li className={clsx(styles.mapping, styles.pending)}>
-                    {`${triggerName(key)} → ${mode === MODE_DEDICATED ? 'F20' : 'Globe'}`}
+                    {`${triggerName(key)} → ${mode === MODE_DEDICATED ? 'F20' : 'fn'}`}
                     <span className={styles.source}>applied once saved</span>
                   </li>
                 ) : null}

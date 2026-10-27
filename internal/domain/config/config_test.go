@@ -15,7 +15,7 @@ func validConfig() config.Config {
 		HUD:         config.HUD{Enabled: true, Duration: 900 * time.Millisecond, ShowCollection: true},
 		Trigger: config.Trigger{
 			Key:       config.TriggerGlobe,
-			Mode:      config.TriggerModeGlobe,
+			Mode:      config.TriggerModeFn,
 			Keyboards: config.Keyboards{ApplyTo: config.KeyboardsWithoutGlobe},
 		},
 		Collections: []config.Collection{
@@ -95,10 +95,10 @@ func TestTriggerModes(t *testing.T) {
 		trigger                          config.Trigger
 		remapped, dedicated, passThrough bool
 	}{
-		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeGlobe}, false, false, false},
+		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeFn}, false, false, false},
 		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeDedicated}, false, false, false},
 		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModePassThrough}, false, false, false},
-		{config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeGlobe}, true, false, false},
+		{config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeFn}, true, false, false},
 		{config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated}, true, true, false},
 		{config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough}, false, false, true},
 	}

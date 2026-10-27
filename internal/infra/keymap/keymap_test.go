@@ -98,7 +98,7 @@ func caps(mode string, keyboards config.Keyboards) config.Trigger {
 	return config.Trigger{Key: config.TriggerCapsLock, Mode: mode, Keyboards: keyboards}
 }
 
-var capsGlobe = caps(config.TriggerModeGlobe, config.Keyboards{})
+var capsGlobe = caps(config.TriggerModeFn, config.Keyboards{})
 
 func newRemapper(t *testing.T, store *fakeStore) (*Remapper, string) {
 	t.Helper()
@@ -206,7 +206,7 @@ func TestApplyScopes(t *testing.T) {
 			store := newStore()
 			remapper, _ := newRemapper(t, store)
 
-			apply(t, remapper, caps(config.TriggerModeGlobe, test.keyboards))
+			apply(t, remapper, caps(config.TriggerModeFn, test.keyboards))
 
 			for _, keyboard := range store.keyboards {
 				want := []Mapping(nil)
@@ -322,7 +322,7 @@ func TestApplySwitchesKeys(t *testing.T) {
 	apply(t, remapper, capsGlobe)
 	apply(t, remapper, config.Trigger{
 		Key:       "right_command",
-		Mode:      config.TriggerModeGlobe,
+		Mode:      config.TriggerModeFn,
 		Keyboards: config.Keyboards{ApplyTo: config.KeyboardsWithoutGlobe},
 	})
 
@@ -331,9 +331,9 @@ func TestApplySwitchesKeys(t *testing.T) {
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
 	for name, trigger := range map[string]config.Trigger{
-		"globe":        {Key: config.TriggerGlobe, Mode: config.TriggerModeGlobe},
+		"globe":        {Key: config.TriggerGlobe, Mode: config.TriggerModeFn},
 		"pass-through": {Key: "right_command", Mode: config.TriggerModePassThrough},
-		"out of scope": caps(config.TriggerModeGlobe, config.Keyboards{Overrides: map[string]bool{"046d:c33f": false}}),
+		"out of scope": caps(config.TriggerModeFn, config.Keyboards{Overrides: map[string]bool{"046d:c33f": false}}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := newStore(userMapping)
@@ -429,7 +429,7 @@ func TestApplyErrors(t *testing.T) {
 		store.writeErr = map[uint64]error{3: boom}
 		remapper, path := newRemapper(t, store)
 
-		all := caps(config.TriggerModeGlobe, config.Keyboards{ApplyTo: config.KeyboardsAll})
+		all := caps(config.TriggerModeFn, config.Keyboards{ApplyTo: config.KeyboardsAll})
 		if err := remapper.Apply(all); !errors.Is(err, boom) {
 			t.Errorf("err = %v, want %v", err, boom)
 		}
@@ -449,7 +449,7 @@ func TestApplyErrors(t *testing.T) {
 
 	t.Run("unknown key", func(t *testing.T) {
 		remapper, _ := newRemapper(t, newStore())
-		if err := remapper.Apply(config.Trigger{Key: "fn", Mode: config.TriggerModeGlobe}); err == nil {
+		if err := remapper.Apply(config.Trigger{Key: "fn", Mode: config.TriggerModeFn}); err == nil {
 			t.Error("Apply accepted an unknown key")
 		}
 	})
@@ -546,7 +546,7 @@ func TestKeyboards(t *testing.T) {
 
 func TestUsageName(t *testing.T) {
 	tests := map[uint64]string{
-		GlobeUsage:          "Globe",
+		GlobeUsage:          "fn",
 		capsLock:            "Caps Lock",
 		DedicatedUsage:      "F20",
 		keyboardPage | 0x04: "A",

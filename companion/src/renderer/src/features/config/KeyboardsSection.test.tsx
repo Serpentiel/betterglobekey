@@ -12,10 +12,10 @@ const config: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'caps_lock', mode: 'globe', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'caps_lock', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
 }
 
-const capsToGlobe = { src: 0x700000039, dst: 0xff00000003, srcName: 'Caps Lock', dstName: 'Globe' }
+const capsToGlobe = { src: 0x700000039, dst: 0xff00000003, srcName: 'Caps Lock', dstName: 'fn' }
 const graveToEscape = { src: 0x700000035, dst: 0x700000029, srcName: 'Grave Accent', dstName: 'Escape' }
 
 const builtIn: Keyboard = {
@@ -62,7 +62,7 @@ describe('KeyboardsSection', () => {
 
     expect(screen.getByText('05ac:0281 · built-in · has Globe')).toBeTruthy()
     expect(screen.getByText('046d:c33f · USB')).toBeTruthy()
-    expect(screen.getByText('Caps Lock → Globe')).toBeTruthy()
+    expect(screen.getByText('Caps Lock → fn')).toBeTruthy()
     expect(screen.getAllByText('Grave Accent → Escape')).toHaveLength(2)
     expect(screen.getByText('System-wide')).toBeTruthy()
     expect(screen.getByText('No key mappings')).toBeTruthy()

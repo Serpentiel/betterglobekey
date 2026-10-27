@@ -14,7 +14,7 @@ import (
 // globeTrigger is the trigger a document without a trigger section loads as.
 var globeTrigger = domainconfig.Trigger{
 	Key:       domainconfig.TriggerGlobe,
-	Mode:      domainconfig.TriggerModeGlobe,
+	Mode:      domainconfig.TriggerModeFn,
 	Keyboards: domainconfig.Keyboards{ApplyTo: domainconfig.KeyboardsWithoutGlobe},
 }
 

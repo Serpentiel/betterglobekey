@@ -10,7 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
-    trigger: { key: 'globe', mode: 'globe', keyboards: { applyTo: 'without_globe', overrides: {} } },
+    trigger: { key: 'globe', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
   }
 }
 
@@ -54,7 +54,7 @@ describe('validateConfig', () => {
     const config = validConfig()
     const keyboards = { applyTo: 'all', overrides: { '046d:c33f': false } }
 
-    config.trigger = { key: 'caps_lock', mode: 'globe', keyboards }
+    config.trigger = { key: 'caps_lock', mode: 'fn', keyboards }
     expect(validateConfig(config).valid).toBe(true)
 
     config.trigger = { key: 'caps_lock', mode: 'dedicated', keyboards }

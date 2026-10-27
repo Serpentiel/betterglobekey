@@ -41,8 +41,8 @@ var (
 )
 
 func TestDecide(t *testing.T) {
-	globe := config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeGlobe}
-	remapped := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeGlobe}
+	globe := config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeFn}
+	remapped := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeFn}
 	dedicated := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated}
 	rightCommand := config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough}
 	rightShift := config.Trigger{Key: "right_shift", Mode: config.TriggerModePassThrough}
@@ -164,7 +164,7 @@ func TestTriggerForFallsBackToGlobe(t *testing.T) {
 	for _, trigger := range []config.Trigger{
 		{Key: config.TriggerGlobe, Mode: config.TriggerModePassThrough},
 		{Key: config.TriggerGlobe, Mode: config.TriggerModeDedicated},
-		{Key: "right_command", Mode: config.TriggerModeGlobe},
+		{Key: "right_command", Mode: config.TriggerModeFn},
 		{Key: "unknown", Mode: config.TriggerModePassThrough},
 	} {
 		if got := triggerFor(trigger); got != globeTrigger {

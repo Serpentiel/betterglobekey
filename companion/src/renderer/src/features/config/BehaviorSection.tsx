@@ -10,7 +10,7 @@ import {
   KEYBOARDS_ALL,
   KEYBOARDS_WITHOUT_GLOBE,
   MODE_DEDICATED,
-  MODE_GLOBE,
+  MODE_FN,
   MODE_PASS_THROUGH,
   triggerName,
 } from '../../lib/trigger-keys'
@@ -18,8 +18,8 @@ import { Field, Input, Section, Select, Setting, Switch } from '../../ui'
 import { KeyPicker } from './KeyPicker'
 
 const MODE_LABELS: Record<string, string> = {
-  [MODE_GLOBE]: 'Act as Globe',
-  [MODE_DEDICATED]: 'Only this key (Globe untouched)',
+  [MODE_FN]: 'Act as fn',
+  [MODE_DEDICATED]: 'Only this key switches',
   [MODE_PASS_THROUGH]: "Keep the key's function",
 }
 
@@ -47,7 +47,7 @@ export function BehaviorSection({ config, errors, onChange }: Props): ReactEleme
   // A key that cannot use the current mode falls back to Globe mode, so picking
   // it never leaves the config invalid.
   const setTriggerKey = (next: string): void =>
-    setTrigger({ key: next, mode: allowedModes(next).includes(mode) ? mode : MODE_GLOBE })
+    setTrigger({ key: next, mode: allowedModes(next).includes(mode) ? mode : MODE_FN })
 
   const keyHint =
     key === GLOBE
@@ -61,8 +61,8 @@ export function BehaviorSection({ config, errors, onChange }: Props): ReactEleme
     (key === GLOBE
       ? 'Record a key other than Globe to choose how it works.'
       : {
-          [MODE_GLOBE]: `${name} becomes a Globe key, with Globe's shortcuts (Globe+E, Globe+arrows, …). Globe keeps switching too.`,
-          [MODE_DEDICATED]: `Only ${name} switches: it is remapped to an unused key (F20). Globe keeps just its macOS functions.`,
+          [MODE_FN]: `${name} becomes an fn key, with the fn shortcuts (fn+arrows, fn+Delete, fn+E, …). Globe keeps switching too.`,
+          [MODE_DEDICATED]: `Only ${name} switches: it is remapped to an unused key (F20). Globe (fn) keeps only its macOS functions.`,
           [MODE_PASS_THROUGH]: `${name} keeps working as itself on every keyboard and switches only when pressed alone.`,
         }[mode])
 

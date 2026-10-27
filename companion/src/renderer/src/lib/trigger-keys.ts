@@ -19,10 +19,10 @@ export const GLOBE = 'globe'
 export const DEDICATED_KEY = 'f20'
 
 /** Trigger modes, mirroring the daemon's TriggerModes. */
-export const MODE_GLOBE = 'globe'
+export const MODE_FN = 'fn'
 export const MODE_DEDICATED = 'dedicated'
 export const MODE_PASS_THROUGH = 'pass_through'
-export const TRIGGER_MODES = [MODE_GLOBE, MODE_DEDICATED, MODE_PASS_THROUGH] as const
+export const TRIGGER_MODES = [MODE_FN, MODE_DEDICATED, MODE_PASS_THROUGH] as const
 
 /** Keyboard scopes, mirroring the daemon's KeyboardScopes. */
 export const KEYBOARDS_WITHOUT_GLOBE = 'without_globe'

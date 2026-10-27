@@ -374,7 +374,7 @@ func triggerStatus(trigger domainconfig.Trigger) string {
 			trigger.Key, strings.ToUpper(domainconfig.TriggerDedicatedKey), scope)
 	}
 
-	return fmt.Sprintf("%s (remapped to Globe on %s while the daemon runs)", trigger.Key, scope)
+	return fmt.Sprintf("%s (remapped to fn on %s while the daemon runs)", trigger.Key, scope)
 }
 
 // reportKeyboards lists the connected keyboards and their key mappings.

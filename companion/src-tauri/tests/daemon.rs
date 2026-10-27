@@ -92,7 +92,7 @@ async fn reads_config_sources_and_version() {
     );
     // The stub predates the trigger, so the Globe default fills it in.
     let trigger = config.trigger.unwrap();
-    assert_eq!((trigger.key.as_str(), trigger.mode.as_str()), ("globe", "globe"));
+    assert_eq!((trigger.key.as_str(), trigger.mode.as_str()), ("globe", "fn"));
     assert_eq!(trigger.keyboards.unwrap().apply_to, "without_globe");
 
     assert_eq!(daemon.list_keyboards().await.unwrap().keyboards[0].name, "Logitech");

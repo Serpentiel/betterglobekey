@@ -41,11 +41,12 @@ var TriggerKeys = []string{
 
 // Trigger modes: how a trigger key other than Globe is detected.
 const (
-	// TriggerModeGlobe remaps the key to Globe, so it gains Globe's shortcuts and
-	// Globe keeps switching too.
-	TriggerModeGlobe = "globe"
+	// TriggerModeFn remaps the key to the Globe (fn) key, so it gains the fn
+	// shortcuts (fn+arrows, fn+F-keys, ...) and Globe keeps switching too.
+	TriggerModeFn = "fn"
 	// TriggerModeDedicated remaps the key to TriggerDedicatedKey, so it is the
-	// only key that switches and Globe keeps just its macOS functions.
+	// only key that switches and the Globe (fn) key keeps just its macOS
+	// functions.
 	TriggerModeDedicated = "dedicated"
 	// TriggerModePassThrough keeps the key's normal function and watches it
 	// directly, switching only when it is tapped on its own.
@@ -53,7 +54,7 @@ const (
 )
 
 // TriggerModes are the accepted trigger modes.
-var TriggerModes = []string{TriggerModeGlobe, TriggerModeDedicated, TriggerModePassThrough}
+var TriggerModes = []string{TriggerModeFn, TriggerModeDedicated, TriggerModePassThrough}
 
 // Keyboard scopes: which keyboards a remapped trigger key applies to.
 const (

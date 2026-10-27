@@ -428,10 +428,10 @@ func TestTriggerStatus(t *testing.T) {
 		trigger domainconfig.Trigger
 		want    string
 	}{
-		{domainconfig.Trigger{Key: "globe", Mode: "globe"}, "globe"},
+		{domainconfig.Trigger{Key: "globe", Mode: "fn"}, "globe"},
 		{
-			domainconfig.Trigger{Key: "caps_lock", Mode: "globe", Keyboards: withoutGlobe},
-			"caps_lock (remapped to Globe on keyboards without Globe while the daemon runs)",
+			domainconfig.Trigger{Key: "caps_lock", Mode: "fn", Keyboards: withoutGlobe},
+			"caps_lock (remapped to fn on keyboards without Globe while the daemon runs)",
 		},
 		{
 			domainconfig.Trigger{
@@ -465,12 +465,12 @@ func TestKeyboardLines(t *testing.T) {
 		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, InScope: true},
 	}
 
-	got := strings.Join(keyboardLines(domainconfig.Trigger{Key: "caps_lock", Mode: "globe"}, statuses,
+	got := strings.Join(keyboardLines(domainconfig.Trigger{Key: "caps_lock", Mode: "fn"}, statuses,
 		[]keymap.Mapping{escape}), "\n")
 
 	for _, want := range []string{
 		"Apple Keyboard (05ac:0281, built-in, has Globe): no mappings",
-		"Logitech (046d:c33f, USB): Caps Lock → Globe; Grave Accent → Escape (other tool)",
+		"Logitech (046d:c33f, USB): Caps Lock → fn; Grave Accent → Escape (other tool)",
 		"Unnamed keyboard (1234:5678): not remapped yet",
 		"system-wide:   Grave Accent → Escape",
 	} {

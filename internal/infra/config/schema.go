@@ -18,7 +18,7 @@ const (
 	defaultReverseModifier  = "shift"
 	defaultHUDDuration      = "900ms"
 	defaultTriggerKey       = "globe"
-	defaultTriggerMode      = "globe"
+	defaultTriggerMode      = "fn"
 	defaultKeyboardScope    = "without_globe"
 	defaultCollectionName   = "primary"
 )

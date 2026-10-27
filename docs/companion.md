@@ -25,7 +25,7 @@ service, so building collections is a matter of picking from a list rather than 
 2. Launch the companion application.
 3. Edit your behavior, collections, and logging settings. Under **Behavior**, **Record** picks the
    [trigger key](configuration.md#trigger-key) from the next key you press, and **Use Globe** goes back to the Globe key
-   (which the app cannot record). **Trigger mode** makes the key a Globe key, the only key that switches (Globe
+   (which the app cannot record). **Trigger mode** makes the key an fn key, the only key that switches (Globe
    untouched), or keeps its normal function, and **Remap on** picks the keyboards it is remapped on. **Keyboards** lists
    every connected keyboard with its key mappings, its own and other tools', with a switch to include or exclude it.
 4. Click **Save**. The change is validated, written, and applied immediately.

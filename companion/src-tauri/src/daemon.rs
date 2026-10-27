@@ -101,9 +101,12 @@ pub fn default_socket() -> PathBuf {
     std::env::home_dir().unwrap_or_default().join(".betterglobekey.sock")
 }
 
-/// GLOBE is the default trigger key and mode, used when a daemon predating the
-/// trigger sends none.
+/// GLOBE is the default trigger key, used when a daemon predating the trigger
+/// sends none.
 const GLOBE: &str = "globe";
+
+/// FN is the default trigger mode.
+const FN: &str = "fn";
 
 /// WITHOUT_GLOBE is the default keyboard scope.
 const WITHOUT_GLOBE: &str = "without_globe";
@@ -125,7 +128,7 @@ fn complete(mut config: Config) -> Config {
 
     let trigger = config.trigger.get_or_insert_default();
     fill(&mut trigger.key, GLOBE);
-    fill(&mut trigger.mode, GLOBE);
+    fill(&mut trigger.mode, FN);
     fill(&mut trigger.keyboards.get_or_insert_default().apply_to, WITHOUT_GLOBE);
 
     config
@@ -152,7 +155,7 @@ mod tests {
                 "collections": [],
                 "trigger": {
                     "key": "globe",
-                    "mode": "globe",
+                    "mode": "fn",
                     "keyboards": { "applyTo": "without_globe", "overrides": {} },
                 },
             }),
@@ -216,7 +219,7 @@ mod tests {
                     src: 0x7_0000_0039,
                     dst: 0xFF_0000_0003,
                     src_name: "Caps Lock".to_owned(),
-                    dst_name: "Globe".to_owned(),
+                    dst_name: "fn".to_owned(),
                 }),
                 ..Keyboard::default()
             }],

@@ -13,7 +13,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'globe', mode: 'globe', keyboards: { applyTo: 'without_globe', overrides: {} } },
+  trigger: { key: 'globe', mode: 'fn', keyboards: { applyTo: 'without_globe', overrides: {} } },
 }
 
 const sources: InputSource[] = [
@@ -166,7 +166,7 @@ describe('ConfigEditor', () => {
     const config: Config = { ...validConfig, trigger: { ...validConfig.trigger, key: 'right_command' } }
     render(<ConfigEditor controller={makeController({ config, update })} />)
 
-    expect(screen.getByText(/Right Command becomes a Globe key/)).toBeTruthy()
+    expect(screen.getByText(/Right Command becomes an fn key/)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
     fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))
@@ -179,8 +179,8 @@ describe('ConfigEditor', () => {
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'Act as Globe',
-      'Only this key (Globe untouched)',
+      'Act as fn',
+      'Only this key switches',
     ])
   })
 
@@ -206,7 +206,7 @@ describe('ConfigEditor', () => {
     render(<ConfigEditor controller={makeController({ config, update })} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
-    expect(update).toHaveBeenCalledWith({ ...config, trigger: { ...config.trigger, key: 'globe', mode: 'globe' } })
+    expect(update).toHaveBeenCalledWith({ ...config, trigger: { ...config.trigger, key: 'globe', mode: 'fn' } })
   })
 
   it('shows the saved confirmation banner', () => {

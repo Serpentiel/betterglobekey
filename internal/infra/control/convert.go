@@ -102,12 +102,12 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 }
 
 // triggerFromProto converts a protobuf trigger, defaulting what a client that
-// predates a field leaves empty: the Globe key, Globe mode, and keyboards
+// predates a field leaves empty: the Globe key, fn mode, and keyboards
 // without Globe.
 func triggerFromProto(proto *controlv1.Trigger) domainconfig.Trigger {
 	trigger := domainconfig.Trigger{
 		Key:  cmp.Or(proto.GetKey(), domainconfig.TriggerGlobe),
-		Mode: cmp.Or(proto.GetMode(), domainconfig.TriggerModeGlobe),
+		Mode: cmp.Or(proto.GetMode(), domainconfig.TriggerModeFn),
 		Keyboards: domainconfig.Keyboards{
 			ApplyTo:   cmp.Or(proto.GetKeyboards().GetApplyTo(), domainconfig.KeyboardsWithoutGlobe),
 			Overrides: proto.GetKeyboards().GetOverrides(),
