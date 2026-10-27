@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager, State, Url, WebviewUrl, WebviewWindowBuilder, Wi
 use tauri_plugin_opener::OpenerExt;
 
 use daemon::Daemon;
-use daemon::proto::{Config, GetVersionResponse, InputSource};
+use daemon::proto::{Config, GetVersionResponse, InputSource, ListKeyboardsResponse};
 
 const MAIN_WINDOW: &str = "main";
 
@@ -26,6 +26,11 @@ async fn apply_config(daemon: State<'_, Daemon>, config: Config) -> Result<(), S
 #[tauri::command]
 async fn list_input_sources(daemon: State<'_, Daemon>) -> Result<Vec<InputSource>, String> {
     daemon.list_input_sources().await
+}
+
+#[tauri::command]
+async fn list_keyboards(daemon: State<'_, Daemon>) -> Result<ListKeyboardsResponse, String> {
+    daemon.list_keyboards().await
 }
 
 #[tauri::command]
@@ -97,7 +102,13 @@ pub fn run() {
         // Registered first, so a second launch exits before anything else starts.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main_window(app)))
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_config, apply_config, list_input_sources, get_version])
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            apply_config,
+            list_input_sources,
+            list_keyboards,
+            get_version
+        ])
         .setup(|app| {
             let daemon = tauri::async_runtime::block_on(async { Daemon::connect(daemon::default_socket()) });
             app.manage(daemon);

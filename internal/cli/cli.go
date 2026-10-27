@@ -3,6 +3,7 @@
 package cli
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"slices"
+	"strings"
 	"syscall"
 	"text/tabwriter"
 	"time"
@@ -52,6 +54,10 @@ const listColumnPadding = 2
 
 // daemonStatusTimeout bounds the doctor's status query to the running daemon.
 const daemonStatusTimeout = 2 * time.Second
+
+// keymapSyncInterval is how often the remapper re-applies the trigger key, to
+// pick up keyboards connected since and mappings the system dropped.
+const keymapSyncInterval = 2 * time.Second
 
 // Execute builds the root command and runs it.
 func Execute(version, commit string) error {
@@ -176,9 +182,12 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	defer stop()
 
 	go watchConfig(ctx, path, logger, daemon, build)
+	go syncKeymap(ctx, remapper, logger)
 
 	root := cmd.Root()
-	if err = startControlServer(ctx, path, controller, logger, root.Version, root.Annotations["commit"]); err != nil {
+	if err = startControlServer(
+		ctx, path, controller, remapper, logger, root.Version, root.Annotations["commit"],
+	); err != nil {
 		return err
 	}
 
@@ -224,6 +233,14 @@ func newSwitcherBuilder(
 	}
 }
 
+// syncKeymap keeps the trigger key remapped on keyboards as they come and go,
+// until ctx is done.
+func syncKeymap(ctx context.Context, remapper *keymap.Remapper, logger *logging.Logger) {
+	remapper.Run(ctx, keymapSyncInterval, func(err error) {
+		logger.Error("remapping the trigger key failed", "error", err)
+	})
+}
+
 // restoreKeymap undoes the trigger key remapping when the daemon exits.
 func restoreKeymap(remapper *keymap.Remapper, logger *logging.Logger) {
 	if err := remapper.Restore(); err != nil {
@@ -262,6 +279,7 @@ func startControlServer(
 	ctx context.Context,
 	path string,
 	sources control.Sources,
+	keyboards control.Keyboards,
 	logger *logging.Logger,
 	version string,
 	commit string,
@@ -271,7 +289,7 @@ func startControlServer(
 		return err
 	}
 
-	server := control.NewServer(path, sources, mainthread.Run, version, commit, accessibility.Trusted)
+	server := control.NewServer(path, sources, keyboards, mainthread.Run, version, commit, accessibility.Trusted)
 
 	go func() {
 		if err := server.Serve(socketPath); err != nil {
@@ -322,6 +340,7 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	} else {
 		fmt.Fprintf(out, "config:        valid (%d collection(s))\n", len(cfg.Collections))
 		fmt.Fprintf(out, "trigger:       %s\n", triggerStatus(cfg.Trigger))
+		reportKeyboards(out, cfg.Trigger)
 		reportUnavailableSources(out, cfg, sources.All())
 	}
 
@@ -333,14 +352,123 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 
 // triggerStatus describes how the trigger key is detected.
 func triggerStatus(trigger domainconfig.Trigger) string {
-	switch {
-	case trigger.Key == domainconfig.TriggerGlobe:
+	if trigger.Key == domainconfig.TriggerGlobe {
 		return trigger.Key
-	case trigger.Remapped():
-		return trigger.Key + " (remapped to Globe while the daemon runs)"
-	default:
+	}
+
+	if trigger.PassThrough() {
 		return trigger.Key + " (passed through)"
 	}
+
+	scope := "keyboards without Globe"
+	if trigger.Keyboards.ApplyTo == domainconfig.KeyboardsAll {
+		scope = "all keyboards"
+	}
+
+	if overrides := len(trigger.Keyboards.Overrides); overrides > 0 {
+		scope += fmt.Sprintf(", %d override(s)", overrides)
+	}
+
+	if trigger.Dedicated() {
+		return fmt.Sprintf("%s (remapped to %s on %s while the daemon runs; Globe does not switch)",
+			trigger.Key, strings.ToUpper(domainconfig.TriggerDedicatedKey), scope)
+	}
+
+	return fmt.Sprintf("%s (remapped to Globe on %s while the daemon runs)", trigger.Key, scope)
+}
+
+// reportKeyboards lists the connected keyboards and their key mappings.
+func reportKeyboards(out io.Writer, trigger domainconfig.Trigger) {
+	statuses, systemWide, err := listKeyboards(trigger)
+	if err != nil {
+		fmt.Fprintf(out, "keyboards:     unknown (%v)\n", err)
+
+		return
+	}
+
+	for _, line := range keyboardLines(trigger, statuses, systemWide) {
+		fmt.Fprintln(out, line)
+	}
+}
+
+// listKeyboards reports the connected keyboards against trigger.
+func listKeyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error) {
+	remapper, err := newRemapper()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return remapper.Keyboards(trigger)
+}
+
+// keyboardLines renders the doctor's keyboard report.
+func keyboardLines(trigger domainconfig.Trigger, statuses []keymap.Status, systemWide []keymap.Mapping) []string {
+	lines := make([]string, 0, len(statuses)+1)
+	inScope := 0
+
+	for _, status := range statuses {
+		lines = append(lines, keyboardLine(status))
+
+		if status.InScope {
+			inScope++
+		}
+	}
+
+	if len(systemWide) > 0 {
+		described := make([]string, 0, len(systemWide))
+		for _, mapping := range systemWide {
+			described = append(described, describeMapping(mapping))
+		}
+
+		lines = append(lines, "system-wide:   "+strings.Join(described, "; "))
+	}
+
+	if trigger.Dedicated() && inScope == 0 {
+		lines = append(lines, "warning:       no connected keyboard remaps the trigger key and Globe does not switch; "+
+			"include a keyboard or set trigger.keyboards.apply_to: all")
+	}
+
+	return lines
+}
+
+// keyboardLine renders one keyboard: its identity and its key mappings.
+func keyboardLine(status keymap.Status) string {
+	details := []string{status.KeyboardID()}
+
+	if status.BuiltIn {
+		details = append(details, "built-in")
+	} else if status.Transport != "" {
+		details = append(details, status.Transport)
+	}
+
+	if status.HasGlobe() {
+		details = append(details, "has Globe")
+	}
+
+	var mappings []string
+
+	switch {
+	case status.Ours != nil:
+		mappings = append(mappings, describeMapping(*status.Ours))
+	case status.InScope:
+		mappings = append(mappings, "not remapped yet (is the service running?)")
+	}
+
+	for _, other := range status.Others {
+		mappings = append(mappings, describeMapping(other)+" (other tool)")
+	}
+
+	if len(mappings) == 0 {
+		mappings = append(mappings, "no mappings")
+	}
+
+	return fmt.Sprintf("keyboard:      %s (%s): %s",
+		cmp.Or(status.Name, "Unnamed keyboard"), strings.Join(details, ", "), strings.Join(mappings, "; "))
+}
+
+// describeMapping renders a key mapping with key names.
+func describeMapping(mapping keymap.Mapping) string {
+	return keymap.UsageName(mapping.Src) + " → " + keymap.UsageName(mapping.Dst)
 }
 
 // reportUnavailableSources warns about configured sources that the system does not offer.

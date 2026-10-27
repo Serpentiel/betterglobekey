@@ -1,7 +1,14 @@
 import { z } from 'zod'
 
 import type { Config } from '../../../shared/types'
-import { TRIGGER_KEY_VALUES, triggerKey } from './trigger-keys'
+import {
+  allowedModes,
+  KEYBOARD_ID,
+  KEYBOARD_SCOPES,
+  MODE_PASS_THROUGH,
+  TRIGGER_KEY_VALUES,
+  TRIGGER_MODES,
+} from './trigger-keys'
 
 // GO_DURATION matches a Go time.Duration string (e.g. "250ms", "1m30s").
 const GO_DURATION = /^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$/
@@ -88,15 +95,20 @@ export const configSchema = z
     collections: z.array(collectionSchema),
     trigger: z.object({
       key: z.enum(TRIGGER_KEY_VALUES),
-      passThrough: z.boolean(),
+      mode: z.enum(TRIGGER_MODES),
+      keyboards: z.object({
+        applyTo: z.enum(KEYBOARD_SCOPES),
+        overrides: z.record(z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'), z.boolean()),
+      }),
     }),
   })
   .superRefine((config, ctx) => {
-    if (config.trigger.passThrough && triggerKey(config.trigger.key)?.passThrough === false) {
+    if (!allowedModes(config.trigger.key).includes(config.trigger.mode)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['trigger', 'passThrough'],
-        message: 'This key can only be remapped to Globe',
+        path: ['trigger', 'mode'],
+        message:
+          config.trigger.mode === MODE_PASS_THROUGH ? 'This key can only be remapped' : 'This key is the dedicated key',
       })
     }
 
@@ -123,7 +135,7 @@ export interface ConfigErrors {
   reverse: { modifier?: string }
   hud: { duration?: string }
   collections: Record<number, { name?: string; sources?: string }>
-  trigger: { key?: string; passThrough?: string }
+  trigger: { key?: string; mode?: string; keyboards?: string }
 }
 
 export interface ValidationResult {
@@ -156,7 +168,7 @@ export function validateConfig(config: Config): ValidationResult {
       errors.reverse.modifier ??= issue.message
     } else if (head === 'hud' && second === 'duration') {
       errors.hud.duration ??= issue.message
-    } else if (head === 'trigger' && (second === 'key' || second === 'passThrough')) {
+    } else if (head === 'trigger' && (second === 'key' || second === 'mode' || second === 'keyboards')) {
       errors.trigger[second] ??= issue.message
     } else if (head === 'collections' && typeof second === 'number') {
       const field = third as 'name' | 'sources'

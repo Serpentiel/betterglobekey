@@ -28,6 +28,11 @@ service ConfigService {
   // answers from its own process, this reflects the daemon's grant rather than
   // that of whatever launched the caller.
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  // ListKeyboards reports every connected keyboard, whether the trigger key is
+  // remapped on it, and its key mappings, plus the system-wide key mappings.
+  // It reports against the configuration on disk.
+  rpc ListKeyboards(ListKeyboardsRequest) returns (ListKeyboardsResponse);
 }
 
 // Config mirrors the daemon's resolved configuration.
@@ -55,15 +60,31 @@ message Config {
 
 // Trigger selects the key that switches input sources.
 message Trigger {
+  reserved 2;
+  reserved "pass_through";
+
   // key is the trigger key: globe, caps_lock, right_command, right_option,
   // right_control, right_shift, left_command, left_option, left_control,
   // left_shift, f13 through f20, or menu.
   string key = 1;
 
-  // pass_through keeps the key's normal function and watches it directly,
-  // instead of remapping it to Globe. It has no effect for globe and is not
-  // allowed for caps_lock.
-  bool pass_through = 2;
+  // mode is how a key other than globe is detected: globe (remapped to Globe,
+  // the default when empty), dedicated (remapped to F20, so Globe no longer
+  // switches), or pass_through (keeps its function; not allowed for caps_lock).
+  string mode = 3;
+
+  // keyboards selects the keyboards a remapped key applies to.
+  Keyboards keyboards = 4;
+}
+
+// Keyboards selects the keyboards a remapped trigger key applies to.
+message Keyboards {
+  // apply_to is without_globe (the default when empty) or all.
+  string apply_to = 1;
+
+  // overrides include (true) or exclude (false) keyboards by ID, the vendor
+  // and product IDs as four lower-case hex digits each ("05ac:029c").
+  map<string, bool> overrides = 2;
 }
 
 // Logger holds the logging configuration.
@@ -165,4 +186,53 @@ message GetStatusResponse {
   // accessibility_trusted reports whether the daemon holds the Accessibility
   // permission required by the global event tap.
   bool accessibility_trusted = 1;
+}
+
+message ListKeyboardsRequest {}
+
+message ListKeyboardsResponse {
+  // keyboards are the connected keyboards.
+  repeated Keyboard keyboards = 1;
+
+  // system_mappings are the system-wide key mappings (`hidutil property --set`).
+  repeated KeyMapping system_mappings = 2;
+}
+
+// Keyboard is a connected keyboard.
+message Keyboard {
+  // id is the vendor and product IDs ("05ac:029c"), as used in overrides.
+  string id = 1;
+
+  // name is the product name, or empty.
+  string name = 2;
+
+  // transport is the connection, such as USB or Bluetooth, or empty.
+  string transport = 3;
+
+  // built_in reports a laptop's own keyboard.
+  bool built_in = 4;
+
+  // has_globe reports whether the keyboard has a Globe key of its own.
+  bool has_globe = 5;
+
+  // in_scope reports whether the configured trigger remaps a key on it.
+  bool in_scope = 6;
+
+  // trigger_mapping is the daemon's mapping on the keyboard, if any.
+  KeyMapping trigger_mapping = 7;
+
+  // other_mappings are the keyboard's mappings set by other tools.
+  repeated KeyMapping other_mappings = 8;
+}
+
+// KeyMapping remaps one HID usage to another.
+message KeyMapping {
+  // src and dst are HID usages: the usage page shifted left 32 bits, or'd
+  // with the usage.
+  uint64 src = 1;
+  uint64 dst = 2;
+
+  // src_name and dst_name name the keys, or give the usage in hex.
+  string src_name = 3;
+  string dst_name = 4;
 }

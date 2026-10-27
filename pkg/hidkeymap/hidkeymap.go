@@ -1,25 +1,40 @@
-// Package hidkeymap reads and writes the system-wide HID key remapping table,
-// the UserKeyMapping property that `hidutil property --set` edits. Mappings act
-// below every event tap and last until they are replaced or the system restarts.
+// Package hidkeymap reads and writes HID key remapping tables: the system-wide
+// UserKeyMapping property that `hidutil property --set` edits, and each
+// keyboard's own, which `hidutil property --matching` edits. Mappings act below
+// every event tap; a keyboard's own last until it disconnects, the system-wide
+// one until the system restarts.
 package hidkeymap
 
 /*
 #cgo LDFLAGS: -framework IOKit -framework CoreFoundation
 
-#include <stdint.h>
-
-// Implemented in hidkeymap.m.
-int bgkKeymapGet(uint64_t *src, uint64_t *dst, int capacity);
-int bgkKeymapSet(const uint64_t *src, const uint64_t *dst, int count);
+#include "hidkeymap.h"
 */
 import "C"
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Mapping remaps the HID usage Src (usage page << 32 | usage) to Dst.
 type Mapping struct {
 	Src uint64
 	Dst uint64
+}
+
+// Keyboard is a connected keyboard service.
+type Keyboard struct {
+	// ID is the service's registry entry ID, unique while it is connected.
+	ID       uint64
+	Vendor   uint32
+	Product  uint32
+	Location uint32
+	// Name is the product name, or empty.
+	Name string
+	// Transport is the connection, such as USB or Bluetooth, or empty.
+	Transport string
+	BuiltIn   bool
 }
 
 // errUnavailable reports that the HID event system could not be reached.
@@ -28,23 +43,28 @@ var errUnavailable = errors.New("HID event system unavailable")
 // errRejected reports that the HID event system refused the new mappings.
 var errRejected = errors.New("HID event system rejected the key mappings")
 
-// initialCapacity is the first buffer size tried when reading mappings.
+// ErrNotFound reports that a keyboard is no longer connected.
+var ErrNotFound = errors.New("keyboard not connected")
+
+// initialCapacity is the first buffer size tried when reading a list.
 const initialCapacity = 32
 
-// Mappings returns the current system-wide key mappings.
-func Mappings() ([]Mapping, error) {
+// readMappings reads mappings with get, growing its buffers until they fit.
+func readMappings(get func(src, dst *C.uint64_t, capacity C.int) C.int) ([]Mapping, error) {
 	capacity := initialCapacity
 
 	for {
 		src := make([]C.uint64_t, capacity)
 		dst := make([]C.uint64_t, capacity)
 
-		count := int(C.bgkKeymapGet(&src[0], &dst[0], C.int(capacity)))
-		if count < 0 {
-			return nil, errUnavailable
-		}
+		count := int(get(&src[0], &dst[0], C.int(capacity)))
 
-		if count > capacity {
+		switch {
+		case count == C.bgkNotFound:
+			return nil, ErrNotFound
+		case count < 0:
+			return nil, errUnavailable
+		case count > capacity:
 			capacity = count
 
 			continue
@@ -59,8 +79,8 @@ func Mappings() ([]Mapping, error) {
 	}
 }
 
-// SetMappings replaces the system-wide key mappings.
-func SetMappings(mappings []Mapping) error {
+// writeMappings converts mappings and passes them to set.
+func writeMappings(mappings []Mapping, set func(src, dst *C.uint64_t, count C.int) C.int) error {
 	// Keep one element so the slices have an address even when clearing.
 	src := make([]C.uint64_t, max(len(mappings), 1))
 	dst := make([]C.uint64_t, max(len(mappings), 1))
@@ -70,8 +90,86 @@ func SetMappings(mappings []Mapping) error {
 		dst[i] = C.uint64_t(mapping.Dst)
 	}
 
-	if C.bgkKeymapSet(&src[0], &dst[0], C.int(len(mappings))) == 0 {
+	switch set(&src[0], &dst[0], C.int(len(mappings))) {
+	case 1:
+		return nil
+	case C.bgkNotFound:
+		return ErrNotFound
+	case C.bgkUnavailable:
+		return errUnavailable
+	default:
 		return errRejected
+	}
+}
+
+// Mappings returns the current system-wide key mappings.
+func Mappings() ([]Mapping, error) {
+	return readMappings(func(src, dst *C.uint64_t, capacity C.int) C.int {
+		return C.bgkKeymapGet(src, dst, capacity)
+	})
+}
+
+// SetMappings replaces the system-wide key mappings.
+func SetMappings(mappings []Mapping) error {
+	return writeMappings(mappings, func(src, dst *C.uint64_t, count C.int) C.int {
+		return C.bgkKeymapSet(src, dst, count)
+	})
+}
+
+// Keyboards returns the connected keyboard services.
+func Keyboards() ([]Keyboard, error) {
+	capacity := initialCapacity
+
+	for {
+		raw := make([]C.bgkKeyboard, capacity)
+
+		count := int(C.bgkKeyboardsList(&raw[0], C.int(capacity)))
+		if count < 0 {
+			return nil, errUnavailable
+		}
+
+		if count > capacity {
+			capacity = count
+
+			continue
+		}
+
+		keyboards := make([]Keyboard, count)
+		for i := range keyboards {
+			keyboards[i] = Keyboard{
+				ID:        uint64(raw[i].id),
+				Vendor:    uint32(raw[i].vendor),
+				Product:   uint32(raw[i].product),
+				Location:  uint32(raw[i].location),
+				Name:      C.GoString(&raw[i].name[0]),
+				Transport: C.GoString(&raw[i].transport[0]),
+				BuiltIn:   raw[i].builtIn != 0,
+			}
+		}
+
+		return keyboards, nil
+	}
+}
+
+// KeyboardMappings returns the key mappings of the keyboard with registry ID id.
+func KeyboardMappings(id uint64) ([]Mapping, error) {
+	mappings, err := readMappings(func(src, dst *C.uint64_t, capacity C.int) C.int {
+		return C.bgkKeyboardKeymapGet(C.uint64_t(id), src, dst, capacity)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("keyboard %#x: %w", id, err)
+	}
+
+	return mappings, nil
+}
+
+// SetKeyboardMappings replaces the key mappings of the keyboard with registry ID id.
+func SetKeyboardMappings(id uint64, mappings []Mapping) error {
+	err := writeMappings(mappings, func(src, dst *C.uint64_t, count C.int) C.int {
+		return C.bgkKeyboardKeymapSet(C.uint64_t(id), src, dst, count)
+	})
+	if err != nil {
+		return fmt.Errorf("keyboard %#x: %w", id, err)
 	}
 
 	return nil

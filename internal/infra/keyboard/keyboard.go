@@ -4,7 +4,8 @@
 // flags-changed event with key code kVK_Function (63); a release (the fn flag
 // clearing) is treated as a press, and a held Shift marks it as a reverse press.
 // A passed-through trigger key is watched the same way: modifiers through their
-// device flag, other keys through key-down and key-up events.
+// device flag, other keys through key-down and key-up events. A dedicated
+// trigger is remapped to F20 and watched as that key, leaving Globe alone.
 package keyboard
 
 /*
@@ -128,16 +129,20 @@ var passThroughTriggers = map[string]C.bgkTrigger{
 	"menu":          keyTrigger(keyContextualMenu),
 }
 
-// triggerFor returns the descriptor the event tap watches for trigger: the key
-// itself when it is passed through, otherwise Globe (a remapped key arrives as
-// Globe).
-func triggerFor(trigger config.Trigger) C.bgkTrigger {
-	if !trigger.PassThrough {
-		return globeTrigger
-	}
+// dedicatedTrigger is the key a dedicated trigger is remapped to.
+var dedicatedTrigger = keyTrigger(keyF20)
 
-	if descriptor, ok := passThroughTriggers[trigger.Key]; ok {
-		return descriptor
+// triggerFor returns the descriptor the event tap watches for trigger: the key
+// itself when it is passed through, the dedicated key when it is remapped to
+// that, otherwise Globe (a key remapped to Globe arrives as Globe).
+func triggerFor(trigger config.Trigger) C.bgkTrigger {
+	switch {
+	case trigger.Dedicated():
+		return dedicatedTrigger
+	case trigger.PassThrough():
+		if descriptor, ok := passThroughTriggers[trigger.Key]; ok {
+			return descriptor
+		}
 	}
 
 	return globeTrigger

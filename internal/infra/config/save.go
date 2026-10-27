@@ -46,7 +46,9 @@ func fromDomain(cfg config.Config) schemaV2 {
 	schema.HUD.Duration = cfg.HUD.Duration.String()
 	schema.HUD.ShowCollection = boolPtr(cfg.HUD.ShowCollection)
 	schema.Trigger.Key = cfg.Trigger.Key
-	schema.Trigger.PassThrough = boolPtr(cfg.Trigger.PassThrough)
+	schema.Trigger.Mode = cfg.Trigger.Mode
+	schema.Trigger.Keyboards.ApplyTo = cfg.Trigger.Keyboards.ApplyTo
+	schema.Trigger.Keyboards.Overrides = cfg.Trigger.Keyboards.Overrides
 	schema.Collections = make([]collectionV2, 0, len(cfg.Collections))
 
 	for _, collection := range cfg.Collections {

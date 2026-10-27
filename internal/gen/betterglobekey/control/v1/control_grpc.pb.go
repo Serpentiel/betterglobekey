@@ -24,6 +24,7 @@ const (
 	ConfigService_ListInputSources_FullMethodName = "/betterglobekey.control.v1.ConfigService/ListInputSources"
 	ConfigService_GetVersion_FullMethodName       = "/betterglobekey.control.v1.ConfigService/GetVersion"
 	ConfigService_GetStatus_FullMethodName        = "/betterglobekey.control.v1.ConfigService/GetStatus"
+	ConfigService_ListKeyboards_FullMethodName    = "/betterglobekey.control.v1.ConfigService/ListKeyboards"
 )
 
 // ConfigServiceClient is the client API for ConfigService service.
@@ -50,6 +51,10 @@ type ConfigServiceClient interface {
 	// answers from its own process, this reflects the daemon's grant rather than
 	// that of whatever launched the caller.
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
+	// ListKeyboards reports every connected keyboard, whether the trigger key is
+	// remapped on it, and its key mappings, plus the system-wide key mappings.
+	// It reports against the configuration on disk.
+	ListKeyboards(ctx context.Context, in *ListKeyboardsRequest, opts ...grpc.CallOption) (*ListKeyboardsResponse, error)
 }
 
 type configServiceClient struct {
@@ -110,6 +115,16 @@ func (c *configServiceClient) GetStatus(ctx context.Context, in *GetStatusReques
 	return out, nil
 }
 
+func (c *configServiceClient) ListKeyboards(ctx context.Context, in *ListKeyboardsRequest, opts ...grpc.CallOption) (*ListKeyboardsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListKeyboardsResponse)
+	err := c.cc.Invoke(ctx, ConfigService_ListKeyboards_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigServiceServer is the server API for ConfigService service.
 // All implementations must embed UnimplementedConfigServiceServer
 // for forward compatibility.
@@ -134,6 +149,10 @@ type ConfigServiceServer interface {
 	// answers from its own process, this reflects the daemon's grant rather than
 	// that of whatever launched the caller.
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
+	// ListKeyboards reports every connected keyboard, whether the trigger key is
+	// remapped on it, and its key mappings, plus the system-wide key mappings.
+	// It reports against the configuration on disk.
+	ListKeyboards(context.Context, *ListKeyboardsRequest) (*ListKeyboardsResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()
 }
 
@@ -158,6 +177,9 @@ func (UnimplementedConfigServiceServer) GetVersion(context.Context, *GetVersionR
 }
 func (UnimplementedConfigServiceServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedConfigServiceServer) ListKeyboards(context.Context, *ListKeyboardsRequest) (*ListKeyboardsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListKeyboards not implemented")
 }
 func (UnimplementedConfigServiceServer) mustEmbedUnimplementedConfigServiceServer() {}
 func (UnimplementedConfigServiceServer) testEmbeddedByValue()                       {}
@@ -270,6 +292,24 @@ func _ConfigService_GetStatus_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigService_ListKeyboards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListKeyboardsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigServiceServer).ListKeyboards(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigService_ListKeyboards_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigServiceServer).ListKeyboards(ctx, req.(*ListKeyboardsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigService_ServiceDesc is the grpc.ServiceDesc for ConfigService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -296,6 +336,10 @@ var ConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStatus",
 			Handler:    _ConfigService_GetStatus_Handler,
+		},
+		{
+			MethodName: "ListKeyboards",
+			Handler:    _ConfigService_ListKeyboards_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

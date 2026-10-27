@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
-import { GLOBE, TRIGGER_KEYS, triggerKey, triggerKeyForCode, triggerLabel, triggerName } from './trigger-keys'
+import {
+  allowedModes,
+  GLOBE,
+  includesKeyboard,
+  TRIGGER_KEYS,
+  triggerKey,
+  triggerKeyForCode,
+  triggerLabel,
+  triggerName,
+} from './trigger-keys'
 
 describe('trigger keys', () => {
   it('mirror the daemon list, with Globe first', () => {
@@ -38,6 +47,21 @@ describe('trigger keys', () => {
   it('only lets keys other than Globe and Caps Lock pass through', () => {
     const remapOnly = TRIGGER_KEYS.filter((key) => !key.passThrough).map((key) => key.value)
     expect(remapOnly).toEqual([GLOBE, 'caps_lock'])
+  })
+
+  it('lists the modes each key allows', () => {
+    expect(allowedModes('right_command')).toEqual(['globe', 'dedicated', 'pass_through'])
+    expect(allowedModes('caps_lock')).toEqual(['globe', 'dedicated'])
+    expect(allowedModes('f20')).toEqual(['globe', 'pass_through'])
+  })
+
+  it('scopes keyboards like the daemon', () => {
+    const withoutGlobe = { applyTo: 'without_globe', overrides: { '004c:029c': true, '046d:c33f': false } }
+    expect(includesKeyboard(withoutGlobe, '1234:5678', false)).toBe(true)
+    expect(includesKeyboard(withoutGlobe, '05ac:0281', true)).toBe(false)
+    expect(includesKeyboard(withoutGlobe, '004c:029c', true)).toBe(true)
+    expect(includesKeyboard(withoutGlobe, '046d:c33f', false)).toBe(false)
+    expect(includesKeyboard({ applyTo: 'all', overrides: {} }, '05ac:0281', true)).toBe(true)
   })
 
   it('names keys, falling back to the config name', () => {

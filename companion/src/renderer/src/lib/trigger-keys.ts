@@ -15,6 +15,23 @@ export interface TriggerKey {
 
 export const GLOBE = 'globe'
 
+/** DEDICATED_KEY is the key a dedicated trigger is remapped to, mirroring the daemon's TriggerDedicatedKey. */
+export const DEDICATED_KEY = 'f20'
+
+/** Trigger modes, mirroring the daemon's TriggerModes. */
+export const MODE_GLOBE = 'globe'
+export const MODE_DEDICATED = 'dedicated'
+export const MODE_PASS_THROUGH = 'pass_through'
+export const TRIGGER_MODES = [MODE_GLOBE, MODE_DEDICATED, MODE_PASS_THROUGH] as const
+
+/** Keyboard scopes, mirroring the daemon's KeyboardScopes. */
+export const KEYBOARDS_WITHOUT_GLOBE = 'without_globe'
+export const KEYBOARDS_ALL = 'all'
+export const KEYBOARD_SCOPES = [KEYBOARDS_WITHOUT_GLOBE, KEYBOARDS_ALL] as const
+
+/** KEYBOARD_ID matches a vendor:product keyboard ID. */
+export const KEYBOARD_ID = /^[0-9a-f]{4}:[0-9a-f]{4}$/
+
 const functionKeys: TriggerKey[] = [13, 14, 15, 16, 17, 18, 19, 20].map((number) => ({
   value: `f${number}`,
   label: `F${number}`,
@@ -53,6 +70,30 @@ export function triggerKeyForCode(code: string): TriggerKey | undefined {
 /** triggerLabel names the key, falling back to its config name. */
 export function triggerLabel(value: string): string {
   return triggerKey(value)?.label ?? value
+}
+
+/** allowedModes lists the modes a key can use: every mode but pass-through for
+ * keys that cannot keep their function, and but dedicated for the dedicated key itself. */
+export function allowedModes(value: string): string[] {
+  return TRIGGER_MODES.filter(
+    (mode) =>
+      !(mode === MODE_PASS_THROUGH && triggerKey(value)?.passThrough === false) &&
+      !(mode === MODE_DEDICATED && value === DEDICATED_KEY),
+  )
+}
+
+/** includesKeyboard reports whether a keyboard is in scope, mirroring the daemon's Keyboards.Includes. */
+export function includesKeyboard(
+  keyboards: { applyTo: string; overrides: Record<string, boolean> },
+  id: string,
+  hasGlobe: boolean,
+): boolean {
+  const override = keyboards.overrides[id]
+  if (override !== undefined) {
+    return override
+  }
+
+  return keyboards.applyTo === KEYBOARDS_ALL || !hasGlobe
 }
 
 /** triggerName names the key inside a sentence, falling back to its config name. */

@@ -10,7 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
-    trigger: { key: 'globe', passThrough: false },
+    trigger: { key: 'globe', mode: 'globe', keyboards: { applyTo: 'without_globe', overrides: {} } },
   }
 }
 
@@ -50,13 +50,34 @@ describe('validateConfig', () => {
     expect(validateConfig(validConfig()).valid).toBe(true)
   })
 
-  it('accepts a remapped or passed-through trigger', () => {
+  it('accepts every trigger mode and keyboard scope', () => {
     const config = validConfig()
-    config.trigger = { key: 'caps_lock', passThrough: false }
+    const keyboards = { applyTo: 'all', overrides: { '046d:c33f': false } }
+
+    config.trigger = { key: 'caps_lock', mode: 'globe', keyboards }
     expect(validateConfig(config).valid).toBe(true)
 
-    config.trigger = { key: 'right_command', passThrough: true }
+    config.trigger = { key: 'caps_lock', mode: 'dedicated', keyboards }
     expect(validateConfig(config).valid).toBe(true)
+
+    config.trigger = { key: 'right_command', mode: 'pass_through', keyboards }
+    expect(validateConfig(config).valid).toBe(true)
+  })
+
+  it('rejects the dedicated key as a dedicated trigger', () => {
+    const config = validConfig()
+    config.trigger = { ...config.trigger, key: 'f20', mode: 'dedicated' }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.mode).toBeDefined()
+  })
+
+  it('rejects an invalid keyboard override', () => {
+    const config = validConfig()
+    config.trigger.keyboards.overrides = { Logitech: true }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.keyboards).toBeDefined()
   })
 
   it('rejects an unknown trigger key', () => {
@@ -69,10 +90,10 @@ describe('validateConfig', () => {
 
   it('rejects passing Caps Lock through', () => {
     const config = validConfig()
-    config.trigger = { key: 'caps_lock', passThrough: true }
+    config.trigger = { ...config.trigger, key: 'caps_lock', mode: 'pass_through' }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
-    expect(result.errors.trigger.passThrough).toBeDefined()
+    expect(result.errors.trigger.mode).toBeDefined()
   })
 
   it('requires a non-blank log path', () => {

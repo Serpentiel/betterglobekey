@@ -55,6 +55,16 @@ impl ConfigService for Stub {
         Ok(Response::new(GetVersionResponse { version: "4.0.1".into(), commit: "abc1234".into() }))
     }
 
+    async fn list_keyboards(
+        &self,
+        _: Request<ListKeyboardsRequest>,
+    ) -> Result<Response<ListKeyboardsResponse>, Status> {
+        let keyboard =
+            Keyboard { id: "046d:c33f".into(), name: "Logitech".into(), in_scope: true, ..Default::default() };
+
+        Ok(Response::new(ListKeyboardsResponse { keyboards: vec![keyboard], system_mappings: vec![] }))
+    }
+
     async fn get_status(&self, _: Request<GetStatusRequest>) -> Result<Response<GetStatusResponse>, Status> {
         Ok(Response::new(GetStatusResponse { accessibility_trusted: true }))
     }
@@ -81,7 +91,11 @@ async fn reads_config_sources_and_version() {
         config.logger.is_some() && config.double_press.is_some() && config.reverse.is_some() && config.hud.is_some()
     );
     // The stub predates the trigger, so the Globe default fills it in.
-    assert_eq!(config.trigger.unwrap().key, "globe");
+    let trigger = config.trigger.unwrap();
+    assert_eq!((trigger.key.as_str(), trigger.mode.as_str()), ("globe", "globe"));
+    assert_eq!(trigger.keyboards.unwrap().apply_to, "without_globe");
+
+    assert_eq!(daemon.list_keyboards().await.unwrap().keyboards[0].name, "Logitech");
 
     assert_eq!(daemon.list_input_sources().await.unwrap()[0].name, "U.S.");
     assert_eq!(daemon.get_version().await.unwrap().version, "4.0.1");

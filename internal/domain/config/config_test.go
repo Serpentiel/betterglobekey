@@ -13,7 +13,11 @@ func validConfig() config.Config {
 		DoublePress: config.DoublePress{Enabled: true, MaxDelay: 250 * time.Millisecond},
 		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
 		HUD:         config.HUD{Enabled: true, Duration: 900 * time.Millisecond, ShowCollection: true},
-		Trigger:     config.Trigger{Key: config.TriggerGlobe},
+		Trigger: config.Trigger{
+			Key:       config.TriggerGlobe,
+			Mode:      config.TriggerModeGlobe,
+			Keyboards: config.Keyboards{ApplyTo: config.KeyboardsWithoutGlobe},
+		},
 		Collections: []config.Collection{
 			{Name: "primary", Sources: []string{"com.apple.keylayout.US"}},
 		},
@@ -44,8 +48,16 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"empty logger path":     func(c *config.Config) { c.Logger.Path = "" },
 		"invalid trigger key":   func(c *config.Config) { c.Trigger.Key = "fn" },
 		"empty trigger key":     func(c *config.Config) { c.Trigger.Key = "" },
+		"invalid trigger mode":  func(c *config.Config) { c.Trigger.Mode = "swallow" },
 		"caps lock pass-through": func(c *config.Config) {
-			c.Trigger = config.Trigger{Key: config.TriggerCapsLock, PassThrough: true}
+			c.Trigger.Key, c.Trigger.Mode = config.TriggerCapsLock, config.TriggerModePassThrough
+		},
+		"dedicated key as dedicated trigger": func(c *config.Config) {
+			c.Trigger.Key, c.Trigger.Mode = config.TriggerDedicatedKey, config.TriggerModeDedicated
+		},
+		"invalid keyboard scope": func(c *config.Config) { c.Trigger.Keyboards.ApplyTo = "apple" },
+		"invalid keyboard id": func(c *config.Config) {
+			c.Trigger.Keyboards.Overrides = map[string]bool{"05AC:29C": true}
 		},
 		"negative retention":    func(c *config.Config) { c.Logger.RetentionFiles = -1 },
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },
@@ -78,21 +90,66 @@ func TestValidateAcceptsEveryTriggerKey(t *testing.T) {
 	}
 }
 
-func TestTriggerRemapped(t *testing.T) {
+func TestTriggerModes(t *testing.T) {
 	tests := []struct {
-		trigger config.Trigger
-		want    bool
+		trigger                          config.Trigger
+		remapped, dedicated, passThrough bool
 	}{
-		{config.Trigger{Key: config.TriggerGlobe}, false},
-		{config.Trigger{Key: config.TriggerGlobe, PassThrough: true}, false},
-		{config.Trigger{Key: config.TriggerCapsLock}, true},
-		{config.Trigger{Key: "right_command"}, true},
-		{config.Trigger{Key: "right_command", PassThrough: true}, false},
+		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeGlobe}, false, false, false},
+		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeDedicated}, false, false, false},
+		{config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModePassThrough}, false, false, false},
+		{config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeGlobe}, true, false, false},
+		{config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated}, true, true, false},
+		{config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough}, false, false, true},
 	}
 
 	for _, test := range tests {
-		if got := test.trigger.Remapped(); got != test.want {
-			t.Errorf("%+v.Remapped() = %v, want %v", test.trigger, got, test.want)
+		trigger := test.trigger
+		if got := trigger.Remapped(); got != test.remapped {
+			t.Errorf("%+v.Remapped() = %v, want %v", trigger, got, test.remapped)
 		}
+
+		if got := trigger.Dedicated(); got != test.dedicated {
+			t.Errorf("%+v.Dedicated() = %v, want %v", trigger, got, test.dedicated)
+		}
+
+		if got := trigger.PassThrough(); got != test.passThrough {
+			t.Errorf("%+v.PassThrough() = %v, want %v", trigger, got, test.passThrough)
+		}
+	}
+}
+
+func TestKeyboardsIncludes(t *testing.T) {
+	withoutGlobe := config.Keyboards{
+		ApplyTo:   config.KeyboardsWithoutGlobe,
+		Overrides: map[string]bool{"05ac:029c": true, "046d:c33f": false},
+	}
+	all := config.Keyboards{ApplyTo: config.KeyboardsAll, Overrides: map[string]bool{"046d:c33f": false}}
+
+	tests := []struct {
+		name      string
+		keyboards config.Keyboards
+		id        string
+		hasGlobe  bool
+		want      bool
+	}{
+		{"without globe: third-party", withoutGlobe, "1234:5678", false, true},
+		{"without globe: apple", withoutGlobe, "05ac:0281", true, false},
+		{"without globe: apple included", withoutGlobe, "05ac:029c", true, true},
+		{"without globe: third-party excluded", withoutGlobe, "046d:c33f", false, false},
+		{"all: apple", all, "05ac:0281", true, true},
+		{"all: excluded", all, "046d:c33f", false, false},
+	}
+
+	for _, test := range tests {
+		if got := test.keyboards.Includes(test.id, test.hasGlobe); got != test.want {
+			t.Errorf("%s: Includes = %v, want %v", test.name, got, test.want)
+		}
+	}
+}
+
+func TestKeyboardID(t *testing.T) {
+	if got := config.KeyboardID(0x5ac, 0x29c); got != "05ac:029c" {
+		t.Errorf("KeyboardID = %q, want 05ac:029c", got)
 	}
 }

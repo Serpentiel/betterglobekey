@@ -4,9 +4,24 @@ import { Keyboard } from 'lucide-react'
 import type { Config } from '../../../../shared/types'
 import { REVERSE_MODIFIERS, type ConfigErrors } from '../../lib/config-schema'
 import { capitalize } from '../../lib/text'
-import { GLOBE, triggerKey, triggerName } from '../../lib/trigger-keys'
+import {
+  allowedModes,
+  GLOBE,
+  KEYBOARDS_ALL,
+  KEYBOARDS_WITHOUT_GLOBE,
+  MODE_DEDICATED,
+  MODE_GLOBE,
+  MODE_PASS_THROUGH,
+  triggerName,
+} from '../../lib/trigger-keys'
 import { Field, Input, Section, Select, Setting, Switch } from '../../ui'
 import { KeyPicker } from './KeyPicker'
+
+const MODE_LABELS: Record<string, string> = {
+  [MODE_GLOBE]: 'Act as Globe',
+  [MODE_DEDICATED]: 'Only this key (Globe untouched)',
+  [MODE_PASS_THROUGH]: "Keep the key's function",
+}
 
 interface Props {
   config: Config
@@ -21,51 +36,74 @@ export function BehaviorSection({ config, errors, onChange }: Props): ReactEleme
   const setReverse = (patch: Partial<Config['reverse']>): void =>
     onChange({ ...config, reverse: { ...config.reverse, ...patch } })
 
-  const { key, passThrough } = config.trigger
+  const { key, mode, keyboards } = config.trigger
   const name = triggerName(key)
-  const canPassThrough = triggerKey(key)?.passThrough ?? false
-  const remapped = key !== GLOBE && !passThrough
+  const modes = allowedModes(key)
+  const remapped = key !== GLOBE && mode !== MODE_PASS_THROUGH
 
-  // A key that can only be remapped drops pass-through, so picking it never
-  // leaves the config invalid.
+  const setTrigger = (patch: Partial<Config['trigger']>): void =>
+    onChange({ ...config, trigger: { ...config.trigger, ...patch } })
+
+  // A key that cannot use the current mode falls back to Globe mode, so picking
+  // it never leaves the config invalid.
   const setTriggerKey = (next: string): void =>
-    onChange({
-      ...config,
-      trigger: { key: next, passThrough: passThrough && (triggerKey(next)?.passThrough ?? false) },
-    })
+    setTrigger({ key: next, mode: allowedModes(next).includes(mode) ? mode : MODE_GLOBE })
 
   const keyHint =
     key === GLOBE
       ? 'The Globe (fn) key on Apple keyboards. Record another key for a keyboard without one.'
       : remapped
-        ? `${name} becomes the Globe key while betterglobekey runs, and loses its normal function.`
+        ? `${name} loses its normal function while betterglobekey runs, on the keyboards chosen below.`
         : `Pressing ${name} alone switches input sources; in combinations it still works as ${name}.`
 
-  const passThroughHint =
-    errors.trigger.passThrough ??
+  const modeHint =
+    errors.trigger.mode ??
     (key === GLOBE
-      ? 'Globe always keeps its normal function.'
-      : canPassThrough
-        ? `${name} keeps working as itself instead of becoming the Globe key.`
-        : `${name} can only be remapped to Globe.`)
+      ? 'Record a key other than Globe to choose how it works.'
+      : {
+          [MODE_GLOBE]: `${name} becomes a Globe key, with Globe's shortcuts (Globe+E, Globe+arrows, …). Globe keeps switching too.`,
+          [MODE_DEDICATED]: `Only ${name} switches: it is remapped to an unused key (F20). Globe keeps just its macOS functions.`,
+          [MODE_PASS_THROUGH]: `${name} keeps working as itself on every keyboard and switches only when pressed alone.`,
+        }[mode])
 
   return (
     <Section icon={Keyboard} title="Behavior" description={`How the ${name} key responds to presses.`}>
       <Field label="Trigger key" hint={keyHint} error={errors.trigger.key}>
         {({ id }) => <KeyPicker id={id} value={key} remapped={remapped} onChange={setTriggerKey} />}
       </Field>
-      <Setting
-        title="Keep the key's normal function"
-        description={passThroughHint}
-        control={
-          <Switch
-            checked={passThrough && canPassThrough}
-            disabled={!canPassThrough}
-            onChange={(enabled) => onChange({ ...config, trigger: { key, passThrough: enabled } })}
-            label="Toggle keeping the key's normal function"
+      <Field label="Trigger mode" hint={modeHint}>
+        {({ id }) => (
+          <Select
+            id={id}
+            value={mode}
+            disabled={key === GLOBE}
+            options={modes.map((value) => ({ value, label: MODE_LABELS[value] ?? value }))}
+            onChange={(next) => setTrigger({ mode: next })}
           />
+        )}
+      </Field>
+      <Field
+        label="Remap on"
+        hint={
+          errors.trigger.keyboards ??
+          (remapped
+            ? 'Keyboards with their own Globe key are Apple keyboards. Change single keyboards under Keyboards.'
+            : 'Only a remapped key applies to chosen keyboards.')
         }
-      />
+      >
+        {({ id }) => (
+          <Select
+            id={id}
+            value={keyboards.applyTo}
+            disabled={!remapped}
+            options={[
+              { value: KEYBOARDS_WITHOUT_GLOBE, label: 'Keyboards without Globe' },
+              { value: KEYBOARDS_ALL, label: 'All keyboards' },
+            ]}
+            onChange={(applyTo) => setTrigger({ keyboards: { ...keyboards, applyTo } })}
+          />
+        )}
+      </Field>
 
       <Setting
         title="Double press to switch collections"

@@ -38,7 +38,9 @@ hud:
 
 trigger:
   key: globe
-  pass_through: false
+  mode: globe
+  keyboards:
+    apply_to: without_globe
 
 collections:
   - name: primary
@@ -66,22 +68,55 @@ keyboards. For a keyboard without one, pick another key:
 | F13 through F20                               | `f13` … `f20`                                                            |
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 
-How the key is used depends on `trigger.pass_through`:
+How a key other than Globe is used depends on `trigger.mode`:
 
-- `false` (the default): the key is **remapped to Globe** at the hardware level while the service runs, the same way
-  `hidutil property --set` does. It then behaves exactly like a Globe key, including macOS's own fn shortcuts, and loses
-  its normal function. Stopping the service puts the key back.
-- `true`: the key **keeps its normal function** and the service watches it directly. Pressing it on its own switches
-  input sources; using it in a combination (such as Right Command + C) does not. Caps Lock cannot be passed through.
+| `trigger.mode`    | The key                                                 | Globe also switches | Per keyboard |
+| ----------------- | ------------------------------------------------------- | ------------------- | ------------ |
+| `globe` (default) | is **remapped to Globe**: Globe+E, Globe+arrows, … work | yes                 | yes          |
+| `dedicated`       | is **remapped to F20**, which only the service watches  | no                  | yes          |
+| `pass_through`    | **keeps its normal function**                           | no                  | no           |
+
+- `globe` and `dedicated` remap the key at the hardware level while the service runs, the same way
+  `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
+  In `dedicated` mode Globe keeps only what macOS does with it. F20 is used because no Apple keyboard has it and macOS
+  binds nothing to it; F21 to F24 have no key codes on macOS.
+- `pass_through` watches the key directly: pressing it on its own switches input sources; using it in a combination
+  (such as Right Command + C) does not. Caps Lock cannot be passed through, and F20 cannot be `dedicated`.
+
+### Keyboards
+
+A remapped key applies per keyboard. `trigger.keyboards.apply_to` picks the default:
+
+- `without_globe` (the default): only keyboards without a Globe key of their own, that is, anything but Apple's built-in
+  and Magic keyboards. Caps Lock on a MacBook stays Caps Lock while an external keyboard's Caps Lock becomes Globe.
+- `all`: every keyboard.
+
+`trigger.keyboards.overrides` includes (`true`) or excludes (`false`) single keyboards by vendor and product ID, as
+`betterglobekey doctor` and the companion show them:
+
+```yaml
+trigger:
+  key: caps_lock
+  mode: dedicated
+  keyboards:
+    apply_to: without_globe
+    overrides:
+      "05ac:029c": true # this Magic Keyboard too
+      "046d:c33f": false # but not this one
+```
+
+Keyboards plugged in while the service runs are remapped within two seconds.
 
 Things to know about remapping:
 
-- The remapping is added to the system-wide key mapping table without touching other entries, and an entry it replaced
-  for the same key is restored when the service stops. If the service is killed, the next start cleans up.
-- It does not apply to keyboards that Karabiner-Elements has taken over; use Karabiner to map the key to fn instead.
+- Each keyboard's own key mapping table is edited without touching other entries, and an entry it replaced for the same
+  key is restored when the service stops. If the service is killed, the next start cleans up.
+- It does not apply to keyboards that Karabiner-Elements has taken over; use Karabiner to map the key instead.
 - It sits on top of _System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys_. Leave the chosen key set to
   itself there.
-- To undo every global remapping by hand: `hidutil property --set '{"UserKeyMapping":[]}'`.
+- `betterglobekey doctor` lists every connected keyboard with its mappings, including other tools'.
+- To undo every remapping on a keyboard by hand:
+  `hidutil property --matching '{"VendorID":0x046d,"ProductID":0xc33f}' --set '{"UserKeyMapping":[]}'`.
 
 Keys pressed together with the trigger key, including media keys such as volume or brightness, never count as a press.
 

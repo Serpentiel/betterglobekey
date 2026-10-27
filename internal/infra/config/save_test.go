@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -10,13 +11,27 @@ import (
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 )
 
+// globeTrigger is the trigger a document without a trigger section loads as.
+var globeTrigger = domainconfig.Trigger{
+	Key:       domainconfig.TriggerGlobe,
+	Mode:      domainconfig.TriggerModeGlobe,
+	Keyboards: domainconfig.Keyboards{ApplyTo: domainconfig.KeyboardsWithoutGlobe},
+}
+
 func sampleConfig() domainconfig.Config {
 	return domainconfig.Config{
 		Logger:      domainconfig.Logger{Path: "x.log", Level: "debug", RetentionDays: 7, RetentionFiles: 2},
 		DoublePress: domainconfig.DoublePress{Enabled: true, MaxDelay: 300 * time.Millisecond},
 		Reverse:     domainconfig.Reverse{Enabled: false, Modifier: "option"},
 		HUD:         domainconfig.HUD{Enabled: true, Duration: 1200 * time.Millisecond, ShowCollection: false},
-		Trigger:     domainconfig.Trigger{Key: "right_command", PassThrough: true},
+		Trigger: domainconfig.Trigger{
+			Key:  "right_command",
+			Mode: domainconfig.TriggerModeDedicated,
+			Keyboards: domainconfig.Keyboards{
+				ApplyTo:   domainconfig.KeyboardsAll,
+				Overrides: map[string]bool{"046d:c33f": false},
+			},
+		},
 		Collections: []domainconfig.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -45,7 +60,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 		t.Errorf("reverse = %+v, want %+v", got.Reverse, want.Reverse)
 	}
 
-	if got.Trigger != want.Trigger {
+	if !reflect.DeepEqual(got.Trigger, want.Trigger) {
 		t.Errorf("trigger = %+v, want %+v", got.Trigger, want.Trigger)
 	}
 

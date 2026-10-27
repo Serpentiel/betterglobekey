@@ -72,7 +72,8 @@ func WriteDefault(path string, sources []string) error {
 	schema.HUD.Duration = defaultHUDDuration
 	schema.HUD.ShowCollection = boolPtr(true)
 	schema.Trigger.Key = defaultTriggerKey
-	schema.Trigger.PassThrough = boolPtr(false)
+	schema.Trigger.Mode = defaultTriggerMode
+	schema.Trigger.Keyboards.ApplyTo = defaultKeyboardScope
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -140,7 +141,14 @@ func toDomain(schema schemaV2) (config.Config, error) {
 			Duration:       duration,
 			ShowCollection: boolOr(schema.HUD.ShowCollection, true),
 		},
-		Trigger:     config.Trigger{Key: schema.Trigger.Key, PassThrough: boolOr(schema.Trigger.PassThrough, false)},
+		Trigger: config.Trigger{
+			Key:  schema.Trigger.Key,
+			Mode: schema.Trigger.Mode,
+			Keyboards: config.Keyboards{
+				ApplyTo:   schema.Trigger.Keyboards.ApplyTo,
+				Overrides: schema.Trigger.Keyboards.Overrides,
+			},
+		},
 		Collections: make([]config.Collection, 0, len(schema.Collections)),
 	}
 
@@ -172,6 +180,14 @@ func applySchemaDefaults(schema *schemaV2) {
 
 	if schema.Trigger.Key == "" {
 		schema.Trigger.Key = defaultTriggerKey
+	}
+
+	if schema.Trigger.Mode == "" {
+		schema.Trigger.Mode = defaultTriggerMode
+	}
+
+	if schema.Trigger.Keyboards.ApplyTo == "" {
+		schema.Trigger.Keyboards.ApplyTo = defaultKeyboardScope
 	}
 }
 

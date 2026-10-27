@@ -24,9 +24,16 @@ export interface Hud {
   showCollection: boolean
 }
 
+export interface Keyboards {
+  applyTo: string
+  /** overrides include (true) or exclude (false) keyboards by vendor:product ID. */
+  overrides: Record<string, boolean>
+}
+
 export interface Trigger {
   key: string
-  passThrough: boolean
+  mode: string
+  keyboards: Keyboards
 }
 
 export interface Collection {
@@ -48,6 +55,30 @@ export interface InputSource {
   name: string
 }
 
+export interface KeyMapping {
+  src: number
+  dst: number
+  srcName: string
+  dstName: string
+}
+
+export interface Keyboard {
+  id: string
+  name: string
+  transport: string
+  builtIn: boolean
+  hasGlobe: boolean
+  inScope: boolean
+  /** triggerMapping is the daemon's own mapping, or absent when it has none. */
+  triggerMapping?: KeyMapping | null
+  otherMappings: KeyMapping[]
+}
+
+export interface KeyboardReport {
+  keyboards: Keyboard[]
+  systemMappings: KeyMapping[]
+}
+
 export interface Version {
   version: string
   commit: string
@@ -59,6 +90,7 @@ export interface Api {
   getConfig: () => Promise<Config>
   applyConfig: (config: Config) => Promise<void>
   listInputSources: () => Promise<InputSource[]>
+  listKeyboards: () => Promise<KeyboardReport>
   getVersion: () => Promise<Version>
   getCompanionVersion: () => Promise<string>
 }

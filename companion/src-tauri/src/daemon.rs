@@ -17,7 +17,7 @@ pub mod proto {
 use proto::config_service_client::ConfigServiceClient;
 use proto::{
     ApplyConfigRequest, Config, GetConfigRequest, GetVersionRequest, GetVersionResponse, InputSource,
-    ListInputSourcesRequest,
+    ListInputSourcesRequest, ListKeyboardsRequest, ListKeyboardsResponse,
 };
 
 /// Daemon is a client for the daemon's ConfigService. It is cheap to clone.
@@ -72,6 +72,12 @@ impl Daemon {
         Ok(response.into_inner().sources)
     }
 
+    pub async fn list_keyboards(&self) -> Result<ListKeyboardsResponse, String> {
+        let response = self.client.clone().list_keyboards(ListKeyboardsRequest {}).await.map_err(|s| self.error(s))?;
+
+        Ok(response.into_inner())
+    }
+
     pub async fn get_version(&self) -> Result<GetVersionResponse, String> {
         let response = self.client.clone().get_version(GetVersionRequest {}).await.map_err(|s| self.error(s))?;
 
@@ -95,9 +101,19 @@ pub fn default_socket() -> PathBuf {
     std::env::home_dir().unwrap_or_default().join(".betterglobekey.sock")
 }
 
-/// GLOBE is the default trigger key, used when a daemon predating the trigger
-/// sends none.
+/// GLOBE is the default trigger key and mode, used when a daemon predating the
+/// trigger sends none.
 const GLOBE: &str = "globe";
+
+/// WITHOUT_GLOBE is the default keyboard scope.
+const WITHOUT_GLOBE: &str = "without_globe";
+
+/// fill sets `value` to `default` when it is empty.
+fn fill(value: &mut String, default: &str) {
+    if value.is_empty() {
+        default.clone_into(value);
+    }
+}
 
 /// complete fills in any section the daemon left unset, so the UI always gets
 /// every field (proto3 omits empty messages; the UI types do not).
@@ -108,9 +124,9 @@ fn complete(mut config: Config) -> Config {
     config.hud.get_or_insert_default();
 
     let trigger = config.trigger.get_or_insert_default();
-    if trigger.key.is_empty() {
-        GLOBE.clone_into(&mut trigger.key);
-    }
+    fill(&mut trigger.key, GLOBE);
+    fill(&mut trigger.mode, GLOBE);
+    fill(&mut trigger.keyboards.get_or_insert_default().apply_to, WITHOUT_GLOBE);
 
     config
 }
@@ -119,7 +135,7 @@ fn complete(mut config: Config) -> Config {
 mod tests {
     use serde_json::json;
 
-    use super::proto::Trigger;
+    use super::proto::{KeyMapping, Keyboard, Keyboards, Trigger};
     use super::*;
 
     #[test]
@@ -134,7 +150,11 @@ mod tests {
                 "reverse": { "enabled": false, "modifier": "" },
                 "hud": { "enabled": false, "duration": "", "showCollection": false },
                 "collections": [],
-                "trigger": { "key": "globe", "passThrough": false },
+                "trigger": {
+                    "key": "globe",
+                    "mode": "globe",
+                    "keyboards": { "applyTo": "without_globe", "overrides": {} },
+                },
             }),
         );
     }
@@ -147,7 +167,11 @@ mod tests {
             "reverse": { "enabled": true, "modifier": "shift" },
             "hud": { "enabled": true, "duration": "900ms", "showCollection": true },
             "collections": [{ "name": "primary", "sources": ["com.apple.keylayout.US"] }],
-            "trigger": { "key": "right_command", "passThrough": true },
+            "trigger": {
+                "key": "right_command",
+                "mode": "pass_through",
+                "keyboards": { "applyTo": "all", "overrides": { "046d:c33f": false } },
+            },
         }))
         .unwrap();
 
@@ -158,18 +182,51 @@ mod tests {
 
         let trigger = config.trigger.unwrap();
         assert_eq!(trigger.key, "right_command");
-        assert!(trigger.pass_through);
+        assert_eq!(trigger.mode, "pass_through");
+
+        let keyboards = trigger.keyboards.unwrap();
+        assert_eq!(keyboards.apply_to, "all");
+        assert_eq!(keyboards.overrides.get("046d:c33f"), Some(&false));
     }
 
     #[test]
     fn complete_keeps_a_set_trigger() {
         let config = complete(Config {
-            trigger: Some(Trigger { key: "f13".to_owned(), pass_through: true }),
+            trigger: Some(Trigger {
+                key: "f13".to_owned(),
+                mode: "dedicated".to_owned(),
+                keyboards: Some(Keyboards { apply_to: "all".to_owned(), ..Keyboards::default() }),
+            }),
             ..Config::default()
         });
 
         let trigger = config.trigger.unwrap();
         assert_eq!(trigger.key, "f13");
-        assert!(trigger.pass_through);
+        assert_eq!(trigger.mode, "dedicated");
+        assert_eq!(trigger.keyboards.unwrap().apply_to, "all");
+    }
+
+    #[test]
+    fn keyboards_serialize_to_the_ui_shape() {
+        let response = ListKeyboardsResponse {
+            keyboards: vec![Keyboard {
+                id: "046d:c33f".to_owned(),
+                in_scope: true,
+                trigger_mapping: Some(KeyMapping {
+                    src: 0x7_0000_0039,
+                    dst: 0xFF_0000_0003,
+                    src_name: "Caps Lock".to_owned(),
+                    dst_name: "Globe".to_owned(),
+                }),
+                ..Keyboard::default()
+            }],
+            system_mappings: vec![],
+        };
+
+        let value = serde_json::to_value(response).unwrap();
+        assert_eq!(value["keyboards"][0]["inScope"], json!(true));
+        assert_eq!(value["keyboards"][0]["triggerMapping"]["srcName"], json!("Caps Lock"));
+        assert_eq!(value["keyboards"][0]["otherMappings"], json!([]));
+        assert_eq!(value["systemMappings"], json!([]));
     }
 }

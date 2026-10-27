@@ -73,7 +73,9 @@ func TestServeOverUnixSocket(t *testing.T) {
 		t.Fatalf("seed stale socket: %v", err)
 	}
 
-	server := NewServer("", fakeSources{}, func(fn func()) { fn() }, "9.9.9", "cafe", func() bool { return true })
+	server := NewServer(
+		"", fakeSources{}, fakeKeyboards{}, func(fn func()) { fn() }, "9.9.9", "cafe", func() bool { return true },
+	)
 
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- server.Serve(socket) }()

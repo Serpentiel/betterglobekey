@@ -1,11 +1,13 @@
 package control
 
 import (
+	"cmp"
 	"fmt"
 	"time"
 
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 )
 
 // toProto converts the domain configuration model into its protobuf representation.
@@ -40,8 +42,12 @@ func toProto(cfg domainconfig.Config) *controlv1.Config {
 		},
 		Collections: collections,
 		Trigger: &controlv1.Trigger{
-			Key:         cfg.Trigger.Key,
-			PassThrough: cfg.Trigger.PassThrough,
+			Key:  cfg.Trigger.Key,
+			Mode: cfg.Trigger.Mode,
+			Keyboards: &controlv1.Keyboards{
+				ApplyTo:   cfg.Trigger.Keyboards.ApplyTo,
+				Overrides: cfg.Trigger.Keyboards.Overrides,
+			},
 		},
 	}
 }
@@ -73,12 +79,6 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 		})
 	}
 
-	// A client that predates the trigger sends none; keep the Globe key.
-	triggerKey := proto.GetTrigger().GetKey()
-	if triggerKey == "" {
-		triggerKey = domainconfig.TriggerGlobe
-	}
-
 	return domainconfig.Config{
 		Logger: domainconfig.Logger{
 			Path:           proto.GetLogger().GetPath(),
@@ -96,7 +96,70 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 			Duration:       duration,
 			ShowCollection: proto.GetHud().GetShowCollection(),
 		},
-		Trigger:     domainconfig.Trigger{Key: triggerKey, PassThrough: proto.GetTrigger().GetPassThrough()},
+		Trigger:     triggerFromProto(proto.GetTrigger()),
 		Collections: collections,
 	}, nil
+}
+
+// triggerFromProto converts a protobuf trigger, defaulting what a client that
+// predates a field leaves empty: the Globe key, Globe mode, and keyboards
+// without Globe.
+func triggerFromProto(proto *controlv1.Trigger) domainconfig.Trigger {
+	trigger := domainconfig.Trigger{
+		Key:  cmp.Or(proto.GetKey(), domainconfig.TriggerGlobe),
+		Mode: cmp.Or(proto.GetMode(), domainconfig.TriggerModeGlobe),
+		Keyboards: domainconfig.Keyboards{
+			ApplyTo:   cmp.Or(proto.GetKeyboards().GetApplyTo(), domainconfig.KeyboardsWithoutGlobe),
+			Overrides: proto.GetKeyboards().GetOverrides(),
+		},
+	}
+
+	if len(trigger.Keyboards.Overrides) == 0 {
+		trigger.Keyboards.Overrides = nil
+	}
+
+	return trigger
+}
+
+// keyboardsToProto converts the remapper's keyboard report.
+func keyboardsToProto(statuses []keymap.Status, systemWide []keymap.Mapping) *controlv1.ListKeyboardsResponse {
+	keyboards := make([]*controlv1.Keyboard, 0, len(statuses))
+
+	for _, status := range statuses {
+		keyboard := &controlv1.Keyboard{
+			Id:            status.KeyboardID(),
+			Name:          status.Name,
+			Transport:     status.Transport,
+			BuiltIn:       status.BuiltIn,
+			HasGlobe:      status.HasGlobe(),
+			InScope:       status.InScope,
+			OtherMappings: mappingsToProto(status.Others),
+		}
+
+		if status.Ours != nil {
+			keyboard.TriggerMapping = mappingToProto(*status.Ours)
+		}
+
+		keyboards = append(keyboards, keyboard)
+	}
+
+	return &controlv1.ListKeyboardsResponse{Keyboards: keyboards, SystemMappings: mappingsToProto(systemWide)}
+}
+
+func mappingsToProto(mappings []keymap.Mapping) []*controlv1.KeyMapping {
+	converted := make([]*controlv1.KeyMapping, 0, len(mappings))
+	for _, mapping := range mappings {
+		converted = append(converted, mappingToProto(mapping))
+	}
+
+	return converted
+}
+
+func mappingToProto(mapping keymap.Mapping) *controlv1.KeyMapping {
+	return &controlv1.KeyMapping{
+		Src:     mapping.Src,
+		Dst:     mapping.Dst,
+		SrcName: keymap.UsageName(mapping.Src),
+		DstName: keymap.UsageName(mapping.Dst),
+	}
 }

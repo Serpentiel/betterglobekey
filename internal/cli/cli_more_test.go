@@ -13,6 +13,7 @@ import (
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	"github.com/Serpentiel/betterglobekey/internal/domain/switcher"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/spf13/cobra"
 )
@@ -294,7 +295,9 @@ func TestStartControlServer(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if err := startControlServer(ctx, cfgPath, inputsource.New(), testLogger(t), "1.0.0", "abc"); err != nil {
+	remapper := keymap.New(hidStore{}, filepath.Join(t.TempDir(), "keymap.json"))
+
+	if err := startControlServer(ctx, cfgPath, inputsource.New(), remapper, testLogger(t), "1.0.0", "abc"); err != nil {
 		t.Fatalf("startControlServer: %v", err)
 	}
 
@@ -419,15 +422,69 @@ func TestRunDoctorReportsStatus(t *testing.T) {
 }
 
 func TestTriggerStatus(t *testing.T) {
-	tests := map[domainconfig.Trigger]string{
-		{Key: "globe"}:     "globe",
-		{Key: "caps_lock"}: "caps_lock (remapped to Globe while the daemon runs)",
-		{Key: "right_command", PassThrough: true}: "right_command (passed through)",
+	withoutGlobe := domainconfig.Keyboards{ApplyTo: domainconfig.KeyboardsWithoutGlobe}
+
+	tests := []struct {
+		trigger domainconfig.Trigger
+		want    string
+	}{
+		{domainconfig.Trigger{Key: "globe", Mode: "globe"}, "globe"},
+		{
+			domainconfig.Trigger{Key: "caps_lock", Mode: "globe", Keyboards: withoutGlobe},
+			"caps_lock (remapped to Globe on keyboards without Globe while the daemon runs)",
+		},
+		{
+			domainconfig.Trigger{
+				Key:       "caps_lock",
+				Mode:      "dedicated",
+				Keyboards: domainconfig.Keyboards{ApplyTo: "all", Overrides: map[string]bool{"046d:c33f": false}},
+			},
+			"caps_lock (remapped to F20 on all keyboards, 1 override(s) while the daemon runs; Globe does not switch)",
+		},
+		{domainconfig.Trigger{Key: "right_command", Mode: "pass_through"}, "right_command (passed through)"},
 	}
 
-	for trigger, want := range tests {
-		if got := triggerStatus(trigger); got != want {
-			t.Errorf("triggerStatus(%+v) = %q, want %q", trigger, got, want)
+	for _, test := range tests {
+		if got := triggerStatus(test.trigger); got != test.want {
+			t.Errorf("triggerStatus(%+v) = %q, want %q", test.trigger, got, test.want)
 		}
+	}
+}
+
+func TestKeyboardLines(t *testing.T) {
+	capsToGlobe := keymap.Mapping{Src: keymap.Usages["caps_lock"], Dst: keymap.GlobeUsage}
+	escape := keymap.Mapping{Src: 0x7_0000_0035, Dst: 0x7_0000_0029}
+	statuses := []keymap.Status{
+		{Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true}},
+		{
+			Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
+			InScope:  true,
+			Ours:     &capsToGlobe,
+			Others:   []keymap.Mapping{escape},
+		},
+		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, InScope: true},
+	}
+
+	got := strings.Join(keyboardLines(domainconfig.Trigger{Key: "caps_lock", Mode: "globe"}, statuses,
+		[]keymap.Mapping{escape}), "\n")
+
+	for _, want := range []string{
+		"Apple Keyboard (05ac:0281, built-in, has Globe): no mappings",
+		"Logitech (046d:c33f, USB): Caps Lock → Globe; Grave Accent → Escape (other tool)",
+		"Unnamed keyboard (1234:5678): not remapped yet",
+		"system-wide:   Grave Accent → Escape",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("keyboard lines missing %q; got:\n%s", want, got)
+		}
+	}
+
+	if strings.Contains(got, "warning") {
+		t.Errorf("unexpected warning:\n%s", got)
+	}
+
+	dedicated := domainconfig.Trigger{Key: "caps_lock", Mode: "dedicated"}
+	if lines := keyboardLines(dedicated, statuses[:1], nil); !strings.Contains(strings.Join(lines, "\n"), "warning") {
+		t.Errorf("no warning for a dedicated trigger no keyboard remaps: %v", lines)
 	}
 }

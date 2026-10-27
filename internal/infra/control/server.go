@@ -10,8 +10,10 @@ import (
 	"net"
 	"os"
 
+	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
 	"github.com/Serpentiel/betterglobekey/internal/infra/config"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,6 +30,13 @@ type Sources interface {
 	Name(id string) string
 }
 
+// Keyboards is the keyboard port: the remapper's report on connected keyboards.
+type Keyboards interface {
+	// Keyboards reports every connected keyboard against trigger, and the
+	// system-wide key mappings.
+	Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error)
+}
+
 // OnMain runs fn on the main thread, blocking until it returns. Input-source
 // queries must run there, as the underlying macOS APIs require a thread with a
 // running run loop.
@@ -37,28 +46,38 @@ type OnMain func(fn func())
 type Server struct {
 	controlv1.UnimplementedConfigServiceServer
 
-	path    string
-	sources Sources
-	onMain  OnMain
-	version string
-	commit  string
-	trusted func() bool
-	grpc    *grpc.Server
+	path      string
+	sources   Sources
+	keyboards Keyboards
+	onMain    OnMain
+	version   string
+	commit    string
+	trusted   func() bool
+	grpc      *grpc.Server
 }
 
 // NewServer builds a control server that reads and writes the configuration at
-// path and reports input sources via sources. Input-source queries are run via
-// onMain. version and commit identify the running build. trusted reports whether
-// the daemon holds Accessibility, evaluated in the daemon's own process.
-func NewServer(path string, sources Sources, onMain OnMain, version, commit string, trusted func() bool) *Server {
+// path and reports input sources via sources and keyboards via keyboards.
+// Input-source queries are run via onMain. version and commit identify the
+// running build. trusted reports whether the daemon holds Accessibility,
+// evaluated in the daemon's own process.
+func NewServer(
+	path string,
+	sources Sources,
+	keyboards Keyboards,
+	onMain OnMain,
+	version, commit string,
+	trusted func() bool,
+) *Server {
 	srv := &Server{
-		path:    path,
-		sources: sources,
-		onMain:  onMain,
-		version: version,
-		commit:  commit,
-		trusted: trusted,
-		grpc:    grpc.NewServer(),
+		path:      path,
+		sources:   sources,
+		keyboards: keyboards,
+		onMain:    onMain,
+		version:   version,
+		commit:    commit,
+		trusted:   trusted,
+		grpc:      grpc.NewServer(),
 	}
 	controlv1.RegisterConfigServiceServer(srv.grpc, srv)
 
@@ -155,4 +174,22 @@ func (s *Server) GetStatus(
 	_ *controlv1.GetStatusRequest,
 ) (*controlv1.GetStatusResponse, error) {
 	return &controlv1.GetStatusResponse{AccessibilityTrusted: s.trusted()}, nil
+}
+
+// ListKeyboards reports the connected keyboards against the configured trigger.
+func (s *Server) ListKeyboards(
+	_ context.Context,
+	_ *controlv1.ListKeyboardsRequest,
+) (*controlv1.ListKeyboardsResponse, error) {
+	cfg, err := config.Load(s.path)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "loading config: %v", err)
+	}
+
+	statuses, systemWide, err := s.keyboards.Keyboards(cfg.Trigger)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "listing keyboards: %v", err)
+	}
+
+	return keyboardsToProto(statuses, systemWide), nil
 }

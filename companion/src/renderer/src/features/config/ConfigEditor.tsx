@@ -2,11 +2,13 @@ import { RotateCcw, Save } from 'lucide-react'
 import { type ReactElement, useMemo } from 'react'
 
 import type { ConfigController } from '../../hooks/useConfig'
+import { useKeyboards } from '../../hooks/useKeyboards'
 import { formatVersion, versionMismatch } from '../../lib/text'
 import { Banner, Button, Footer, Stack, Titlebar } from '../../ui'
 import { BehaviorSection } from './BehaviorSection'
 import { CollectionsSection } from './CollectionsSection'
 import { HudSection } from './HudSection'
+import { KeyboardsSection } from './KeyboardsSection'
 import { LoggingSection } from './LoggingSection'
 import styles from './ConfigEditor.module.css'
 
@@ -29,6 +31,8 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
     save,
     revert,
   } = controller
+
+  const keyboards = useKeyboards()
 
   const nameOf = useMemo(() => {
     const names = new Map(sources.map((source) => [source.id, source.name]))
@@ -73,6 +77,7 @@ export function ConfigEditor({ controller }: Props): ReactElement | null {
           {dirty && !validation.valid ? <Banner tone="info">Fix the highlighted fields to save.</Banner> : null}
 
           <BehaviorSection config={config} errors={validation.errors} onChange={update} />
+          <KeyboardsSection config={config} keyboards={keyboards} onChange={update} />
           <HudSection config={config} errors={validation.errors} onChange={update} />
           <CollectionsSection
             config={config}

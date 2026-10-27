@@ -18,6 +18,8 @@ const (
 	defaultReverseModifier  = "shift"
 	defaultHUDDuration      = "900ms"
 	defaultTriggerKey       = "globe"
+	defaultTriggerMode      = "globe"
+	defaultKeyboardScope    = "without_globe"
 	defaultCollectionName   = "primary"
 )
 
@@ -65,8 +67,12 @@ type schemaV2 struct {
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
 	Trigger struct {
-		Key         string `yaml:"key"`
-		PassThrough *bool  `yaml:"pass_through"`
+		Key       string `yaml:"key"`
+		Mode      string `yaml:"mode"`
+		Keyboards struct {
+			ApplyTo   string          `yaml:"apply_to"`
+			Overrides map[string]bool `yaml:"overrides,omitempty"`
+		} `yaml:"keyboards"`
 	} `yaml:"trigger"`
 	Collections []collectionV2 `yaml:"collections"`
 }

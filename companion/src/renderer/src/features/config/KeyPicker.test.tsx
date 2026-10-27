@@ -73,7 +73,7 @@ describe('KeyPicker', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
 
-    expect(screen.getByRole('status').textContent).toContain('Caps Lock is mapped to Globe right now')
+    expect(screen.getByRole('status').textContent).toContain('Caps Lock is remapped right now')
   })
 
   it('resets to Globe, which cannot be recorded', () => {

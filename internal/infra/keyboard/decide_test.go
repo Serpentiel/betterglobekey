@@ -41,11 +41,12 @@ var (
 )
 
 func TestDecide(t *testing.T) {
-	globe := config.Trigger{Key: config.TriggerGlobe}
-	remapped := config.Trigger{Key: config.TriggerCapsLock}
-	rightCommand := config.Trigger{Key: "right_command", PassThrough: true}
-	rightShift := config.Trigger{Key: "right_shift", PassThrough: true}
-	f13 := config.Trigger{Key: "f13", PassThrough: true}
+	globe := config.Trigger{Key: config.TriggerGlobe, Mode: config.TriggerModeGlobe}
+	remapped := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeGlobe}
+	dedicated := config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated}
+	rightCommand := config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough}
+	rightShift := config.Trigger{Key: "right_shift", Mode: config.TriggerModePassThrough}
+	f13 := config.Trigger{Key: "f13", Mode: config.TriggerModePassThrough}
 
 	tests := []struct {
 		name    string
@@ -60,6 +61,14 @@ func TestDecide(t *testing.T) {
 			[]press{{fired: true, reverse: true}},
 		},
 		{"remapped key arrives as globe", remapped, []tapEvent{globeDown, globeUp}, []press{{fired: true}}},
+		{"dedicated key tap", dedicated, []tapEvent{keyDown(keyF20, 0), keyUp(keyF20, 0)}, []press{{fired: true}}},
+		{
+			"dedicated key tap with shift reverses", dedicated,
+			[]tapEvent{keyDown(keyF20, flagShift), keyUp(keyF20, flagShift)},
+			[]press{{fired: true, reverse: true}},
+		},
+		{"globe does nothing in dedicated mode", dedicated, []tapEvent{globeDown, globeUp}, nil},
+		{"dedicated key + c", dedicated, []tapEvent{keyDown(keyF20, 0), keyDown(keyC, 0), keyUp(keyF20, 0)}, nil},
 		{"globe + f1 media", globe, []tapEvent{globeDown, media, globeUp}, nil},
 		{"globe + f1 key", globe, []tapEvent{globeDown, keyDown(keyF1, flagFn), keyUp(keyF1, flagFn), globeUp}, nil},
 		{
@@ -153,9 +162,10 @@ func TestDecide(t *testing.T) {
 
 func TestTriggerForFallsBackToGlobe(t *testing.T) {
 	for _, trigger := range []config.Trigger{
-		{Key: config.TriggerGlobe, PassThrough: true},
-		{Key: "right_command"},
-		{Key: "unknown", PassThrough: true},
+		{Key: config.TriggerGlobe, Mode: config.TriggerModePassThrough},
+		{Key: config.TriggerGlobe, Mode: config.TriggerModeDedicated},
+		{Key: "right_command", Mode: config.TriggerModeGlobe},
+		{Key: "unknown", Mode: config.TriggerModePassThrough},
 	} {
 		if got := triggerFor(trigger); got != globeTrigger {
 			t.Errorf("triggerFor(%+v) is not the Globe trigger", trigger)

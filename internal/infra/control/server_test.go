@@ -7,11 +7,37 @@ import (
 	"path/filepath"
 	"testing"
 
+	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	controlv1 "github.com/Serpentiel/betterglobekey/internal/gen/betterglobekey/control/v1"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 )
+
+// fakeKeyboards reports a built-in keyboard and a remapped third-party one.
+type fakeKeyboards struct{ err error }
+
+func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapping, error) {
+	if f.err != nil {
+		return nil, nil, f.err
+	}
+
+	capsToGlobe := keymap.Mapping{Src: keymap.Usages[domainconfig.TriggerCapsLock], Dst: keymap.GlobeUsage}
+	escape := keymap.Mapping{Src: 0x7_0000_0035, Dst: 0x7_0000_0029}
+
+	return []keymap.Status{
+			{Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true}},
+			{
+				Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
+				InScope:  trigger.Remapped(),
+				Ours:     &capsToGlobe,
+				Others:   []keymap.Mapping{escape},
+			},
+		},
+		[]keymap.Mapping{escape},
+		nil
+}
 
 type fakeSources struct {
 	all   []string
@@ -34,7 +60,9 @@ func newTestClient(t *testing.T, path string, sources Sources, trusted bool) con
 	t.Helper()
 
 	listener := bufconn.Listen(1 << 20)
-	server := NewServer(path, sources, func(fn func()) { fn() }, "1.2.3", "abc1234", func() bool { return trusted })
+	server := NewServer(
+		path, sources, fakeKeyboards{}, func(fn func()) { fn() }, "1.2.3", "abc1234", func() bool { return trusted },
+	)
 
 	go func() { _ = server.grpc.Serve(listener) }()
 
@@ -62,7 +90,14 @@ func sampleProtoConfig() *controlv1.Config {
 		DoublePress: &controlv1.DoublePress{Enabled: true, MaximumDelay: "300ms"},
 		Reverse:     &controlv1.Reverse{Enabled: true, Modifier: "shift"},
 		Hud:         &controlv1.Hud{Enabled: true, Duration: "900ms", ShowCollection: true},
-		Trigger:     &controlv1.Trigger{Key: "right_command", PassThrough: true},
+		Trigger: &controlv1.Trigger{
+			Key:  "right_command",
+			Mode: "dedicated",
+			Keyboards: &controlv1.Keyboards{
+				ApplyTo:   "all",
+				Overrides: map[string]bool{"046d:c33f": false},
+			},
+		},
 		Collections: []*controlv1.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -99,8 +134,10 @@ func TestApplyThenGetConfig(t *testing.T) {
 		t.Errorf("reverse.modifier = %q, want shift", cfg.GetReverse().GetModifier())
 	}
 
-	if cfg.GetTrigger().GetKey() != "right_command" || !cfg.GetTrigger().GetPassThrough() {
-		t.Errorf("trigger = %+v, want pass-through right_command", cfg.GetTrigger())
+	trigger := cfg.GetTrigger()
+	if trigger.GetKey() != "right_command" || trigger.GetMode() != "dedicated" ||
+		trigger.GetKeyboards().GetApplyTo() != "all" || len(trigger.GetKeyboards().GetOverrides()) != 1 {
+		t.Errorf("trigger = %+v, want dedicated right_command on all but one keyboard", trigger)
 	}
 
 	if len(cfg.GetCollections()) != 2 {
@@ -129,8 +166,10 @@ func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
 		t.Fatalf("GetConfig: %v", err)
 	}
 
-	if got.GetConfig().GetTrigger().GetKey() != "globe" || got.GetConfig().GetTrigger().GetPassThrough() {
-		t.Errorf("trigger = %+v, want globe", got.GetConfig().GetTrigger())
+	trigger := got.GetConfig().GetTrigger()
+	if trigger.GetKey() != "globe" || trigger.GetMode() != "globe" ||
+		trigger.GetKeyboards().GetApplyTo() != "without_globe" {
+		t.Errorf("trigger = %+v, want globe", trigger)
 	}
 }
 
@@ -198,4 +237,72 @@ func TestGetStatus(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestListKeyboards(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	client := newTestClient(t, path, fakeSources{}, true)
+
+	config := sampleProtoConfig()
+	config.Trigger = &controlv1.Trigger{Key: "caps_lock"}
+
+	if _, err := client.ApplyConfig(context.Background(), &controlv1.ApplyConfigRequest{Config: config}); err != nil {
+		t.Fatalf("ApplyConfig: %v", err)
+	}
+
+	got, err := client.ListKeyboards(context.Background(), &controlv1.ListKeyboardsRequest{})
+	if err != nil {
+		t.Fatalf("ListKeyboards: %v", err)
+	}
+
+	if len(got.GetKeyboards()) != 2 || len(got.GetSystemMappings()) != 1 {
+		t.Fatalf("response = %+v", got)
+	}
+
+	builtIn, logitech := got.GetKeyboards()[0], got.GetKeyboards()[1]
+	if builtIn.GetId() != "05ac:0281" || !builtIn.GetHasGlobe() || !builtIn.GetBuiltIn() || builtIn.GetInScope() ||
+		builtIn.GetTriggerMapping() != nil {
+		t.Errorf("built-in = %+v", builtIn)
+	}
+
+	if logitech.GetId() != "046d:c33f" || logitech.GetHasGlobe() || !logitech.GetInScope() ||
+		logitech.GetTransport() != "USB" {
+		t.Errorf("logitech = %+v", logitech)
+	}
+
+	if m := logitech.GetTriggerMapping(); m.GetSrcName() != "Caps Lock" || m.GetDstName() != "Globe" {
+		t.Errorf("trigger mapping = %+v", m)
+	}
+
+	others := logitech.GetOtherMappings()
+	if len(others) != 1 || others[0].GetSrcName() != "Grave Accent" || others[0].GetDstName() != "Escape" {
+		t.Errorf("other mappings = %+v", others)
+	}
+}
+
+func TestListKeyboardsErrors(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
+		client := newTestClient(t, filepath.Join(t.TempDir(), "missing.yaml"), fakeSources{}, true)
+		if _, err := client.ListKeyboards(context.Background(), &controlv1.ListKeyboardsRequest{}); err == nil {
+			t.Error("ListKeyboards succeeded without a config")
+		}
+	})
+
+	t.Run("keyboards", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "config.yaml")
+
+		server := NewServer(
+			path, fakeSources{}, fakeKeyboards{err: fmt.Errorf("boom")}, func(fn func()) { fn() }, "", "",
+			func() bool { return true },
+		)
+
+		request := &controlv1.ApplyConfigRequest{Config: sampleProtoConfig()}
+		if _, err := server.ApplyConfig(context.Background(), request); err != nil {
+			t.Fatalf("ApplyConfig: %v", err)
+		}
+
+		if _, err := server.ListKeyboards(context.Background(), &controlv1.ListKeyboardsRequest{}); err == nil {
+			t.Error("ListKeyboards hid the keyboard error")
+		}
+	})
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -116,7 +117,7 @@ func TestLoadV2(t *testing.T) {
 	}
 
 	// A document without a trigger section keeps the Globe key.
-	if cfg.Trigger != (domainconfig.Trigger{Key: domainconfig.TriggerGlobe}) {
+	if !reflect.DeepEqual(cfg.Trigger, globeTrigger) {
 		t.Errorf("trigger = %+v, want the Globe default", cfg.Trigger)
 	}
 }
@@ -195,7 +196,7 @@ func TestWriteDefaultRoundTrip(t *testing.T) {
 		t.Errorf("delay = %s, want 250ms", cfg.DoublePress.MaxDelay)
 	}
 
-	if cfg.Trigger != (domainconfig.Trigger{Key: domainconfig.TriggerGlobe}) {
+	if !reflect.DeepEqual(cfg.Trigger, globeTrigger) {
 		t.Errorf("trigger = %+v, want the Globe default", cfg.Trigger)
 	}
 }

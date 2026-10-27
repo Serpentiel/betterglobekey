@@ -8,7 +8,7 @@ import styles from './KeyPicker.module.css'
 
 interface Props {
   value: string
-  /** remapped reports whether value is currently mapped to Globe, so pressing it no longer reaches the page. */
+  /** remapped reports whether value is currently remapped, so pressing it no longer reaches the page. */
   remapped: boolean
   onChange: (key: string) => void
   id?: string
@@ -73,7 +73,7 @@ export function KeyPicker({ value, remapped, onChange, id }: Props): ReactElemen
     ? error
     : recording
       ? remapped
-        ? `Press a key, or Esc to cancel. ${triggerName(value)} is mapped to Globe right now, so pressing it won't register.`
+        ? `Press a key, or Esc to cancel. ${triggerName(value)} is remapped right now, so pressing it won't register.`
         : 'Press a key, or Esc to cancel.'
       : null
 

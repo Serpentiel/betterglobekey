@@ -9,6 +9,7 @@ export const api: Api = {
   getConfig: () => invoke('get_config'),
   applyConfig: (config: Config) => invoke('apply_config', { config }),
   listInputSources: () => invoke('list_input_sources'),
+  listKeyboards: () => invoke('list_keyboards'),
   getVersion: () => invoke('get_version'),
   getCompanionVersion,
 }

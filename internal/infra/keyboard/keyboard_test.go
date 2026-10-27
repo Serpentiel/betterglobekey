@@ -22,6 +22,7 @@ func TestNewReturnsListener(t *testing.T) {
 }
 
 func TestSetTrigger(_ *testing.T) {
-	SetTrigger(config.Trigger{Key: "right_command", PassThrough: true})
+	SetTrigger(config.Trigger{Key: "right_command", Mode: config.TriggerModePassThrough})
+	SetTrigger(config.Trigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated})
 	SetTrigger(config.Trigger{Key: config.TriggerGlobe})
 }
