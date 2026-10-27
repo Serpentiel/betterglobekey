@@ -1,0 +1,3 @@
+kind: Added
+body: "The trigger key is remapped only on keyboards without a Globe key by default. `trigger.keyboards` and the companion's Keyboards… sheet include or exclude single keyboards, and the sheet and `doctor` list every connected keyboard with its key mappings."
+time: 2026-10-28T10:00:01.000000+02:00

@@ -1,0 +1,3 @@
+kind: Added
+body: "`trigger.mode: pass_through` keeps the trigger key's normal function, and switches input sources only when the key is pressed on its own."
+time: 2026-10-28T10:00:03.000000+02:00

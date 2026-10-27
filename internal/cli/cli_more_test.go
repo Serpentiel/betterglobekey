@@ -516,7 +516,9 @@ func TestLogRawInput(t *testing.T) {
 		t.Errorf("want the failure logged once; got:\n%s", log)
 	}
 
-	for _, want := range []string{"0xe00002e2", "reading raw keyboard input for", "stopped reading raw keyboard input"} {
+	for _, want := range []string{
+		"0xe00002e2", "reading raw keyboard input for", "stopped reading raw keyboard input",
+	} {
 		if !strings.Contains(log, want) {
 			t.Errorf("log missing %q; got:\n%s", want, log)
 		}

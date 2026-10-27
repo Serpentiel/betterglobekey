@@ -1,0 +1,3 @@
+kind: Added
+body: "`trigger.mode: dedicated` makes the trigger key the only key that switches input sources and leaves the Globe key to macOS. The key is silenced and read straight from the keyboard, which needs the Input Monitoring permission; `doctor` reports it."
+time: 2026-10-28T10:00:02.000000+02:00
