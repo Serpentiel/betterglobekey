@@ -17,6 +17,7 @@ const (
 	defaultDoublePressDelay = "250ms"
 	defaultReverseModifier  = "shift"
 	defaultHUDDuration      = "900ms"
+	defaultTriggerKey       = "globe"
 	defaultCollectionName   = "primary"
 )
 
@@ -63,6 +64,10 @@ type schemaV2 struct {
 		Duration       string `yaml:"duration"`
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
+	Trigger struct {
+		Key         string `yaml:"key"`
+		PassThrough *bool  `yaml:"pass_through"`
+	} `yaml:"trigger"`
 	Collections []collectionV2 `yaml:"collections"`
 }
 

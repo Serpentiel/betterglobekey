@@ -8,10 +8,11 @@ interface SwitchProps {
   onChange: (checked: boolean) => void
   label: string
   id?: string
+  disabled?: boolean
 }
 
 /** Switch is an Apple-style toggle. */
-export function Switch({ checked, onChange, label, id }: SwitchProps): ReactElement {
+export function Switch({ checked, onChange, label, id, disabled = false }: SwitchProps): ReactElement {
   return (
     <button
       type="button"
@@ -19,6 +20,7 @@ export function Switch({ checked, onChange, label, id }: SwitchProps): ReactElem
       id={id}
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       className={clsx(styles.track, checked && styles.on)}
       onClick={() => onChange(!checked)}
     >

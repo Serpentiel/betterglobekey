@@ -45,6 +45,8 @@ func fromDomain(cfg config.Config) schemaV2 {
 	schema.HUD.Enabled = boolPtr(cfg.HUD.Enabled)
 	schema.HUD.Duration = cfg.HUD.Duration.String()
 	schema.HUD.ShowCollection = boolPtr(cfg.HUD.ShowCollection)
+	schema.Trigger.Key = cfg.Trigger.Key
+	schema.Trigger.PassThrough = boolPtr(cfg.Trigger.PassThrough)
 	schema.Collections = make([]collectionV2, 0, len(cfg.Collections))
 
 	for _, collection := range cfg.Collections {

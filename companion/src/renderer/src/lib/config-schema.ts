@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Config } from '../../../shared/types'
+import { TRIGGER_KEY_VALUES, triggerKey } from './trigger-keys'
 
 // GO_DURATION matches a Go time.Duration string (e.g. "250ms", "1m30s").
 const GO_DURATION = /^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$/
@@ -85,8 +86,20 @@ export const configSchema = z
       showCollection: z.boolean(),
     }),
     collections: z.array(collectionSchema),
+    trigger: z.object({
+      key: z.enum(TRIGGER_KEY_VALUES),
+      passThrough: z.boolean(),
+    }),
   })
   .superRefine((config, ctx) => {
+    if (config.trigger.passThrough && triggerKey(config.trigger.key)?.passThrough === false) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['trigger', 'passThrough'],
+        message: 'This key can only be remapped to Globe',
+      })
+    }
+
     const seen = new Set<string>()
 
     config.collections.forEach((collection, index) => {
@@ -110,6 +123,7 @@ export interface ConfigErrors {
   reverse: { modifier?: string }
   hud: { duration?: string }
   collections: Record<number, { name?: string; sources?: string }>
+  trigger: { key?: string; passThrough?: string }
 }
 
 export interface ValidationResult {
@@ -118,7 +132,7 @@ export interface ValidationResult {
 }
 
 function emptyErrors(): ConfigErrors {
-  return { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} }
+  return { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
 }
 
 /** validateConfig runs the schema and maps issues to a per-field error tree. */
@@ -142,6 +156,8 @@ export function validateConfig(config: Config): ValidationResult {
       errors.reverse.modifier ??= issue.message
     } else if (head === 'hud' && second === 'duration') {
       errors.hud.duration ??= issue.message
+    } else if (head === 'trigger' && (second === 'key' || second === 'passThrough')) {
+      errors.trigger[second] ??= issue.message
     } else if (head === 'collections' && typeof second === 'number') {
       const field = third as 'name' | 'sources'
       errors.collections[second] ??= {}

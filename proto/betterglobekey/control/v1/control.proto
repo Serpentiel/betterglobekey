@@ -44,9 +44,26 @@ message Config {
   // hud configures the on-screen overlay.
   Hud hud = 4;
 
-  // collections are the ordered input source collections the Globe key cycles
-  // through.
+  // collections are the ordered input source collections the trigger key
+  // cycles through.
   repeated Collection collections = 5;
+
+  // trigger selects the key that switches input sources. When absent, or when
+  // its key is empty, the Globe key is used.
+  Trigger trigger = 6;
+}
+
+// Trigger selects the key that switches input sources.
+message Trigger {
+  // key is the trigger key: globe, caps_lock, right_command, right_option,
+  // right_control, right_shift, left_command, left_option, left_control,
+  // left_shift, f13 through f20, or menu.
+  string key = 1;
+
+  // pass_through keeps the key's normal function and watches it directly,
+  // instead of remapping it to Globe. It has no effect for globe and is not
+  // allowed for caps_lock.
+  bool pass_through = 2;
 }
 
 // Logger holds the logging configuration.

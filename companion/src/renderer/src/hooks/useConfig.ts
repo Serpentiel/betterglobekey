@@ -26,7 +26,7 @@ export interface ConfigController {
 
 const emptyValidation: ValidationResult = {
   valid: false,
-  errors: { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} },
+  errors: { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} },
 }
 
 /** useConfig owns loading, editing, validating, and saving the configuration. */

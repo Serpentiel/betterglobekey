@@ -24,6 +24,11 @@ export interface Hud {
   showCollection: boolean
 }
 
+export interface Trigger {
+  key: string
+  passThrough: boolean
+}
+
 export interface Collection {
   name: string
   sources: string[]
@@ -35,6 +40,7 @@ export interface Config {
   reverse: Reverse
   hud: Hud
   collections: Collection[]
+  trigger: Trigger
 }
 
 export interface InputSource {

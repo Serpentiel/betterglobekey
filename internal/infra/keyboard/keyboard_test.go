@@ -1,6 +1,10 @@
 package keyboard
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Serpentiel/betterglobekey/internal/domain/config"
+)
 
 // TestSetReverseModifier exercises the modifier-name lookup, including the
 // fallback for unknown names. It only updates an internal event-flag mask, so it
@@ -15,4 +19,9 @@ func TestNewReturnsListener(t *testing.T) {
 	if New() == nil {
 		t.Fatal("New() returned nil")
 	}
+}
+
+func TestSetTrigger(_ *testing.T) {
+	SetTrigger(config.Trigger{Key: "right_command", PassThrough: true})
+	SetTrigger(config.Trigger{Key: config.TriggerGlobe})
 }

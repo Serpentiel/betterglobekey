@@ -13,6 +13,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
+  trigger: { key: 'globe', passThrough: false },
 }
 
 const sources: InputSource[] = [
@@ -20,7 +21,7 @@ const sources: InputSource[] = [
   { id: 'de', name: 'German' },
 ]
 
-const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} }
+const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
 
 function makeController(overrides: Partial<ConfigController> = {}): ConfigController {
   return {
@@ -144,6 +145,36 @@ describe('ConfigEditor', () => {
 
     fireEvent.click(screen.getByRole('switch', { name: 'Toggle the HUD' }))
     expect(update).toHaveBeenCalledWith({ ...validConfig, hud: { ...validConfig.hud, enabled: false } })
+  })
+
+  it('names the trigger key and keeps Globe from passing through', () => {
+    render(<ConfigEditor controller={makeController()} />)
+
+    expect(screen.getByText('How the Globe key responds to presses.')).toBeTruthy()
+    expect(screen.getByText('Ordered groups of input sources the Globe key cycles through.')).toBeTruthy()
+    expect(
+      (screen.getByRole('switch', { name: "Toggle keeping the key's normal function" }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+  })
+
+  it('toggles pass-through for a key that supports it', () => {
+    const update = vi.fn()
+    const config: Config = { ...validConfig, trigger: { key: 'right_command', passThrough: false } }
+    render(<ConfigEditor controller={makeController({ config, update })} />)
+
+    expect(screen.getByText(/Right Command becomes the Globe key/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('switch', { name: "Toggle keeping the key's normal function" }))
+    expect(update).toHaveBeenCalledWith({ ...config, trigger: { key: 'right_command', passThrough: true } })
+  })
+
+  it('drops pass-through when switching to a key that cannot keep its function', () => {
+    const update = vi.fn()
+    const config: Config = { ...validConfig, trigger: { key: 'right_command', passThrough: true } }
+    render(<ConfigEditor controller={makeController({ config, update })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
+    expect(update).toHaveBeenCalledWith({ ...config, trigger: { key: 'globe', passThrough: false } })
   })
 
   it('shows the saved confirmation banner', () => {

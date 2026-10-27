@@ -27,6 +27,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/feedback"
 	"github.com/Serpentiel/betterglobekey/internal/infra/inputsource"
 	"github.com/Serpentiel/betterglobekey/internal/infra/keyboard"
+	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/Serpentiel/betterglobekey/pkg/accessibility"
 	"github.com/Serpentiel/betterglobekey/pkg/hud"
@@ -41,6 +42,10 @@ const configFileName = ".betterglobekey.yaml"
 
 // socketFileName is the control socket name, created in the user's home directory.
 const socketFileName = ".betterglobekey.sock"
+
+// keymapStateFileName records the daemon's trigger key remapping, in the user's
+// home directory, so a crashed run's remapping is undone on the next start.
+const keymapStateFileName = ".betterglobekey.keymap.json"
 
 // listColumnPadding is the gap between columns in the `list` output.
 const listColumnPadding = 2
@@ -151,22 +156,19 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	logger := logging.New(cfg.Logger)
 
 	if !accessibility.Trusted() {
-		logger.Error("accessibility permission not granted; the Globe key is ignored until it is " +
+		logger.Error("accessibility permission not granted; the trigger key is ignored until it is " +
 			"enabled in System Settings > Privacy & Security > Accessibility")
 		accessibility.Prompt()
 	}
 
-	build := func(c domainconfig.Config) *switcher.Switcher {
-		keyboard.SetReverseModifier(c.Reverse.Modifier)
-		hud.SetDuration(c.HUD.Duration)
-
-		var notifier switcher.Notifier
-		if c.HUD.Enabled {
-			notifier = feedback.NewHUD(controller, c.HUD.ShowCollection)
-		}
-
-		return switcher.New(c, controller, realClock{}, logger, notifier)
+	remapper, err := newRemapper()
+	if err != nil {
+		return err
 	}
+
+	defer restoreKeymap(remapper, logger)
+
+	build := newSwitcherBuilder(controller, remapper, logger)
 
 	daemon := app.NewDaemon(build(cfg), keyboard.New(), logger)
 
@@ -193,6 +195,40 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	hud.Run()
 
 	return nil
+}
+
+// newSwitcherBuilder returns the function that applies a configuration: it sets
+// up the trigger key, reverse modifier, and HUD, and builds the matching switcher.
+// It runs at startup and on every reload.
+func newSwitcherBuilder(
+	controller inputsource.Controller,
+	remapper *keymap.Remapper,
+	logger *logging.Logger,
+) func(domainconfig.Config) *switcher.Switcher {
+	return func(c domainconfig.Config) *switcher.Switcher {
+		keyboard.SetReverseModifier(c.Reverse.Modifier)
+		keyboard.SetTrigger(c.Trigger)
+
+		if err := remapper.Apply(c.Trigger); err != nil {
+			logger.Error("remapping the trigger key failed", "key", c.Trigger.Key, "error", err)
+		}
+
+		hud.SetDuration(c.HUD.Duration)
+
+		var notifier switcher.Notifier
+		if c.HUD.Enabled {
+			notifier = feedback.NewHUD(controller, c.HUD.ShowCollection)
+		}
+
+		return switcher.New(c, controller, realClock{}, logger, notifier)
+	}
+}
+
+// restoreKeymap undoes the trigger key remapping when the daemon exits.
+func restoreKeymap(remapper *keymap.Remapper, logger *logging.Logger) {
+	if err := remapper.Restore(); err != nil {
+		logger.Error("restoring key mappings failed", "error", err)
+	}
 }
 
 // watchConfig reloads the daemon's switcher whenever the config file changes.
@@ -285,6 +321,7 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 		fmt.Fprintf(out, "config:        INVALID (%v)\n", err)
 	} else {
 		fmt.Fprintf(out, "config:        valid (%d collection(s))\n", len(cfg.Collections))
+		fmt.Fprintf(out, "trigger:       %s\n", triggerStatus(cfg.Trigger))
 		reportUnavailableSources(out, cfg, sources.All())
 	}
 
@@ -292,6 +329,18 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	fmt.Fprintf(out, "current source: %s (%s)\n", current, sources.Name(current))
 
 	return nil
+}
+
+// triggerStatus describes how the trigger key is detected.
+func triggerStatus(trigger domainconfig.Trigger) string {
+	switch {
+	case trigger.Key == domainconfig.TriggerGlobe:
+		return trigger.Key
+	case trigger.Remapped():
+		return trigger.Key + " (remapped to Globe while the daemon runs)"
+	default:
+		return trigger.Key + " (passed through)"
+	}
 }
 
 // reportUnavailableSources warns about configured sources that the system does not offer.
@@ -410,6 +459,17 @@ func accessibilityStatusLine(running, trusted bool) string {
 	default:
 		return "accessibility: NOT granted (enable in System Settings > Privacy & Security > Accessibility)"
 	}
+}
+
+// newRemapper returns the trigger key remapper backed by the system's HID key
+// mapping table, with its state file in the user's home directory.
+func newRemapper() (*keymap.Remapper, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	return keymap.New(hidStore{}, filepath.Join(home, keymapStateFileName)), nil
 }
 
 // resolveSocketPath returns the path to the control socket in the user's home

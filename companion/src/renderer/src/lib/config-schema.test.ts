@@ -10,6 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
+    trigger: { key: 'globe', passThrough: false },
   }
 }
 
@@ -47,6 +48,31 @@ describe('parseGoDuration', () => {
 describe('validateConfig', () => {
   it('accepts a valid config', () => {
     expect(validateConfig(validConfig()).valid).toBe(true)
+  })
+
+  it('accepts a remapped or passed-through trigger', () => {
+    const config = validConfig()
+    config.trigger = { key: 'caps_lock', passThrough: false }
+    expect(validateConfig(config).valid).toBe(true)
+
+    config.trigger = { key: 'right_command', passThrough: true }
+    expect(validateConfig(config).valid).toBe(true)
+  })
+
+  it('rejects an unknown trigger key', () => {
+    const config = validConfig()
+    config.trigger.key = 'fn'
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.key).toBeDefined()
+  })
+
+  it('rejects passing Caps Lock through', () => {
+    const config = validConfig()
+    config.trigger = { key: 'caps_lock', passThrough: true }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.passThrough).toBeDefined()
   })
 
   it('requires a non-blank log path', () => {

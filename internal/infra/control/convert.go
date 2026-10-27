@@ -39,6 +39,10 @@ func toProto(cfg domainconfig.Config) *controlv1.Config {
 			ShowCollection: cfg.HUD.ShowCollection,
 		},
 		Collections: collections,
+		Trigger: &controlv1.Trigger{
+			Key:         cfg.Trigger.Key,
+			PassThrough: cfg.Trigger.PassThrough,
+		},
 	}
 }
 
@@ -69,6 +73,12 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 		})
 	}
 
+	// A client that predates the trigger sends none; keep the Globe key.
+	triggerKey := proto.GetTrigger().GetKey()
+	if triggerKey == "" {
+		triggerKey = domainconfig.TriggerGlobe
+	}
+
 	return domainconfig.Config{
 		Logger: domainconfig.Logger{
 			Path:           proto.GetLogger().GetPath(),
@@ -86,6 +96,7 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 			Duration:       duration,
 			ShowCollection: proto.GetHud().GetShowCollection(),
 		},
+		Trigger:     domainconfig.Trigger{Key: triggerKey, PassThrough: proto.GetTrigger().GetPassThrough()},
 		Collections: collections,
 	}, nil
 }

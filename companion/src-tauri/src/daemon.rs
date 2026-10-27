@@ -95,6 +95,10 @@ pub fn default_socket() -> PathBuf {
     std::env::home_dir().unwrap_or_default().join(".betterglobekey.sock")
 }
 
+/// GLOBE is the default trigger key, used when a daemon predating the trigger
+/// sends none.
+const GLOBE: &str = "globe";
+
 /// complete fills in any section the daemon left unset, so the UI always gets
 /// every field (proto3 omits empty messages; the UI types do not).
 fn complete(mut config: Config) -> Config {
@@ -103,6 +107,11 @@ fn complete(mut config: Config) -> Config {
     config.reverse.get_or_insert_default();
     config.hud.get_or_insert_default();
 
+    let trigger = config.trigger.get_or_insert_default();
+    if trigger.key.is_empty() {
+        GLOBE.clone_into(&mut trigger.key);
+    }
+
     config
 }
 
@@ -110,6 +119,7 @@ fn complete(mut config: Config) -> Config {
 mod tests {
     use serde_json::json;
 
+    use super::proto::Trigger;
     use super::*;
 
     #[test]
@@ -124,6 +134,7 @@ mod tests {
                 "reverse": { "enabled": false, "modifier": "" },
                 "hud": { "enabled": false, "duration": "", "showCollection": false },
                 "collections": [],
+                "trigger": { "key": "globe", "passThrough": false },
             }),
         );
     }
@@ -136,6 +147,7 @@ mod tests {
             "reverse": { "enabled": true, "modifier": "shift" },
             "hud": { "enabled": true, "duration": "900ms", "showCollection": true },
             "collections": [{ "name": "primary", "sources": ["com.apple.keylayout.US"] }],
+            "trigger": { "key": "right_command", "passThrough": true },
         }))
         .unwrap();
 
@@ -143,5 +155,21 @@ mod tests {
         assert_eq!(config.double_press.unwrap().maximum_delay, "250ms");
         assert!(config.hud.unwrap().show_collection);
         assert_eq!(config.collections[0].sources, ["com.apple.keylayout.US"]);
+
+        let trigger = config.trigger.unwrap();
+        assert_eq!(trigger.key, "right_command");
+        assert!(trigger.pass_through);
+    }
+
+    #[test]
+    fn complete_keeps_a_set_trigger() {
+        let config = complete(Config {
+            trigger: Some(Trigger { key: "f13".to_owned(), pass_through: true }),
+            ..Config::default()
+        });
+
+        let trigger = config.trigger.unwrap();
+        assert_eq!(trigger.key, "f13");
+        assert!(trigger.pass_through);
     }
 }

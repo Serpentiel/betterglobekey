@@ -36,6 +36,10 @@ hud:
   duration: 900ms
   show_collection: true
 
+trigger:
+  key: globe
+  pass_through: false
+
 collections:
   - name: primary
     sources:
@@ -49,11 +53,43 @@ collections:
 
 All options other than `collections` are optional and fall back to the defaults shown above.
 
+## Trigger Key
+
+`trigger.key` selects the key that switches input sources. The default, `globe`, is the Globe (fn) key on Apple
+keyboards. For a keyboard without one, pick another key:
+
+| Key                                           | `trigger.key`                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| Globe (fn)                                    | `globe`                                                                  |
+| Caps Lock                                     | `caps_lock`                                                              |
+| Right or left Command, Option, Control, Shift | `right_command`, `left_option`, `right_control`, `left_shift`, and so on |
+| F13 through F20                               | `f13` … `f20`                                                            |
+| Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
+
+How the key is used depends on `trigger.pass_through`:
+
+- `false` (the default): the key is **remapped to Globe** at the hardware level while the service runs, the same way
+  `hidutil property --set` does. It then behaves exactly like a Globe key, including macOS's own fn shortcuts, and loses
+  its normal function. Stopping the service puts the key back.
+- `true`: the key **keeps its normal function** and the service watches it directly. Pressing it on its own switches
+  input sources; using it in a combination (such as Right Command + C) does not. Caps Lock cannot be passed through.
+
+Things to know about remapping:
+
+- The remapping is added to the system-wide key mapping table without touching other entries, and an entry it replaced
+  for the same key is restored when the service stops. If the service is killed, the next start cleans up.
+- It does not apply to keyboards that Karabiner-Elements has taken over; use Karabiner to map the key to fn instead.
+- It sits on top of _System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys_. Leave the chosen key set to
+  itself there.
+- To undo every global remapping by hand: `hidutil property --set '{"UserKeyMapping":[]}'`.
+
+Keys pressed together with the trigger key, including media keys such as volume or brightness, never count as a press.
+
 ## Collections
 
 `collections` is an **ordered list** of named collections. Each has a `name` (shown in the HUD) and an ordered list of
-input source `sources`. A single press of the Globe key cycles forward through the sources of the current collection; a
-double press moves to the next collection.
+input source `sources`. A single press of the trigger key cycles forward through the sources of the current collection;
+a double press moves to the next collection.
 
 To list the input source identifiers available on your system, along with their localized names:
 

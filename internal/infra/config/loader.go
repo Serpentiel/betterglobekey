@@ -71,6 +71,8 @@ func WriteDefault(path string, sources []string) error {
 	schema.HUD.Enabled = boolPtr(true)
 	schema.HUD.Duration = defaultHUDDuration
 	schema.HUD.ShowCollection = boolPtr(true)
+	schema.Trigger.Key = defaultTriggerKey
+	schema.Trigger.PassThrough = boolPtr(false)
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -138,6 +140,7 @@ func toDomain(schema schemaV2) (config.Config, error) {
 			Duration:       duration,
 			ShowCollection: boolOr(schema.HUD.ShowCollection, true),
 		},
+		Trigger:     config.Trigger{Key: schema.Trigger.Key, PassThrough: boolOr(schema.Trigger.PassThrough, false)},
 		Collections: make([]config.Collection, 0, len(schema.Collections)),
 	}
 
@@ -165,6 +168,10 @@ func applySchemaDefaults(schema *schemaV2) {
 
 	if schema.HUD.Duration == "" {
 		schema.HUD.Duration = defaultHUDDuration
+	}
+
+	if schema.Trigger.Key == "" {
+		schema.Trigger.Key = defaultTriggerKey
 	}
 }
 

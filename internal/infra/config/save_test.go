@@ -16,6 +16,7 @@ func sampleConfig() domainconfig.Config {
 		DoublePress: domainconfig.DoublePress{Enabled: true, MaxDelay: 300 * time.Millisecond},
 		Reverse:     domainconfig.Reverse{Enabled: false, Modifier: "option"},
 		HUD:         domainconfig.HUD{Enabled: true, Duration: 1200 * time.Millisecond, ShowCollection: false},
+		Trigger:     domainconfig.Trigger{Key: "right_command", PassThrough: true},
 		Collections: []domainconfig.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -42,6 +43,10 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 
 	if got.Reverse != want.Reverse {
 		t.Errorf("reverse = %+v, want %+v", got.Reverse, want.Reverse)
+	}
+
+	if got.Trigger != want.Trigger {
+		t.Errorf("trigger = %+v, want %+v", got.Trigger, want.Trigger)
 	}
 
 	if got.HUD != want.HUD || got.Logger != want.Logger {

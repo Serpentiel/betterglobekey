@@ -10,7 +10,7 @@ const sources: InputSource[] = [{ id: 'us', name: 'U.S.' }]
 
 const nameOf = (id: string): string => sources.find((source) => source.id === id)?.name ?? id
 
-const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {} }
+const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
 
 const baseConfig: Config = {
   logger: { path: '/tmp/x.log', level: 'info', retentionDays: 7, retentionFiles: 3 },
@@ -18,6 +18,7 @@ const baseConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
+  trigger: { key: 'globe', passThrough: false },
 }
 
 function renderSection(onChange = vi.fn()) {

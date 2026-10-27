@@ -90,16 +90,21 @@ func TestApplySchemaDefaults(t *testing.T) {
 		t.Errorf("duration = %q, want %q", empty.HUD.Duration, defaultHUDDuration)
 	}
 
+	if empty.Trigger.Key != defaultTriggerKey {
+		t.Errorf("trigger key = %q, want %q", empty.Trigger.Key, defaultTriggerKey)
+	}
+
 	// Populated fields must be left untouched.
 	set := schemaV2{}
 	set.Logger.Level = "debug"
 	set.DoublePress.MaximumDelay = "1s"
 	set.Reverse.Modifier = "command"
 	set.HUD.Duration = "2s"
+	set.Trigger.Key = "f13"
 	applySchemaDefaults(&set)
 
 	if set.Logger.Level != "debug" || set.DoublePress.MaximumDelay != "1s" ||
-		set.Reverse.Modifier != "command" || set.HUD.Duration != "2s" {
+		set.Reverse.Modifier != "command" || set.HUD.Duration != "2s" || set.Trigger.Key != "f13" {
 		t.Errorf("applySchemaDefaults overwrote populated fields: %+v", set)
 	}
 }

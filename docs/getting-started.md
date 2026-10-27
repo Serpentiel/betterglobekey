@@ -35,6 +35,9 @@ betterglobekey doctor
 So that macOS does not also switch the input source on its own — which would conflict with **betterglobekey** — set the
 Globe key to do nothing: open _System Settings > Keyboard_ and set **"Press 🌐 key to"** to **"Do Nothing"**.
 
+No Globe key on your keyboard? Choose another [trigger key](configuration.md#trigger-key), such as Caps Lock or Right
+Command.
+
 ## Starting the Service
 
 Start the **betterglobekey** service with Homebrew:

@@ -17,6 +17,22 @@ var LogLevels = []string{"debug", "info", "warn", "error"}
 // ReverseModifiers are the accepted modifier keys for a reverse press.
 var ReverseModifiers = []string{"shift", "option", "control", "command"}
 
+// TriggerGlobe is the default trigger key: the Globe (fn) key itself.
+const TriggerGlobe = "globe"
+
+// TriggerCapsLock is the Caps Lock key, which can only be remapped, not passed through.
+const TriggerCapsLock = "caps_lock"
+
+// TriggerKeys are the accepted trigger keys.
+var TriggerKeys = []string{
+	TriggerGlobe,
+	TriggerCapsLock,
+	"right_command", "right_option", "right_control", "right_shift",
+	"left_command", "left_option", "left_control", "left_shift",
+	"f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20",
+	"menu",
+}
+
 // Config is the fully-resolved application configuration.
 type Config struct {
 	// Logger holds the logging configuration.
@@ -27,6 +43,8 @@ type Config struct {
 	Reverse Reverse
 	// HUD configures the on-screen overlay shown when the input source changes.
 	HUD HUD
+	// Trigger selects the key that switches input sources.
+	Trigger Trigger
 	// Collections are the ordered input source collections the Globe key cycles through.
 	Collections []Collection
 }
@@ -58,6 +76,20 @@ type Reverse struct {
 	Enabled bool
 	// Modifier is the key held to reverse a press (see ReverseModifiers).
 	Modifier string
+}
+
+// Trigger selects the key that switches input sources.
+type Trigger struct {
+	// Key is the trigger key (see TriggerKeys).
+	Key string
+	// PassThrough keeps the key's normal function and watches it directly, instead
+	// of remapping it to Globe. It has no effect for the Globe key.
+	PassThrough bool
+}
+
+// Remapped reports whether the trigger key is remapped to Globe at the HID level.
+func (t Trigger) Remapped() bool {
+	return t.Key != TriggerGlobe && !t.PassThrough
 }
 
 // HUD configures the on-screen overlay.
@@ -94,6 +126,14 @@ func (c Config) Validate() error {
 
 	if !slices.Contains(ReverseModifiers, c.Reverse.Modifier) {
 		return fmt.Errorf("reverse modifier must be one of %v, got %q", ReverseModifiers, c.Reverse.Modifier)
+	}
+
+	if !slices.Contains(TriggerKeys, c.Trigger.Key) {
+		return fmt.Errorf("trigger key must be one of %v, got %q", TriggerKeys, c.Trigger.Key)
+	}
+
+	if c.Trigger.Key == TriggerCapsLock && c.Trigger.PassThrough {
+		return fmt.Errorf("trigger key %q cannot be passed through", TriggerCapsLock)
 	}
 
 	if c.Logger.Path == "" {

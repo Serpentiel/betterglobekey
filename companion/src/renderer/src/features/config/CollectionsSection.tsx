@@ -3,6 +3,7 @@ import { Layers, Plus } from 'lucide-react'
 
 import type { Collection, Config, InputSource } from '../../../../shared/types'
 import { move } from '../../lib/array'
+import { triggerName } from '../../lib/trigger-keys'
 import type { ConfigErrors } from '../../lib/config-schema'
 import { Button, Section, Stack } from '../../ui'
 import { CollectionCard } from './CollectionCard'
@@ -28,7 +29,7 @@ export function CollectionsSection({ config, sources, errors, nameOf, onChange }
     <Section
       icon={Layers}
       title="Collections"
-      description="Ordered groups of input sources the Globe key cycles through."
+      description={`Ordered groups of input sources the ${triggerName(config.trigger.key)} key cycles through.`}
       actions={
         <Button icon={Plus} onClick={addCollection}>
           Add

@@ -338,6 +338,7 @@ func TestWatchConfigReloadsOnChange(t *testing.T) {
 	// Wait for the watcher to exit before cleanup, or a reload still logging
 	// recreates the log file while its TempDir is being removed.
 	done := make(chan struct{})
+
 	t.Cleanup(func() {
 		cancel()
 		<-done
@@ -345,6 +346,7 @@ func TestWatchConfigReloadsOnChange(t *testing.T) {
 
 	go func() {
 		defer close(done)
+
 		watchConfig(ctx, path, logger, daemon, build)
 	}()
 
@@ -407,9 +409,25 @@ func TestRunDoctorReportsStatus(t *testing.T) {
 	}
 
 	out := buf.String()
-	for _, want := range []string{"accessibility:", "config file:", "config:", "current source:", "not available"} {
+	for _, want := range []string{
+		"accessibility:", "config file:", "config:", "trigger:", "current source:", "not available",
+	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("doctor output missing %q; got:\n%s", want, out)
+		}
+	}
+}
+
+func TestTriggerStatus(t *testing.T) {
+	tests := map[domainconfig.Trigger]string{
+		{Key: "globe"}:     "globe",
+		{Key: "caps_lock"}: "caps_lock (remapped to Globe while the daemon runs)",
+		{Key: "right_command", PassThrough: true}: "right_command (passed through)",
+	}
+
+	for trigger, want := range tests {
+		if got := triggerStatus(trigger); got != want {
+			t.Errorf("triggerStatus(%+v) = %q, want %q", trigger, got, want)
 		}
 	}
 }

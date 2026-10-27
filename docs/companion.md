@@ -23,7 +23,9 @@ service, so building collections is a matter of picking from a list rather than 
 
 1. Make sure the **betterglobekey** service is running (see [Getting Started](getting-started.md)).
 2. Launch the companion application.
-3. Edit your behavior, collections, and logging settings.
+3. Edit your behavior, collections, and logging settings. Under **Behavior**, **Record** picks the
+   [trigger key](configuration.md#trigger-key) from the next key you press, and **Use Globe** goes back to the Globe key
+   (which the app cannot record). **Keep the key's normal function** passes the key through instead of remapping it.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing

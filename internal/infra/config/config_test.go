@@ -114,6 +114,11 @@ func TestLoadV2(t *testing.T) {
 	if len(cfg.Collections) != 2 || cfg.Collections[1].Name != "coding" {
 		t.Errorf("collections = %+v", cfg.Collections)
 	}
+
+	// A document without a trigger section keeps the Globe key.
+	if cfg.Trigger != (domainconfig.Trigger{Key: domainconfig.TriggerGlobe}) {
+		t.Errorf("trigger = %+v, want the Globe default", cfg.Trigger)
+	}
 }
 
 func TestLoadMigratesV1AndWritesBackup(t *testing.T) {
@@ -188,6 +193,10 @@ func TestWriteDefaultRoundTrip(t *testing.T) {
 
 	if cfg.DoublePress.MaxDelay != 250*time.Millisecond {
 		t.Errorf("delay = %s, want 250ms", cfg.DoublePress.MaxDelay)
+	}
+
+	if cfg.Trigger != (domainconfig.Trigger{Key: domainconfig.TriggerGlobe}) {
+		t.Errorf("trigger = %+v, want the Globe default", cfg.Trigger)
 	}
 }
 

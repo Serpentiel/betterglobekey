@@ -12,6 +12,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
+  trigger: { key: 'globe', passThrough: false },
 }
 
 const sources: InputSource[] = [{ id: 'us', name: 'U.S.' }]

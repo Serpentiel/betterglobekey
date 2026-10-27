@@ -20,4 +20,12 @@ describe('Switch', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Toggle' }))
     expect(onChange).toHaveBeenCalledWith(true)
   })
+
+  it('ignores clicks while disabled', () => {
+    const onChange = vi.fn()
+    render(<Switch checked={false} disabled label="Toggle" onChange={onChange} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Toggle' }))
+    expect(onChange).not.toHaveBeenCalled()
+  })
 })

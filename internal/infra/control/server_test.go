@@ -62,6 +62,7 @@ func sampleProtoConfig() *controlv1.Config {
 		DoublePress: &controlv1.DoublePress{Enabled: true, MaximumDelay: "300ms"},
 		Reverse:     &controlv1.Reverse{Enabled: true, Modifier: "shift"},
 		Hud:         &controlv1.Hud{Enabled: true, Duration: "900ms", ShowCollection: true},
+		Trigger:     &controlv1.Trigger{Key: "right_command", PassThrough: true},
 		Collections: []*controlv1.Collection{
 			{Name: "primary", Sources: []string{"a", "b"}},
 			{Name: "coding", Sources: []string{"c"}},
@@ -98,12 +99,38 @@ func TestApplyThenGetConfig(t *testing.T) {
 		t.Errorf("reverse.modifier = %q, want shift", cfg.GetReverse().GetModifier())
 	}
 
+	if cfg.GetTrigger().GetKey() != "right_command" || !cfg.GetTrigger().GetPassThrough() {
+		t.Errorf("trigger = %+v, want pass-through right_command", cfg.GetTrigger())
+	}
+
 	if len(cfg.GetCollections()) != 2 {
 		t.Fatalf("collections = %d, want 2", len(cfg.GetCollections()))
 	}
 
 	if cfg.GetCollections()[0].GetName() != "primary" {
 		t.Errorf("first collection = %q, want primary", cfg.GetCollections()[0].GetName())
+	}
+}
+
+func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	client := newTestClient(t, path, fakeSources{}, true)
+
+	// A companion that predates the trigger sends no trigger at all.
+	legacy := sampleProtoConfig()
+	legacy.Trigger = nil
+
+	if _, err := client.ApplyConfig(context.Background(), &controlv1.ApplyConfigRequest{Config: legacy}); err != nil {
+		t.Fatalf("ApplyConfig: %v", err)
+	}
+
+	got, err := client.GetConfig(context.Background(), &controlv1.GetConfigRequest{})
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+
+	if got.GetConfig().GetTrigger().GetKey() != "globe" || got.GetConfig().GetTrigger().GetPassThrough() {
+		t.Errorf("trigger = %+v, want globe", got.GetConfig().GetTrigger())
 	}
 }
 

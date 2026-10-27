@@ -80,6 +80,8 @@ async fn reads_config_sources_and_version() {
     assert!(
         config.logger.is_some() && config.double_press.is_some() && config.reverse.is_some() && config.hud.is_some()
     );
+    // The stub predates the trigger, so the Globe default fills it in.
+    assert_eq!(config.trigger.unwrap().key, "globe");
 
     assert_eq!(daemon.list_input_sources().await.unwrap()[0].name, "U.S.");
     assert_eq!(daemon.get_version().await.unwrap().version, "4.0.1");

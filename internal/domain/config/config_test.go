@@ -13,6 +13,7 @@ func validConfig() config.Config {
 		DoublePress: config.DoublePress{Enabled: true, MaxDelay: 250 * time.Millisecond},
 		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
 		HUD:         config.HUD{Enabled: true, Duration: 900 * time.Millisecond, ShowCollection: true},
+		Trigger:     config.Trigger{Key: config.TriggerGlobe},
 		Collections: []config.Collection{
 			{Name: "primary", Sources: []string{"com.apple.keylayout.US"}},
 		},
@@ -41,6 +42,11 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"invalid level":         func(c *config.Config) { c.Logger.Level = "trace" },
 		"invalid modifier":      func(c *config.Config) { c.Reverse.Modifier = "fn" },
 		"empty logger path":     func(c *config.Config) { c.Logger.Path = "" },
+		"invalid trigger key":   func(c *config.Config) { c.Trigger.Key = "fn" },
+		"empty trigger key":     func(c *config.Config) { c.Trigger.Key = "" },
+		"caps lock pass-through": func(c *config.Config) {
+			c.Trigger = config.Trigger{Key: config.TriggerCapsLock, PassThrough: true}
+		},
 		"negative retention":    func(c *config.Config) { c.Logger.RetentionFiles = -1 },
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },
 		"collection no sources": func(c *config.Config) { c.Collections[0].Sources = nil },
@@ -58,5 +64,35 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 				t.Fatalf("expected validation error for %s", name)
 			}
 		})
+	}
+}
+
+func TestValidateAcceptsEveryTriggerKey(t *testing.T) {
+	for _, key := range config.TriggerKeys {
+		cfg := validConfig()
+		cfg.Trigger.Key = key
+
+		if err := cfg.Validate(); err != nil {
+			t.Errorf("trigger %q: unexpected error: %v", key, err)
+		}
+	}
+}
+
+func TestTriggerRemapped(t *testing.T) {
+	tests := []struct {
+		trigger config.Trigger
+		want    bool
+	}{
+		{config.Trigger{Key: config.TriggerGlobe}, false},
+		{config.Trigger{Key: config.TriggerGlobe, PassThrough: true}, false},
+		{config.Trigger{Key: config.TriggerCapsLock}, true},
+		{config.Trigger{Key: "right_command"}, true},
+		{config.Trigger{Key: "right_command", PassThrough: true}, false},
+	}
+
+	for _, test := range tests {
+		if got := test.trigger.Remapped(); got != test.want {
+			t.Errorf("%+v.Remapped() = %v, want %v", test.trigger, got, test.want)
+		}
 	}
 }
