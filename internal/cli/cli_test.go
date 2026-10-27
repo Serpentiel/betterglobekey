@@ -56,7 +56,7 @@ func TestQueryDaemonAccessibilityRunning(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			socketPath := shortSocketPath(t)
-			server := control.NewServer("", nil, func(fn func()) { fn() }, "", "", func() bool { return trusted })
+			server := control.NewServer("", nil, nil, func(fn func()) { fn() }, "", "", func() bool { return trusted })
 
 			go func() { _ = server.Serve(socketPath) }()
 
