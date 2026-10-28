@@ -45,7 +45,7 @@ func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 		return nil, nil, f.err
 	}
 
-	capsToGlobe := keymap.Mapping{Src: keymap.Usages[domainconfig.TriggerCapsLock], Dst: keymap.GlobeUsage}
+	capsSilenced := keymap.Mapping{Src: keymap.Usages[domainconfig.TriggerCapsLock], Dst: keymap.DedicatedUsage}
 	escape := keymap.Mapping{Src: 0x7_0000_0035, Dst: 0x7_0000_0029}
 
 	return []keymap.Status{
@@ -54,7 +54,7 @@ func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 				Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
 				Trigger:  trigger.Keyboards["046d:c33f"],
 				Listed:   true,
-				Ours:     &capsToGlobe,
+				Ours:     &capsSilenced,
 				Others:   []keymap.Mapping{escape},
 			},
 		},
@@ -293,7 +293,7 @@ func TestListKeyboards(t *testing.T) {
 		t.Errorf("logitech = %+v", logitech)
 	}
 
-	if m := logitech.GetTriggerMapping(); m.GetSrcName() != "Caps Lock" || m.GetDstName() != "fn" {
+	if m := logitech.GetTriggerMapping(); m.GetSrcName() != "Caps Lock" || m.GetDstName() != "F24" {
 		t.Errorf("trigger mapping = %+v", m)
 	}
 

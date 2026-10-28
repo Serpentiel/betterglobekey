@@ -66,7 +66,7 @@ trigger:
       mode: dedicated
 ```
 
-`mode` defaults to `fn`. The keys:
+The keys:
 
 | Key                                           | `key`                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------ |
@@ -77,28 +77,27 @@ trigger:
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 | Insert, Print Screen, Scroll Lock, Pause      | `insert`, `print_screen`, `scroll_lock`, `pause`                         |
 
-The Globe key, labeled fn on some keyboards, does two things: tapped alone it switches input sources, and held it is the
-fn modifier. How a key other than the Globe key is used depends on `mode`:
+A key other than the Globe key is read straight from the keyboard's raw input, which needs **Input Monitoring**
+(_System Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a
+restart after you grant it). How it is used depends on `mode`:
 
-| `mode`         | The key                                                   | Needs Input Monitoring |
-| -------------- | --------------------------------------------------------- | ---------------------- |
-| `fn` (default) | is **remapped to fn**: fn+arrows, fn+Delete, fn+E, … work | no                     |
-| `dedicated`    | is **silenced** and read straight from the keyboard       | yes                    |
-| `pass_through` | **keeps its normal function** and is read from it         | yes                    |
+| `mode`                | The key                                                 |
+| --------------------- | ------------------------------------------------------- |
+| `dedicated` (default) | is **silenced**: it only switches input sources         |
+| `pass_through`        | **keeps its normal function**, and switches when tapped |
 
-- `fn` and `dedicated` remap the key on its keyboard while the service runs, the same way
-  `hidutil property --matching … --set` does, so it loses its normal function. Stopping the service puts the key back.
-- `dedicated` remaps the key to F24, which macOS has no key code for, so the key produces no event at all and nothing
-  else can react to it.
+- `dedicated` remaps the key on its keyboard while the service runs, the same way `hidutil property --matching … --set`
+  does, to F24, which macOS has no key code for: the key produces no event at all and nothing else can react to it.
+  Stopping the service puts the key back.
 - `pass_through` switches input sources when the key is pressed on its own; in a combination (such as Right Command +
   C) the key works as usual. Caps Lock cannot be passed through.
-- `dedicated` and `pass_through` read the key from the keyboard's raw input, which needs **Input Monitoring** (_System
-  Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a restart after
-  you grant it).
-- The Globe key cannot tell keyboards apart: while any keyboard switches with it (its own Globe key, or a key in `fn`
-  mode), the Globe key switches on every keyboard.
+- No trigger key acts as fn: a third-party keyboard has none of the fn combinations an Apple keyboard has, so a key
+  remapped to fn would only half work there.
+- The Globe key cannot tell keyboards apart: while any keyboard switches with it, the Globe key switches on every
+  keyboard.
 
-Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping:
+Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping a
+dedicated key:
 
 - Each keyboard's own key mapping table is edited without touching other entries, and an entry it replaced for the same
   key is restored when the service stops. If the service is killed, the next start cleans up.

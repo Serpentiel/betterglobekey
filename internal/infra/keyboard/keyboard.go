@@ -3,8 +3,7 @@
 // dependencies. The default trigger, the Globe key, surfaces as a
 // flags-changed event with key code kVK_Function (63); a release (the fn flag
 // clearing) is treated as a press, and a held Shift marks it as a reverse press.
-// A key remapped to fn arrives the same way. Dedicated and passed-through
-// trigger keys are read per keyboard from raw HID input instead, which also
+// Dedicated and passed-through trigger keys are read per keyboard from raw HID input instead, which also
 // records keys for the companion.
 package keyboard
 
@@ -83,7 +82,7 @@ const (
 	keyRightShift   = 60
 )
 
-// globeTrigger is the Globe key, also used for a key remapped to fn.
+// globeTrigger is the Globe key.
 var globeTrigger = C.bgkTrigger{kind: C.bgkKindFlag, keycode: keyFunction, pressFlag: C.kCGEventFlagMaskSecondaryFn}
 
 // modifierTrigger describes a modifier key: its key code, its own device flag,
@@ -114,8 +113,8 @@ var modifierTriggers = map[string]C.bgkTrigger{
 // noTrigger matches no event, for when the Globe key does not switch.
 var noTrigger = C.bgkTrigger{kind: C.bgkKindKey, keycode: C.bgkRawTriggerCode}
 
-// tapTrigger returns the descriptor the event tap watches: the Globe key (a
-// key remapped to fn arrives as it), or nothing.
+// tapTrigger returns the descriptor the event tap watches: the Globe key, or
+// nothing.
 func tapTrigger(globe bool) C.bgkTrigger {
 	if globe {
 		return globeTrigger

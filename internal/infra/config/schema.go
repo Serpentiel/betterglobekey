@@ -17,7 +17,7 @@ const (
 	defaultDoublePressDelay = "250ms"
 	defaultReverseModifier  = "shift"
 	defaultHUDDuration      = "900ms"
-	defaultTriggerMode      = "fn"
+	defaultTriggerMode      = "dedicated"
 	defaultCollectionName   = "primary"
 )
 

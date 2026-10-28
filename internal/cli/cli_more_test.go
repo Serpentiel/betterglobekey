@@ -425,7 +425,7 @@ func TestRunDoctorReportsStatus(t *testing.T) {
 }
 
 func TestTriggerStatus(t *testing.T) {
-	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "fn"}
+	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
 
 	tests := []struct {
 		trigger domainconfig.Trigger
@@ -446,9 +446,9 @@ func TestTriggerStatus(t *testing.T) {
 }
 
 func TestKeyboardLines(t *testing.T) {
-	capsToFn := keymap.Mapping{Src: keymap.Usages["caps_lock"], Dst: keymap.GlobeUsage}
+	capsSilenced := keymap.Mapping{Src: keymap.Usages["caps_lock"], Dst: keymap.DedicatedUsage}
 	escape := keymap.Mapping{Src: 0x7_0000_0035, Dst: 0x7_0000_0029}
-	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "fn"}
+	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
 	statuses := []keymap.Status{
 		{
 			Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true},
@@ -458,7 +458,7 @@ func TestKeyboardLines(t *testing.T) {
 			Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
 			Trigger:  caps,
 			Listed:   true,
-			Ours:     &capsToFn,
+			Ours:     &capsSilenced,
 			Others:   []keymap.Mapping{escape},
 		},
 		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, Trigger: caps, Listed: true},
@@ -469,9 +469,10 @@ func TestKeyboardLines(t *testing.T) {
 
 	for _, want := range []string{
 		"Apple Keyboard (05ac:0281, built-in, has Globe key): trigger Globe key",
-		"Logitech (046d:c33f, USB): trigger caps_lock (remapped to fn), set for this keyboard; Caps Lock → fn; " +
-			"Grave Accent → Escape (other tool)",
-		"Unnamed keyboard (1234:5678): trigger caps_lock (remapped to fn), set for this keyboard; not remapped yet",
+		"Logitech (046d:c33f, USB): trigger caps_lock (silenced, read directly), set for this keyboard; " +
+			"Caps Lock silenced; Grave Accent → Escape (other tool)",
+		"Unnamed keyboard (1234:5678): trigger caps_lock (silenced, read directly), set for this keyboard; " +
+			"not remapped yet",
 		"Holtek (04d9:0169): trigger none",
 		"system-wide:   Grave Accent → Escape",
 	} {
@@ -482,7 +483,6 @@ func TestKeyboardLines(t *testing.T) {
 }
 
 func TestReadsRawInput(t *testing.T) {
-	fn := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "fn"}
 	insert := domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}
 
 	dedicated := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
@@ -490,8 +490,8 @@ func TestReadsRawInput(t *testing.T) {
 		return domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": trigger}}
 	}
 
-	if readsRawInput(domainconfig.Trigger{}) || readsRawInput(on(fn)) {
-		t.Error("an fn trigger reads raw input")
+	if readsRawInput(domainconfig.Trigger{}) || readsRawInput(on(domainconfig.GlobeTrigger)) {
+		t.Error("the Globe key reads raw input")
 	}
 
 	if !readsRawInput(on(insert)) {

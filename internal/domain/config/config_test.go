@@ -47,9 +47,10 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"invalid level":         func(c *config.Config) { c.Logger.Level = "trace" },
 		"invalid modifier":      func(c *config.Config) { c.Reverse.Modifier = "fn" },
 		"empty logger path":     func(c *config.Config) { c.Logger.Path = "" },
-		"invalid trigger key":   func(c *config.Config) { c.Trigger = keyboardTrigger("fn", config.TriggerModeFn) },
-		"empty trigger key":     func(c *config.Config) { c.Trigger = keyboardTrigger("", config.TriggerModeFn) },
+		"invalid trigger key":   func(c *config.Config) { c.Trigger = keyboardTrigger("fn", "dedicated") },
+		"empty trigger key":     func(c *config.Config) { c.Trigger = keyboardTrigger("", "dedicated") },
 		"invalid trigger mode":  func(c *config.Config) { c.Trigger = keyboardTrigger("insert", "swallow") },
+		"fn trigger mode":       func(c *config.Config) { c.Trigger = keyboardTrigger("insert", "fn") },
 		"caps lock pass-through": func(c *config.Config) {
 			c.Trigger = keyboardTrigger(config.TriggerCapsLock, config.TriggerModePassThrough)
 		},
@@ -91,24 +92,23 @@ func TestKeyboardTriggerModes(t *testing.T) {
 	key := func(key, mode string) config.KeyboardTrigger { return config.KeyboardTrigger{Key: key, Mode: mode} }
 
 	tests := []struct {
-		trigger                                   config.KeyboardTrigger
-		remapped, fn, dedicated, passThrough, raw bool
+		trigger                               config.KeyboardTrigger
+		remapped, dedicated, passThrough, raw bool
 	}{
-		{config.KeyboardTrigger{}, false, false, false, false, false},
-		{config.GlobeTrigger, false, false, false, false, false},
-		{key(config.TriggerGlobe, config.TriggerModeDedicated), false, false, false, false, false},
-		{key(config.TriggerCapsLock, config.TriggerModeFn), true, true, false, false, false},
-		{key(config.TriggerCapsLock, config.TriggerModeDedicated), true, false, true, false, true},
-		{key("insert", config.TriggerModePassThrough), false, false, false, true, true},
+		{config.KeyboardTrigger{}, false, false, false, false},
+		{config.GlobeTrigger, false, false, false, false},
+		{key(config.TriggerCapsLock, "fn"), false, false, false, false},
+		{key(config.TriggerCapsLock, config.TriggerModeDedicated), true, true, false, true},
+		{key("insert", config.TriggerModePassThrough), false, false, true, true},
 	}
 
 	for _, test := range tests {
 		trigger := test.trigger
-		got := []bool{trigger.Remapped(), trigger.Fn(), trigger.Dedicated(), trigger.PassThrough(), trigger.Raw()}
-		want := []bool{test.remapped, test.fn, test.dedicated, test.passThrough, test.raw}
+		got := []bool{trigger.Remapped(), trigger.Dedicated(), trigger.PassThrough(), trigger.Raw()}
+		want := []bool{test.remapped, test.dedicated, test.passThrough, test.raw}
 
 		if !slices.Equal(got, want) {
-			t.Errorf("%+v: remapped, fn, dedicated, pass-through, raw = %v, want %v", trigger, got, want)
+			t.Errorf("%+v: remapped, dedicated, pass-through, raw = %v, want %v", trigger, got, want)
 		}
 	}
 }

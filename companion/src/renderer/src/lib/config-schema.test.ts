@@ -56,7 +56,7 @@ describe('validateConfig', () => {
       keyboards: {
         '046d:c33f': { key: 'insert', mode: 'pass_through' },
         '05ac:0281': { key: 'caps_lock', mode: 'dedicated' },
-        '1234:5678': { key: 'right_command', mode: 'fn' },
+        '1234:5678': { key: 'right_command', mode: 'dedicated' },
       },
     }
     expect(validateConfig(config).valid).toBe(true)
@@ -64,7 +64,7 @@ describe('validateConfig', () => {
 
   it('rejects an invalid keyboard ID', () => {
     const config = validConfig()
-    config.trigger.keyboards = { Logitech: { key: 'insert', mode: 'fn' } }
+    config.trigger.keyboards = { Logitech: { key: 'insert', mode: 'dedicated' } }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()
@@ -80,7 +80,7 @@ describe('validateConfig', () => {
 
   it('rejects an unknown trigger key', () => {
     const config = validConfig()
-    config.trigger.keyboards = { '046d:c33f': { key: 'fn', mode: 'fn' } }
+    config.trigger.keyboards = { '046d:c33f': { key: 'fn', mode: 'dedicated' } }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()

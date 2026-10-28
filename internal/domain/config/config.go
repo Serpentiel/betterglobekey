@@ -36,9 +36,6 @@ var TriggerKeys = []string{
 
 // Trigger modes: how a trigger key other than the Globe key is detected.
 const (
-	// TriggerModeFn remaps the key to fn, the Globe key's usage, so it switches
-	// input sources and works in fn shortcuts (fn+arrows, fn+F-keys, ...).
-	TriggerModeFn = "fn"
 	// TriggerModeDedicated silences the key, remapping it to one macOS has no key
 	// code for, and reads it from the keyboard's raw input instead, which needs
 	// Input Monitoring.
@@ -49,7 +46,7 @@ const (
 )
 
 // TriggerModes are the accepted trigger modes.
-var TriggerModes = []string{TriggerModeFn, TriggerModeDedicated, TriggerModePassThrough}
+var TriggerModes = []string{TriggerModeDedicated, TriggerModePassThrough}
 
 // keyboardIDPattern matches a keyboard ID: vendor and product IDs as four
 // lower-case hex digits each.
@@ -107,7 +104,7 @@ type Reverse struct {
 
 // GlobeTrigger is the trigger of a keyboard with a Globe key of its own, unless
 // it is listed in Trigger.Keyboards.
-var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeFn}
+var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeDedicated}
 
 // Trigger selects the key that switches input sources on each keyboard.
 type Trigger struct {
@@ -158,13 +155,7 @@ func (k KeyboardTrigger) other() bool {
 
 // Remapped reports whether the trigger key is remapped at the HID level.
 func (k KeyboardTrigger) Remapped() bool {
-	return k.other() && k.Mode != TriggerModePassThrough
-}
-
-// Fn reports whether the trigger key is remapped to fn, so it arrives as the
-// Globe key.
-func (k KeyboardTrigger) Fn() bool {
-	return k.other() && k.Mode == TriggerModeFn
+	return k.Dedicated()
 }
 
 // Dedicated reports whether the trigger key is silenced and read from raw input.

@@ -383,8 +383,6 @@ func describeTrigger(trigger domainconfig.KeyboardTrigger) string {
 		return "none"
 	case trigger.Globe():
 		return "Globe key"
-	case trigger.Fn():
-		return trigger.Key + " (remapped to fn)"
 	case trigger.Dedicated():
 		return trigger.Key + " (silenced, read directly)"
 	default:
@@ -460,7 +458,7 @@ func keyboardLine(status keymap.Status) string {
 
 	switch {
 	case status.Ours != nil:
-		mappings = append(mappings, describeMapping(*status.Ours))
+		mappings = append(mappings, keymap.UsageName(status.Ours.Src)+" silenced")
 	case status.Trigger.Remapped():
 		mappings = append(mappings, "not remapped yet (is the service running?)")
 	}
@@ -603,7 +601,7 @@ func inputMonitoringStatusLine(granted bool) string {
 		return "input monitoring: granted"
 	}
 
-	return "input monitoring: not granted (only dedicated and passed-through trigger keys need it; enable in " +
+	return "input monitoring: not granted (trigger keys other than the Globe key need it; enable in " +
 		"System Settings > Privacy & Security > Input Monitoring, then restart the service)"
 }
 

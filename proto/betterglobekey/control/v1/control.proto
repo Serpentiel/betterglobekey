@@ -66,21 +66,29 @@ message Config {
 
 // Trigger selects the key that switches input sources on each keyboard. A
 // keyboard with a Globe key of its own uses it, unless it is listed in
-// keyboards; one without uses key and mode, unless it is listed.
+// keyboards; one without has no trigger, unless it is listed.
 message Trigger {
   reserved 1 to 4;
   reserved "key", "mode", "pass_through";
 
   // keyboards are the triggers of single keyboards, by ID: the vendor and
-  // product IDs as four lower-case hex digits each ("05ac:029c"). Any other
-  // keyboard uses the Globe key.
+  // product IDs as four lower-case hex digits each ("05ac:029c").
   map<string, KeyboardTrigger> keyboards = 5;
 }
 
 // KeyboardTrigger is one keyboard's trigger key and how it is detected, as in
 // Trigger.
 message KeyboardTrigger {
+  // key is the trigger key: globe, caps_lock, right_command, right_option,
+  // right_control, right_shift, left_command, left_option, left_control,
+  // left_shift, f13 through f20, menu, insert, print_screen, scroll_lock, or
+  // pause. Empty is no trigger.
   string key = 1;
+
+  // mode is how a key other than globe is detected, both needing Input
+  // Monitoring: dedicated (silenced and read from raw input; the default when
+  // empty) or pass_through (keeps its function and is read from raw input;
+  // not allowed for caps_lock).
   string mode = 2;
 }
 

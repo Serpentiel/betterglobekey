@@ -77,7 +77,7 @@ var (
 	capsLock     = Usages[config.TriggerCapsLock]
 	rightCommand = Usages["right_command"]
 	userMapping  = Mapping{Src: keyboardPage | 0x04, Dst: keyboardPage | 0x05} // a -> b
-	capsToGlobe  = Mapping{Src: capsLock, Dst: GlobeUsage}
+	capsSilenced = Mapping{Src: capsLock, Dst: DedicatedUsage}
 )
 
 // Keyboards: a built-in Apple one, a Magic Keyboard over Bluetooth, and a
@@ -113,8 +113,8 @@ func onLogitech(trigger config.KeyboardTrigger) config.Trigger {
 	return config.Trigger{Keyboards: map[string]config.KeyboardTrigger{logitechID: trigger}}
 }
 
-// capsGlobe remaps Caps Lock to fn on the third-party keyboard.
-var capsGlobe = onLogitech(caps(config.TriggerModeFn))
+// capsDedicated silences Caps Lock on the third-party keyboard.
+var capsDedicated = onLogitech(caps(config.TriggerModeDedicated))
 
 func newRemapper(t *testing.T, store *fakeStore) (*Remapper, string) {
 	t.Helper()
@@ -230,11 +230,11 @@ func TestApplyRemapsKeyboardsWithoutGlobe(t *testing.T) {
 	store := newStore(userMapping)
 	remapper, path := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
 	assertMappings(t, store, 1)
 	assertMappings(t, store, 2)
-	assertMappings(t, store, 3, userMapping, capsToGlobe)
+	assertMappings(t, store, 3, userMapping, capsSilenced)
 
 	if _, err := os.Stat(path); err != nil {
 		t.Errorf("state file not written: %v", err)
@@ -246,27 +246,26 @@ func TestApplyRemapsKeyboardsWithoutGlobe(t *testing.T) {
 }
 
 func TestApplyPerKeyboard(t *testing.T) {
-	capsToF24 := Mapping{Src: capsLock, Dst: DedicatedUsage}
-	commandToFn := Mapping{Src: rightCommand, Dst: GlobeUsage}
+	commandSilenced := Mapping{Src: rightCommand, Dst: DedicatedUsage}
 
 	tests := []struct {
 		name    string
 		trigger config.Trigger
 		want    map[uint64][]Mapping
 	}{
-		{"every keyboard", everywhere(caps(config.TriggerModeFn)), map[uint64][]Mapping{
-			1: {capsToGlobe}, 2: {capsToGlobe}, 3: {capsToGlobe},
+		{"every keyboard", everywhere(caps(config.TriggerModeDedicated)), map[uint64][]Mapping{
+			1: {capsSilenced}, 2: {capsSilenced}, 3: {capsSilenced},
 		}},
 		{"apple keyboard listed", config.Trigger{
-			Keyboards: map[string]config.KeyboardTrigger{magicID: caps(config.TriggerModeFn)},
-		}, map[uint64][]Mapping{2: {capsToGlobe}}},
+			Keyboards: map[string]config.KeyboardTrigger{magicID: caps(config.TriggerModeDedicated)},
+		}, map[uint64][]Mapping{2: {capsSilenced}}},
 		{"none listed", config.Trigger{}, map[uint64][]Mapping{}},
 		{"a key and mode per keyboard", config.Trigger{
 			Keyboards: map[string]config.KeyboardTrigger{
-				magicID:    {Key: "right_command", Mode: config.TriggerModeFn},
+				magicID:    {Key: "right_command", Mode: config.TriggerModeDedicated},
 				logitechID: caps(config.TriggerModeDedicated),
 			},
-		}, map[uint64][]Mapping{2: {commandToFn}, 3: {capsToF24}}},
+		}, map[uint64][]Mapping{2: {commandSilenced}, 3: {capsSilenced}}},
 	}
 
 	for _, test := range tests {
@@ -293,9 +292,9 @@ func TestApplyDedicatedMapsToDedicatedKey(t *testing.T) {
 		assertMappings(t, store, keyboard.ID, Mapping{Src: capsLock, Dst: DedicatedUsage})
 	}
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 	assertMappings(t, store, 1)
-	assertMappings(t, store, 3, capsToGlobe)
+	assertMappings(t, store, 3, capsSilenced)
 }
 
 func TestApplyIsIdempotent(t *testing.T) {
@@ -303,14 +302,14 @@ func TestApplyIsIdempotent(t *testing.T) {
 	remapper, _ := newRemapper(t, store)
 
 	for range 3 {
-		apply(t, remapper, capsGlobe)
+		apply(t, remapper, capsDedicated)
 	}
 
 	if err := remapper.Sync(); err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
 
-	assertMappings(t, store, 3, capsToGlobe)
+	assertMappings(t, store, 3, capsSilenced)
 
 	if store.writes != 1 {
 		t.Errorf("writes = %d, want 1", store.writes)
@@ -321,7 +320,7 @@ func TestSyncRemapsNewAndResetKeyboards(t *testing.T) {
 	store := newStore()
 	remapper, _ := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
 	store.keyboards[2].Mappings = nil // the system dropped it, e.g. across sleep
 	store.keyboards = append(store.keyboards, Keyboard{ID: 4, Vendor: 0x046d, Product: 0xc33f, Location: 4})
@@ -330,15 +329,15 @@ func TestSyncRemapsNewAndResetKeyboards(t *testing.T) {
 		t.Fatalf("Sync: %v", err)
 	}
 
-	assertMappings(t, store, 3, capsToGlobe)
-	assertMappings(t, store, 4, capsToGlobe)
+	assertMappings(t, store, 3, capsSilenced)
+	assertMappings(t, store, 4, capsSilenced)
 }
 
 func TestSyncSurvivesReconnect(t *testing.T) {
 	store := newStore()
 	remapper, path := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
 	unplugged := store.keyboards[2]
 	store.keyboards = store.keyboards[:2]
@@ -355,7 +354,7 @@ func TestSyncSurvivesReconnect(t *testing.T) {
 		t.Fatalf("Sync: %v", err)
 	}
 
-	assertMappings(t, store, 5, capsToGlobe)
+	assertMappings(t, store, 5, capsSilenced)
 
 	restore(t, remapper)
 	assertMappings(t, store, 5)
@@ -367,11 +366,11 @@ func TestApplyReplacesAndRestoresSameKeyMapping(t *testing.T) {
 	store := newStore(theirs, userMapping)
 	remapper, path := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
-	assertMappings(t, store, 3, userMapping, capsToGlobe)
+	apply(t, remapper, capsDedicated)
+	assertMappings(t, store, 3, userMapping, capsSilenced)
 
 	// Re-applying must not lose the displaced entry.
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 	restore(t, remapper)
 
 	assertMappings(t, store, 3, userMapping, theirs)
@@ -382,12 +381,12 @@ func TestApplySwitchesKeys(t *testing.T) {
 	store := newStore(userMapping)
 	remapper, _ := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
-	rightCommandFn := config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeFn}
-	apply(t, remapper, onLogitech(rightCommandFn))
+	rightCommandDedicated := config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeDedicated}
+	apply(t, remapper, onLogitech(rightCommandDedicated))
 
-	assertMappings(t, store, 3, userMapping, Mapping{Src: rightCommand, Dst: GlobeUsage})
+	assertMappings(t, store, 3, userMapping, Mapping{Src: rightCommand, Dst: DedicatedUsage})
 }
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
@@ -400,7 +399,7 @@ func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
 			store := newStore(userMapping)
 			remapper, path := newRemapper(t, store)
 
-			apply(t, remapper, capsGlobe)
+			apply(t, remapper, capsDedicated)
 			apply(t, remapper, trigger)
 
 			assertMappings(t, store, 3, userMapping)
@@ -413,7 +412,7 @@ func TestNewCleansUpAfterCrash(t *testing.T) {
 	store := newStore(userMapping)
 	path := filepath.Join(t.TempDir(), "keymap.json")
 
-	apply(t, New(store, path), capsGlobe)
+	apply(t, New(store, path), capsDedicated)
 
 	// A fresh remapper (the next run) finds the leftover entry and removes it.
 	restore(t, New(store, path))
@@ -425,7 +424,7 @@ func TestNewCleansUpAfterCrash(t *testing.T) {
 func TestRestoreCleansUpSystemWideEntry(t *testing.T) {
 	theirs := Mapping{Src: capsLock, Dst: keyboardPage | 0x29}
 	store := newStore()
-	store.systemWide = []Mapping{userMapping, capsToGlobe}
+	store.systemWide = []Mapping{userMapping, {Src: capsLock, Dst: GlobeUsage}}
 
 	path := filepath.Join(t.TempDir(), "keymap.json")
 
@@ -451,7 +450,7 @@ func TestRestoreLeavesChangedEntryAlone(t *testing.T) {
 	store := newStore()
 	remapper, _ := newRemapper(t, store)
 
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
 	edited := Mapping{Src: capsLock, Dst: keyboardPage | 0x29} // the user remapped it to Escape meanwhile
 	store.keyboards[2].Mappings = []Mapping{edited}
@@ -480,7 +479,7 @@ func TestApplyErrors(t *testing.T) {
 		store.listErr = boom
 
 		remapper, _ := newRemapper(t, store)
-		if err := remapper.Apply(capsGlobe); !errors.Is(err, boom) {
+		if err := remapper.Apply(capsDedicated); !errors.Is(err, boom) {
 			t.Errorf("err = %v, want %v", err, boom)
 		}
 	})
@@ -490,12 +489,12 @@ func TestApplyErrors(t *testing.T) {
 		store.writeErr = map[uint64]error{3: boom}
 		remapper, path := newRemapper(t, store)
 
-		all := everywhere(caps(config.TriggerModeFn))
+		all := everywhere(caps(config.TriggerModeDedicated))
 		if err := remapper.Apply(all); !errors.Is(err, boom) {
 			t.Errorf("err = %v, want %v", err, boom)
 		}
 
-		assertMappings(t, store, 1, capsToGlobe)
+		assertMappings(t, store, 1, capsSilenced)
 
 		if _, err := os.Stat(path); err != nil {
 			t.Errorf("state file missing after failed write: %v", err)
@@ -534,7 +533,7 @@ func TestApplyErrors(t *testing.T) {
 func TestRunSyncsAndReportsErrorsOnce(t *testing.T) {
 	store := newStore()
 	remapper, _ := newRemapper(t, store)
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
 	store.listErr = errors.New("boom")
 
@@ -569,9 +568,9 @@ func TestKeyboards(t *testing.T) {
 	store.systemWide = []Mapping{userMapping}
 
 	remapper, _ := newRemapper(t, store)
-	apply(t, remapper, capsGlobe)
+	apply(t, remapper, capsDedicated)
 
-	statuses, systemWide, err := remapper.Keyboards(capsGlobe)
+	statuses, systemWide, err := remapper.Keyboards(capsDedicated)
 	if err != nil {
 		t.Fatalf("Keyboards: %v", err)
 	}
@@ -581,8 +580,8 @@ func TestKeyboards(t *testing.T) {
 	}
 
 	logitech := statuses[2]
-	if logitech.Trigger != caps(config.TriggerModeFn) || !logitech.Listed || logitech.Ours == nil ||
-		*logitech.Ours != capsToGlobe {
+	if logitech.Trigger != caps(config.TriggerModeDedicated) || !logitech.Listed || logitech.Ours == nil ||
+		*logitech.Ours != capsSilenced {
 		t.Errorf("logitech = %+v, want our caps lock mapping", logitech)
 	}
 

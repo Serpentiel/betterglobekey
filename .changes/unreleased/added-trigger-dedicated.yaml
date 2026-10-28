@@ -1,3 +1,0 @@
-kind: Added
-body: "A keyboard's `mode: dedicated` makes its trigger key the only key that switches input sources on it. The key is silenced and read straight from the keyboard, which needs the Input Monitoring permission; `doctor` reports it."
-time: 2026-10-28T10:00:02.000000+02:00

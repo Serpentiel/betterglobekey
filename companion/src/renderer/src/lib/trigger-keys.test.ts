@@ -46,9 +46,9 @@ describe('trigger keys', () => {
   })
 
   it('lists the modes each key allows', () => {
-    expect(allowedModes('right_command')).toEqual(['fn', 'dedicated', 'pass_through'])
-    expect(allowedModes('caps_lock')).toEqual(['fn', 'dedicated'])
-    expect(allowedModes('f20')).toEqual(['fn', 'dedicated', 'pass_through'])
+    expect(allowedModes('right_command')).toEqual(['dedicated', 'pass_through'])
+    expect(allowedModes('caps_lock')).toEqual(['dedicated'])
+    expect(allowedModes('f20')).toEqual(['dedicated', 'pass_through'])
   })
 
   it('resolves keyboard triggers like the daemon', () => {
@@ -56,13 +56,16 @@ describe('trigger keys', () => {
     const trigger = { keyboards: { '046d:c33f': insert } }
 
     expect(triggerFor(trigger, '046d:c33f', false)).toEqual([insert, true])
-    expect(triggerFor(trigger, '05ac:0281', true)).toEqual([{ key: 'globe', mode: 'fn' }, false])
-    expect(triggerFor(trigger, '1234:5678', false)).toEqual([{ key: '', mode: 'fn' }, false])
+    expect(triggerFor(trigger, '05ac:0281', true)).toEqual([{ key: 'globe', mode: 'dedicated' }, false])
+    expect(triggerFor(trigger, '1234:5678', false)).toEqual([{ key: '', mode: 'dedicated' }, false])
   })
 
   it('keeps a mode the new key allows', () => {
     expect(withKey({ key: 'insert', mode: 'pass_through' }, 'f13')).toEqual({ key: 'f13', mode: 'pass_through' })
-    expect(withKey({ key: 'insert', mode: 'pass_through' }, 'caps_lock')).toEqual({ key: 'caps_lock', mode: 'fn' })
+    expect(withKey({ key: 'insert', mode: 'pass_through' }, 'caps_lock')).toEqual({
+      key: 'caps_lock',
+      mode: 'dedicated',
+    })
   })
 
   it('names keys, falling back to the config name', () => {

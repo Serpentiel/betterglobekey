@@ -17,9 +17,9 @@ const config: Config = {
   trigger: { keyboards: {} },
 }
 
-const globe: KeyboardTrigger = { key: 'globe', mode: 'fn' }
-const capsFn: KeyboardTrigger = { key: 'caps_lock', mode: 'fn' }
-const capsToFn = { src: 0x700000039, dst: 0xff00000003, srcName: 'Caps Lock', dstName: 'fn' }
+const globe: KeyboardTrigger = { key: 'globe', mode: 'dedicated' }
+const capsDedicated: KeyboardTrigger = { key: 'caps_lock', mode: 'dedicated' }
+const capsSilenced = { src: 0x700000039, dst: 0x700000073, srcName: 'Caps Lock', dstName: 'F24' }
 const graveToEscape = { src: 0x700000035, dst: 0x700000029, srcName: 'Grave Accent', dstName: 'Escape' }
 
 const builtIn: Keyboard = {
@@ -40,9 +40,9 @@ const logitech: Keyboard = {
   transport: 'USB',
   builtIn: false,
   hasGlobe: false,
-  trigger: capsFn,
+  trigger: capsDedicated,
   listed: false,
-  triggerMapping: capsToFn,
+  triggerMapping: capsSilenced,
   otherMappings: [graveToEscape],
 }
 
@@ -93,32 +93,32 @@ describe('KeyboardsSheet', () => {
 
     cleanup()
 
-    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': capsFn } })
+    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': capsDedicated } })
     chooseKeyboard('Logitech K120')
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
   it('shows another keyboard with its applied mapping', () => {
-    renderSheet({ keyboards: { '046d:c33f': capsFn } })
+    renderSheet({ keyboards: { '046d:c33f': capsDedicated } })
 
     chooseKeyboard('Logitech K120')
 
     expect(screen.getByText('USB · 046d:c33f')).toBeTruthy()
     expect(screen.getByText('⇪ Caps Lock')).toBeTruthy()
-    expect(screen.getByText('Caps Lock → fn.')).toBeTruthy()
+    expect(screen.getByText('Caps Lock silenced.')).toBeTruthy()
   })
 
   it('sets a keyboard its own mode', () => {
-    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': capsFn } })
+    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': { key: 'insert', mode: 'dedicated' } } })
 
     chooseKeyboard('Logitech K120')
     fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
-    fireEvent.click(screen.getByRole('option', { name: 'Only this key switches' }))
+    fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))
 
     expect(onChange).toHaveBeenCalledWith({
       ...config,
-      trigger: { ...trigger, keyboards: { '046d:c33f': { key: 'caps_lock', mode: 'dedicated' } } },
+      trigger: { ...trigger, keyboards: { '046d:c33f': { key: 'insert', mode: 'pass_through' } } },
     })
   })
 
@@ -134,7 +134,7 @@ describe('KeyboardsSheet', () => {
   })
 
   it('notes that the Globe key still switches while another keyboard switches with it', () => {
-    renderSheet({ keyboards: { '05ac:0281': { key: 'caps_lock', mode: 'dedicated' }, '046d:c33f': capsFn } })
+    renderSheet({ keyboards: { '05ac:0281': capsDedicated, '046d:c33f': { key: 'globe', mode: 'dedicated' } } })
 
     expect(screen.getByText(/The Globe key still switches here/)).toBeTruthy()
   })
@@ -143,7 +143,7 @@ describe('KeyboardsSheet', () => {
     const silenced = {
       ...logitech,
       trigger: { key: 'caps_lock', mode: 'dedicated' },
-      triggerMapping: { ...capsToFn, dst: 0x700000073, dstName: 'F24' },
+      triggerMapping: capsSilenced,
     }
     renderSheet(
       { keyboards: { '046d:c33f': { key: 'caps_lock', mode: 'dedicated' } } },
@@ -154,10 +154,10 @@ describe('KeyboardsSheet', () => {
   })
 
   it('lists and forgets keyboards set here that are not connected', () => {
-    const { onChange, trigger } = renderSheet({ keyboards: { '1234:5678': { key: 'insert', mode: 'fn' } } })
+    const { onChange, trigger } = renderSheet({ keyboards: { '1234:5678': { key: 'insert', mode: 'dedicated' } } })
 
     chooseKeyboard('1234:5678 (not connected)')
-    expect(screen.getByText('Insert, act as fn')).toBeTruthy()
+    expect(screen.getByText('Insert, switch input sources only')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })

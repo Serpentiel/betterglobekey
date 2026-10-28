@@ -126,7 +126,7 @@ func triggerFromProto(proto *controlv1.Trigger) domainconfig.Trigger {
 func keyboardTriggerFromProto(key, mode string) domainconfig.KeyboardTrigger {
 	return domainconfig.KeyboardTrigger{
 		Key:  cmp.Or(key, domainconfig.TriggerGlobe),
-		Mode: cmp.Or(mode, domainconfig.TriggerModeFn),
+		Mode: cmp.Or(mode, domainconfig.TriggerModeDedicated),
 	}
 }
 

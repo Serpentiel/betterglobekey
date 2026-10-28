@@ -1,7 +1,6 @@
-// Package keymap remaps each keyboard's trigger key on that keyboard's own HID
-// key mapping table: to fn (the Globe key's usage), so the key drives the
-// daemon through its existing Globe key handling, or to a key that produces no
-// event, for a dedicated trigger the daemon reads from raw input.
+// Package keymap remaps each keyboard's dedicated trigger key on that keyboard's
+// own HID key mapping table to a key that produces no event, so the daemon
+// reads it from raw input alone.
 //
 // The tables are shared with hidutil and other tools, so the remapper only ever
 // touches its own entries: it merges into a keyboard's current table, remembers
@@ -281,12 +280,7 @@ func (r *Remapper) wantFor(keyboard Keyboard) (Mapping, bool) {
 		return Mapping{}, false
 	}
 
-	dst := GlobeUsage
-	if trigger.Dedicated() {
-		dst = DedicatedUsage
-	}
-
-	return Mapping{Src: src, Dst: dst}, true
+	return Mapping{Src: src, Dst: DedicatedUsage}, true
 }
 
 // change is a keyboard table sync rewrites: next replaces it, and the entry

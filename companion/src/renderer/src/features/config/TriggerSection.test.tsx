@@ -26,7 +26,7 @@ const keyboard = (id: string, hasGlobe: boolean): Keyboard => ({
   transport: 'USB',
   builtIn: false,
   hasGlobe,
-  trigger: { key: 'globe', mode: 'fn' },
+  trigger: { key: 'globe', mode: 'dedicated' },
   listed: false,
   triggerMapping: null,
   otherMappings: [],

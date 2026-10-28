@@ -116,12 +116,11 @@ func (x *Config) GetTrigger() *Trigger {
 
 // Trigger selects the key that switches input sources on each keyboard. A
 // keyboard with a Globe key of its own uses it, unless it is listed in
-// keyboards; one without uses key and mode, unless it is listed.
+// keyboards; one without has no trigger, unless it is listed.
 type Trigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// keyboards are the triggers of single keyboards, by ID: the vendor and
-	// product IDs as four lower-case hex digits each ("05ac:029c"). Any other
-	// keyboard uses the Globe key.
+	// product IDs as four lower-case hex digits each ("05ac:029c").
 	Keyboards     map[string]*KeyboardTrigger `protobuf:"bytes,5,rep,name=keyboards,proto3" json:"keyboards,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -167,9 +166,17 @@ func (x *Trigger) GetKeyboards() map[string]*KeyboardTrigger {
 // KeyboardTrigger is one keyboard's trigger key and how it is detected, as in
 // Trigger.
 type KeyboardTrigger struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Mode          string                 `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the trigger key: globe, caps_lock, right_command, right_option,
+	// right_control, right_shift, left_command, left_option, left_control,
+	// left_shift, f13 through f20, menu, insert, print_screen, scroll_lock, or
+	// pause. Empty is no trigger.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// mode is how a key other than globe is detected, both needing Input
+	// Monitoring: dedicated (silenced and read from raw input; the default when
+	// empty) or pass_through (keeps its function and is read from raw input;
+	// not allowed for caps_lock).
+	Mode          string `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -2,7 +2,7 @@ import { type ReactElement, useState } from 'react'
 
 import type { Config, Keyboard, KeyboardTrigger, KeyMapping } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
-import { allowedModes, DEDICATED_USAGE, GLOBE, MODE_FN, triggerFor, withKey } from '../../lib/trigger-keys'
+import { allowedModes, DEDICATED_USAGE, GLOBE, triggerFor, withKey } from '../../lib/trigger-keys'
 import { Banner, Button, Field, Select, Sheet } from '../../ui'
 import { KeyPicker } from './KeyPicker'
 import { describeTrigger, MODE_LABELS, modeHint } from './trigger-text'
@@ -43,9 +43,9 @@ function sameTrigger(a: KeyboardTrigger, b: KeyboardTrigger): boolean {
   return a.key === b.key && (a.key === '' || a.key === GLOBE || a.mode === b.mode)
 }
 
-/** switchesWithGlobe reports whether a trigger makes the Globe key switch: the key itself, or a key remapped to fn. */
+/** switchesWithGlobe reports whether a trigger makes the Globe key switch. */
 function switchesWithGlobe(trigger: KeyboardTrigger): boolean {
-  return trigger.key === GLOBE || (trigger.key !== '' && trigger.mode === MODE_FN)
+  return trigger.key === GLOBE
 }
 
 /** KeyboardsSheet sets the trigger key of single keyboards, the way macOS's Modifier Keys sheet configures a chosen keyboard. */
@@ -188,7 +188,7 @@ function KeyboardSettings({ keyboard, config, globeElsewhere, onChange, onReset 
           <Select
             id={id}
             value={current.mode}
-            disabled={current.key === '' || current.key === GLOBE}
+            disabled={allowedModes(current.key).length < 2 || current.key === '' || current.key === GLOBE}
             options={allowedModes(current.key).map((value) => ({ value, label: MODE_LABELS[value] ?? value }))}
             onChange={(mode) => onChange({ ...current, mode })}
           />
