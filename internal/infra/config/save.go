@@ -45,8 +45,6 @@ func fromDomain(cfg config.Config) schemaV2 {
 	schema.HUD.Enabled = boolPtr(cfg.HUD.Enabled)
 	schema.HUD.Duration = cfg.HUD.Duration.String()
 	schema.HUD.ShowCollection = boolPtr(cfg.HUD.ShowCollection)
-	schema.Trigger.Key = cfg.Trigger.Default.Key
-	schema.Trigger.Mode = cfg.Trigger.Default.Mode
 
 	if len(cfg.Trigger.Keyboards) > 0 {
 		schema.Trigger.Keyboards = make(map[string]keyboardTriggerV2, len(cfg.Trigger.Keyboards))

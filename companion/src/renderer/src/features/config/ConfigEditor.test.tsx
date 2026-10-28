@@ -13,7 +13,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'globe', mode: 'fn', keyboards: {} },
+  trigger: { keyboards: {} },
 }
 
 const sources: InputSource[] = [
@@ -152,49 +152,13 @@ describe('ConfigEditor', () => {
     expect(update).toHaveBeenCalledWith({ ...validConfig, hud: { ...validConfig.hud, enabled: false } })
   })
 
-  it('names the trigger key and keeps Globe from changing mode', async () => {
+  it('names the trigger key', async () => {
     render(<ConfigEditor controller={makeController()} />)
 
     expect(await screen.findByText('0 keyboards connected.')).toBeTruthy()
 
-    expect(screen.getByText('How the Globe key responds to presses.')).toBeTruthy()
-    expect(screen.getByText('Ordered groups of input sources the Globe key cycles through.')).toBeTruthy()
-    expect((screen.getByRole('combobox', { name: 'Trigger mode' }) as HTMLButtonElement).disabled).toBe(true)
-  })
-
-  it('switches the mode of a key that supports it', () => {
-    const update = vi.fn()
-    const config: Config = { ...validConfig, trigger: { ...validConfig.trigger, key: 'right_command' } }
-    render(<ConfigEditor controller={makeController({ config, update })} />)
-
-    expect(screen.getByText(/Right Command switches input sources and works as fn/)).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
-    fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))
-    expect(update).toHaveBeenCalledWith({ ...config, trigger: { ...config.trigger, mode: 'pass_through' } })
-  })
-
-  it('offers Caps Lock no pass-through', () => {
-    const config: Config = { ...validConfig, trigger: { ...validConfig.trigger, key: 'caps_lock' } }
-    render(<ConfigEditor controller={makeController({ config })} />)
-
-    fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'Act as fn',
-      'Only this key switches',
-    ])
-  })
-
-  it('falls back to Globe mode when switching to a key that cannot use the mode', () => {
-    const update = vi.fn()
-    const config: Config = {
-      ...validConfig,
-      trigger: { ...validConfig.trigger, key: 'right_command', mode: 'pass_through' },
-    }
-    render(<ConfigEditor controller={makeController({ config, update })} />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
-    expect(update).toHaveBeenCalledWith({ ...config, trigger: { ...config.trigger, key: 'globe', mode: 'fn' } })
+    expect(screen.getByText('How the trigger key responds to presses.')).toBeTruthy()
+    expect(screen.getByText('Ordered groups of input sources the trigger key cycles through.')).toBeTruthy()
   })
 
   it('shows the saved confirmation banner', () => {

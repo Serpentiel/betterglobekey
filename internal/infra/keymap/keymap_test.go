@@ -104,13 +104,17 @@ func caps(mode string) config.KeyboardTrigger {
 // everywhere makes trigger the trigger of every keyboard in the store.
 func everywhere(trigger config.KeyboardTrigger) config.Trigger {
 	return config.Trigger{
-		Default:   trigger,
-		Keyboards: map[string]config.KeyboardTrigger{builtInID: trigger, magicID: trigger},
+		Keyboards: map[string]config.KeyboardTrigger{builtInID: trigger, magicID: trigger, logitechID: trigger},
 	}
 }
 
-// capsGlobe remaps Caps Lock to fn on keyboards without a Globe key.
-var capsGlobe = config.Trigger{Default: caps(config.TriggerModeFn)}
+// onLogitech makes trigger the trigger of the third-party keyboard.
+func onLogitech(trigger config.KeyboardTrigger) config.Trigger {
+	return config.Trigger{Keyboards: map[string]config.KeyboardTrigger{logitechID: trigger}}
+}
+
+// capsGlobe remaps Caps Lock to fn on the third-party keyboard.
+var capsGlobe = onLogitech(caps(config.TriggerModeFn))
 
 func newRemapper(t *testing.T, store *fakeStore) (*Remapper, string) {
 	t.Helper()
@@ -195,13 +199,12 @@ func TestObserveReportsResolvedTriggers(t *testing.T) {
 
 	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
 	apply(t, remapper, config.Trigger{
-		Default:   caps(config.TriggerModeDedicated),
-		Keyboards: map[string]config.KeyboardTrigger{magicID: insert},
+		Keyboards: map[string]config.KeyboardTrigger{magicID: insert, logitechID: caps(config.TriggerModeDedicated)},
 	})
 
 	want := []Resolved{
-		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, HasGlobe: true, Trigger: config.GlobeTrigger},
-		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, HasGlobe: true, Trigger: insert},
+		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, Trigger: config.GlobeTrigger},
+		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, Trigger: insert},
 		{Vendor: 0x046d, Product: 0xc33f, Location: 3, Trigger: caps(config.TriggerModeDedicated), Applied: true},
 	}
 	if !slices.Equal(got, want) {
@@ -255,15 +258,10 @@ func TestApplyPerKeyboard(t *testing.T) {
 			1: {capsToGlobe}, 2: {capsToGlobe}, 3: {capsToGlobe},
 		}},
 		{"apple keyboard listed", config.Trigger{
-			Default:   caps(config.TriggerModeFn),
 			Keyboards: map[string]config.KeyboardTrigger{magicID: caps(config.TriggerModeFn)},
-		}, map[uint64][]Mapping{2: {capsToGlobe}, 3: {capsToGlobe}}},
-		{"third-party keyboard listed as Globe", config.Trigger{
-			Default:   caps(config.TriggerModeFn),
-			Keyboards: map[string]config.KeyboardTrigger{logitechID: config.GlobeTrigger},
-		}, map[uint64][]Mapping{}},
+		}, map[uint64][]Mapping{2: {capsToGlobe}}},
+		{"none listed", config.Trigger{}, map[uint64][]Mapping{}},
 		{"a key and mode per keyboard", config.Trigger{
-			Default: config.GlobeTrigger,
 			Keyboards: map[string]config.KeyboardTrigger{
 				magicID:    {Key: "right_command", Mode: config.TriggerModeFn},
 				logitechID: caps(config.TriggerModeDedicated),
@@ -326,7 +324,7 @@ func TestSyncRemapsNewAndResetKeyboards(t *testing.T) {
 	apply(t, remapper, capsGlobe)
 
 	store.keyboards[2].Mappings = nil // the system dropped it, e.g. across sleep
-	store.keyboards = append(store.keyboards, Keyboard{ID: 4, Vendor: 0x1234, Product: 0x5678, Location: 4})
+	store.keyboards = append(store.keyboards, Keyboard{ID: 4, Vendor: 0x046d, Product: 0xc33f, Location: 4})
 
 	if err := remapper.Sync(); err != nil {
 		t.Fatalf("Sync: %v", err)
@@ -387,19 +385,16 @@ func TestApplySwitchesKeys(t *testing.T) {
 	apply(t, remapper, capsGlobe)
 
 	rightCommandFn := config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeFn}
-	apply(t, remapper, config.Trigger{Default: rightCommandFn})
+	apply(t, remapper, onLogitech(rightCommandFn))
 
 	assertMappings(t, store, 3, userMapping, Mapping{Src: rightCommand, Dst: GlobeUsage})
 }
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
 	for name, trigger := range map[string]config.Trigger{
-		"globe":        {Default: config.GlobeTrigger},
-		"pass-through": {Default: config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModePassThrough}},
-		"listed as Globe": {
-			Default:   caps(config.TriggerModeFn),
-			Keyboards: map[string]config.KeyboardTrigger{logitechID: config.GlobeTrigger},
-		},
+		"none listed":     {},
+		"listed as Globe": onLogitech(config.GlobeTrigger),
+		"pass-through":    onLogitech(config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := newStore(userMapping)
@@ -586,7 +581,7 @@ func TestKeyboards(t *testing.T) {
 	}
 
 	logitech := statuses[2]
-	if logitech.Trigger != caps(config.TriggerModeFn) || logitech.Listed || logitech.Ours == nil ||
+	if logitech.Trigger != caps(config.TriggerModeFn) || !logitech.Listed || logitech.Ours == nil ||
 		*logitech.Ours != capsToGlobe {
 		t.Errorf("logitech = %+v, want our caps lock mapping", logitech)
 	}

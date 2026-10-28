@@ -15,7 +15,7 @@ const config: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'caps_lock', mode: 'fn', keyboards: {} },
+  trigger: { keyboards: {} },
 }
 
 const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
@@ -67,23 +67,6 @@ describe('TriggerSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.queryByRole('dialog')).toBeNull()
-  })
-
-  it('sets the default mode', () => {
-    const { onChange, trigger } = renderSection()
-
-    fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
-    fireEvent.click(screen.getByRole('option', { name: 'Only this key switches' }))
-
-    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, mode: 'dedicated' } })
-  })
-
-  it('falls back to fn mode for a key that cannot keep its mode', () => {
-    const { onChange, trigger } = renderSection({ key: 'insert', mode: 'pass_through' })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
-
-    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, key: 'globe', mode: 'fn' } })
   })
 
   it('reports loading and errors', () => {

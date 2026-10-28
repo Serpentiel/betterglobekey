@@ -1,3 +1,3 @@
 kind: Added
-body: "Keyboards without a Globe key can switch input sources with another key, such as Caps Lock, Right Command, F13, or Insert: set `trigger.key`, or record the key in the companion. By default the key is remapped to fn, so it switches input sources like the Globe key and works in fn shortcuts."
+body: "Each keyboard can switch input sources with its own trigger key, such as Caps Lock, Right Command, F13, or Insert: set it under `trigger.keyboards` by keyboard, or record it in the companion's Keyboards… sheet. Keyboards not listed keep the Globe key. By default the key is remapped to fn, so it switches input sources like the Globe key and works in fn shortcuts. The sheet and `doctor` list every connected keyboard with its trigger and key mappings."
 time: 2026-10-28T10:00:00.000000+02:00

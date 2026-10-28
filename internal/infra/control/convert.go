@@ -101,7 +101,7 @@ func triggerToProto(trigger domainconfig.Trigger) *controlv1.Trigger {
 		keyboards[id] = keyboardTriggerToProto(keyboard)
 	}
 
-	return &controlv1.Trigger{Key: trigger.Default.Key, Mode: trigger.Default.Mode, Keyboards: keyboards}
+	return &controlv1.Trigger{Keyboards: keyboards}
 }
 
 func keyboardTriggerToProto(trigger domainconfig.KeyboardTrigger) *controlv1.KeyboardTrigger {
@@ -111,7 +111,7 @@ func keyboardTriggerToProto(trigger domainconfig.KeyboardTrigger) *controlv1.Key
 // triggerFromProto converts a protobuf trigger, defaulting what a client that
 // predates a field leaves empty: the Globe key and fn mode.
 func triggerFromProto(proto *controlv1.Trigger) domainconfig.Trigger {
-	trigger := domainconfig.Trigger{Default: keyboardTriggerFromProto(proto.GetKey(), proto.GetMode())}
+	var trigger domainconfig.Trigger
 
 	if len(proto.GetKeyboards()) > 0 {
 		trigger.Keyboards = make(map[string]domainconfig.KeyboardTrigger, len(proto.GetKeyboards()))

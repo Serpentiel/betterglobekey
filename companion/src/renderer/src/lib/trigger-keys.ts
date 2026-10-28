@@ -24,7 +24,7 @@ export const MODE_DEDICATED = 'dedicated'
 export const MODE_PASS_THROUGH = 'pass_through'
 export const TRIGGER_MODES = [MODE_FN, MODE_DEDICATED, MODE_PASS_THROUGH] as const
 
-/** GLOBE_TRIGGER is the trigger of a keyboard with a Globe key of its own, unless it is listed. */
+/** GLOBE_TRIGGER is the trigger of a keyboard that is not listed. */
 export const GLOBE_TRIGGER: KeyboardTrigger = { key: GLOBE, mode: MODE_FN }
 
 /** KEYBOARD_ID matches a vendor:product keyboard ID. */
@@ -85,13 +85,10 @@ export function remapped(trigger: KeyboardTrigger): boolean {
 }
 
 /** triggerFor returns a keyboard's trigger and whether it is listed, mirroring the daemon's Trigger.For. */
-export function triggerFor(trigger: Trigger, id: string, hasGlobe: boolean): [KeyboardTrigger, boolean] {
+export function triggerFor(trigger: Trigger, id: string): [KeyboardTrigger, boolean] {
   const listed = trigger.keyboards[id]
-  if (listed) {
-    return [listed, true]
-  }
 
-  return [hasGlobe ? GLOBE_TRIGGER : { key: trigger.key, mode: trigger.mode }, false]
+  return listed ? [listed, true] : [GLOBE_TRIGGER, false]
 }
 
 /** withKey sets a trigger's key, falling back to fn mode for a key that cannot use its mode. */

@@ -431,18 +431,10 @@ func TestTriggerStatus(t *testing.T) {
 		trigger domainconfig.Trigger
 		want    string
 	}{
-		{domainconfig.Trigger{Default: domainconfig.GlobeTrigger}, "Globe key on keyboards without a Globe key"},
-		{domainconfig.Trigger{Default: caps}, "caps_lock (remapped to fn) on keyboards without a Globe key"},
+		{domainconfig.Trigger{}, "Globe key on every keyboard"},
 		{
-			domainconfig.Trigger{
-				Default:   domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"},
-				Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": caps},
-			},
-			"caps_lock (silenced, read directly) on keyboards without a Globe key; 1 keyboard(s) set their own",
-		},
-		{
-			domainconfig.Trigger{Default: domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}},
-			"insert (passed through, read directly) on keyboards without a Globe key",
+			domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": caps}},
+			"1 keyboard(s) set their own; others use the Globe key",
 		},
 	}
 
@@ -491,18 +483,21 @@ func TestReadsRawInput(t *testing.T) {
 	fn := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "fn"}
 	insert := domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}
 
-	if readsRawInput(domainconfig.Trigger{Default: fn}) {
+	dedicated := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
+	on := func(trigger domainconfig.KeyboardTrigger) domainconfig.Trigger {
+		return domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": trigger}}
+	}
+
+	if readsRawInput(domainconfig.Trigger{}) || readsRawInput(on(fn)) {
 		t.Error("an fn trigger reads raw input")
 	}
 
-	listed := domainconfig.Trigger{Default: fn, Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": insert}}
-	if !readsRawInput(listed) {
-		t.Error("a passed-through keyboard trigger does not read raw input")
+	if !readsRawInput(on(insert)) {
+		t.Error("a passed-through trigger does not read raw input")
 	}
 
-	dedicated := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
-	if !readsRawInput(domainconfig.Trigger{Default: dedicated}) {
-		t.Error("a dedicated default trigger does not read raw input")
+	if !readsRawInput(on(dedicated)) {
+		t.Error("a dedicated trigger does not read raw input")
 	}
 }
 

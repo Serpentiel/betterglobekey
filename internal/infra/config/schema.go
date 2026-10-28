@@ -17,7 +17,6 @@ const (
 	defaultDoublePressDelay = "250ms"
 	defaultReverseModifier  = "shift"
 	defaultHUDDuration      = "900ms"
-	defaultTriggerKey       = "globe"
 	defaultTriggerMode      = "fn"
 	defaultCollectionName   = "primary"
 )
@@ -66,10 +65,8 @@ type schemaV2 struct {
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
 	Trigger struct {
-		Key       string                       `yaml:"key"`
-		Mode      string                       `yaml:"mode"`
 		Keyboards map[string]keyboardTriggerV2 `yaml:"keyboards,omitempty"`
-	} `yaml:"trigger"`
+	} `yaml:"trigger,omitempty"`
 	Collections []collectionV2 `yaml:"collections"`
 }
 

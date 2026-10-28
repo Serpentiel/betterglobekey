@@ -53,11 +53,10 @@ describe('trigger keys', () => {
 
   it('resolves keyboard triggers like the daemon', () => {
     const insert = { key: 'insert', mode: 'pass_through' }
-    const trigger = { key: 'caps_lock', mode: 'fn', keyboards: { '046d:c33f': insert } }
+    const trigger = { keyboards: { '046d:c33f': insert } }
 
-    expect(triggerFor(trigger, '046d:c33f', false)).toEqual([insert, true])
-    expect(triggerFor(trigger, '05ac:0281', true)).toEqual([{ key: 'globe', mode: 'fn' }, false])
-    expect(triggerFor(trigger, '1234:5678', false)).toEqual([{ key: 'caps_lock', mode: 'fn' }, false])
+    expect(triggerFor(trigger, '046d:c33f')).toEqual([insert, true])
+    expect(triggerFor(trigger, '1234:5678')).toEqual([{ key: 'globe', mode: 'fn' }, false])
   })
 
   it('keeps a mode the new key allows', () => {

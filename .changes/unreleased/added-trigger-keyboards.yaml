@@ -1,3 +1,0 @@
-kind: Added
-body: "Every keyboard can have its own trigger key: `trigger.keyboards` and the companion's Keyboards… sheet set it by keyboard, and keyboards with a Globe key keep using it otherwise. The sheet and `doctor` list every connected keyboard with its trigger and key mappings."
-time: 2026-10-28T10:00:01.000000+02:00

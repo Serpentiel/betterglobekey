@@ -29,9 +29,9 @@ export interface KeyboardTrigger {
   mode: string
 }
 
-/** Trigger is the default trigger of keyboards without a Globe key, plus the
- * triggers of single keyboards by vendor:product ID. */
-export interface Trigger extends KeyboardTrigger {
+/** Trigger holds the triggers of single keyboards by vendor:product ID; any
+ * other keyboard uses the Globe key. */
+export interface Trigger {
   keyboards: Record<string, KeyboardTrigger>
 }
 

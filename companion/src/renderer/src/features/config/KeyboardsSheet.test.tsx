@@ -14,7 +14,7 @@ const config: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { key: 'caps_lock', mode: 'fn', keyboards: {} },
+  trigger: { keyboards: {} },
 }
 
 const globe: KeyboardTrigger = { key: 'globe', mode: 'fn' }
@@ -80,24 +80,21 @@ describe('KeyboardsSheet', () => {
     expect(screen.getByRole('dialog', { name: 'Keyboards' })).toBeTruthy()
     expect(screen.getByText('Built-in · 05ac:0281 · has Globe key')).toBeTruthy()
     expect(screen.getByText('🌐 Globe')).toBeTruthy()
-    expect(screen.getByText('Uses the default: the Globe key.')).toBeTruthy()
     expect((screen.getByRole('combobox', { name: 'Trigger mode' }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.queryByRole('button', { name: 'Use Default' })).toBeNull()
   })
 
   it('shows another keyboard with its applied mapping', () => {
-    renderSheet()
+    renderSheet({ keyboards: { '046d:c33f': capsFn } })
 
     chooseKeyboard('Logitech K120')
 
     expect(screen.getByText('USB · 046d:c33f')).toBeTruthy()
     expect(screen.getByText('⇪ Caps Lock')).toBeTruthy()
-    expect(screen.getByText('Uses the default: Caps Lock, act as fn.')).toBeTruthy()
     expect(screen.getByText('Caps Lock → fn.')).toBeTruthy()
   })
 
   it('sets a keyboard its own mode', () => {
-    const { onChange, trigger } = renderSheet()
+    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': capsFn } })
 
     chooseKeyboard('Logitech K120')
     fireEvent.click(screen.getByRole('combobox', { name: 'Trigger mode' }))
@@ -109,15 +106,14 @@ describe('KeyboardsSheet', () => {
     })
   })
 
-  it('puts a listed keyboard back on the default', () => {
+  it('puts a listed keyboard back on the Globe key', () => {
     const insert = { key: 'insert', mode: 'pass_through' }
     const { onChange, trigger } = renderSheet({ keyboards: { '05ac:0281': insert } })
 
     expect(screen.getByText('Insert')).toBeTruthy()
-    expect(screen.getByText('Set for this keyboard.')).toBeTruthy()
     expect(screen.getByText('Applies once saved.')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Use Default' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 

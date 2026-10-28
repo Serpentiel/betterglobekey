@@ -14,7 +14,6 @@ func validConfig() config.Config {
 		DoublePress: config.DoublePress{Enabled: true, MaxDelay: 250 * time.Millisecond},
 		Reverse:     config.Reverse{Enabled: true, Modifier: "shift"},
 		HUD:         config.HUD{Enabled: true, Duration: 900 * time.Millisecond, ShowCollection: true},
-		Trigger:     config.Trigger{Default: config.GlobeTrigger},
 		Collections: []config.Collection{
 			{Name: "primary", Sources: []string{"com.apple.keylayout.US"}},
 		},
@@ -36,6 +35,11 @@ func TestValidateAllowsNoCollections(t *testing.T) {
 	}
 }
 
+// keyboardTrigger returns a trigger setting key and mode for one keyboard.
+func keyboardTrigger(key, mode string) config.Trigger {
+	return config.Trigger{Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": {Key: key, Mode: mode}}}
+}
+
 func TestValidateRejectsInvalidConfigs(t *testing.T) {
 	tests := map[string]func(*config.Config){
 		"non-positive delay":    func(c *config.Config) { c.DoublePress.MaxDelay = 0 },
@@ -43,17 +47,14 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 		"invalid level":         func(c *config.Config) { c.Logger.Level = "trace" },
 		"invalid modifier":      func(c *config.Config) { c.Reverse.Modifier = "fn" },
 		"empty logger path":     func(c *config.Config) { c.Logger.Path = "" },
-		"invalid trigger key":   func(c *config.Config) { c.Trigger.Default.Key = "fn" },
-		"empty trigger key":     func(c *config.Config) { c.Trigger.Default.Key = "" },
-		"invalid trigger mode":  func(c *config.Config) { c.Trigger.Default.Mode = "swallow" },
+		"invalid trigger key":   func(c *config.Config) { c.Trigger = keyboardTrigger("fn", config.TriggerModeFn) },
+		"empty trigger key":     func(c *config.Config) { c.Trigger = keyboardTrigger("", config.TriggerModeFn) },
+		"invalid trigger mode":  func(c *config.Config) { c.Trigger = keyboardTrigger("insert", "swallow") },
 		"caps lock pass-through": func(c *config.Config) {
-			c.Trigger.Default = config.KeyboardTrigger{Key: config.TriggerCapsLock, Mode: config.TriggerModePassThrough}
+			c.Trigger = keyboardTrigger(config.TriggerCapsLock, config.TriggerModePassThrough)
 		},
 		"invalid keyboard id": func(c *config.Config) {
 			c.Trigger.Keyboards = map[string]config.KeyboardTrigger{"05AC:29C": config.GlobeTrigger}
-		},
-		"invalid keyboard trigger": func(c *config.Config) {
-			c.Trigger.Keyboards = map[string]config.KeyboardTrigger{"046d:c33f": {Key: "insert", Mode: "swallow"}}
 		},
 		"negative retention":    func(c *config.Config) { c.Logger.RetentionFiles = -1 },
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },
@@ -78,10 +79,7 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 func TestValidateAcceptsEveryTriggerKey(t *testing.T) {
 	for _, key := range config.TriggerKeys {
 		cfg := validConfig()
-		cfg.Trigger.Default.Key = key
-		cfg.Trigger.Keyboards = map[string]config.KeyboardTrigger{
-			"046d:c33f": {Key: key, Mode: config.TriggerModeDedicated},
-		}
+		cfg.Trigger = keyboardTrigger(key, config.TriggerModeDedicated)
 
 		if err := cfg.Validate(); err != nil {
 			t.Errorf("trigger %q: unexpected error: %v", key, err)
@@ -115,24 +113,21 @@ func TestKeyboardTriggerModes(t *testing.T) {
 }
 
 func TestTriggerFor(t *testing.T) {
-	caps := config.KeyboardTrigger{Key: config.TriggerCapsLock, Mode: config.TriggerModeFn}
 	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
-	trigger := config.Trigger{Default: caps, Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": insert}}
+	trigger := config.Trigger{Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": insert}}
 
 	tests := []struct {
-		name     string
-		id       string
-		hasGlobe bool
-		want     config.KeyboardTrigger
-		listed   bool
+		name   string
+		id     string
+		want   config.KeyboardTrigger
+		listed bool
 	}{
-		{"listed", "046d:c33f", false, insert, true},
-		{"with Globe key", "05ac:0281", true, config.GlobeTrigger, false},
-		{"without Globe key", "1234:5678", false, caps, false},
+		{"listed", "046d:c33f", insert, true},
+		{"not listed", "1234:5678", config.GlobeTrigger, false},
 	}
 
 	for _, test := range tests {
-		got, listed := trigger.For(test.id, test.hasGlobe)
+		got, listed := trigger.For(test.id)
 		if got != test.want || listed != test.listed {
 			t.Errorf("%s: For = %+v, %v; want %+v, %v", test.name, got, listed, test.want, test.listed)
 		}

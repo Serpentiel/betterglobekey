@@ -119,20 +119,6 @@ pub fn default_socket() -> PathBuf {
     std::env::home_dir().unwrap_or_default().join(".betterglobekey.sock")
 }
 
-/// GLOBE is the default trigger key, used when a daemon predating the trigger
-/// sends none.
-const GLOBE: &str = "globe";
-
-/// FN is the default trigger mode.
-const FN: &str = "fn";
-
-/// fill sets `value` to `default` when it is empty.
-fn fill(value: &mut String, default: &str) {
-    if value.is_empty() {
-        default.clone_into(value);
-    }
-}
-
 /// complete fills in any section the daemon left unset, so the UI always gets
 /// every field (proto3 omits empty messages; the UI types do not).
 fn complete(mut config: Config) -> Config {
@@ -140,10 +126,7 @@ fn complete(mut config: Config) -> Config {
     config.double_press.get_or_insert_default();
     config.reverse.get_or_insert_default();
     config.hud.get_or_insert_default();
-
-    let trigger = config.trigger.get_or_insert_default();
-    fill(&mut trigger.key, GLOBE);
-    fill(&mut trigger.mode, FN);
+    config.trigger.get_or_insert_default();
 
     config
 }
@@ -167,11 +150,7 @@ mod tests {
                 "reverse": { "enabled": false, "modifier": "" },
                 "hud": { "enabled": false, "duration": "", "showCollection": false },
                 "collections": [],
-                "trigger": {
-                    "key": "globe",
-                    "mode": "fn",
-                    "keyboards": {},
-                },
+                "trigger": { "keyboards": {} },
             }),
         );
     }
@@ -184,11 +163,7 @@ mod tests {
             "reverse": { "enabled": true, "modifier": "shift" },
             "hud": { "enabled": true, "duration": "900ms", "showCollection": true },
             "collections": [{ "name": "primary", "sources": ["com.apple.keylayout.US"] }],
-            "trigger": {
-                "key": "right_command",
-                "mode": "pass_through",
-                "keyboards": { "046d:c33f": { "key": "insert", "mode": "pass_through" } },
-            },
+            "trigger": { "keyboards": { "046d:c33f": { "key": "insert", "mode": "pass_through" } } },
         }))
         .unwrap();
 
@@ -197,11 +172,7 @@ mod tests {
         assert!(config.hud.unwrap().show_collection);
         assert_eq!(config.collections[0].sources, ["com.apple.keylayout.US"]);
 
-        let trigger = config.trigger.unwrap();
-        assert_eq!(trigger.key, "right_command");
-        assert_eq!(trigger.mode, "pass_through");
-
-        let logitech = &trigger.keyboards["046d:c33f"];
+        let logitech = &config.trigger.unwrap().keyboards["046d:c33f"];
         assert_eq!((logitech.key.as_str(), logitech.mode.as_str()), ("insert", "pass_through"));
     }
 
@@ -209,8 +180,6 @@ mod tests {
     fn complete_keeps_a_set_trigger() {
         let config = complete(Config {
             trigger: Some(Trigger {
-                key: "f13".to_owned(),
-                mode: "dedicated".to_owned(),
                 keyboards: [(
                     "046d:c33f".to_owned(),
                     KeyboardTrigger { key: "insert".to_owned(), mode: "pass_through".to_owned() },
@@ -220,10 +189,7 @@ mod tests {
             ..Config::default()
         });
 
-        let trigger = config.trigger.unwrap();
-        assert_eq!(trigger.key, "f13");
-        assert_eq!(trigger.mode, "dedicated");
-        assert_eq!(trigger.keyboards["046d:c33f"].key, "insert");
+        assert_eq!(config.trigger.unwrap().keyboards["046d:c33f"].key, "insert");
     }
 
     #[test]

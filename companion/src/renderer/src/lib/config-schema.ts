@@ -87,8 +87,6 @@ export const configSchema = z
     }),
     collections: z.array(collectionSchema),
     trigger: z.object({
-      key: z.enum(TRIGGER_KEY_VALUES),
-      mode: z.enum(TRIGGER_MODES),
       keyboards: z.record(
         z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'),
         z.object({ key: z.enum(TRIGGER_KEY_VALUES), mode: z.enum(TRIGGER_MODES) }),
@@ -96,14 +94,6 @@ export const configSchema = z
     }),
   })
   .superRefine((config, ctx) => {
-    if (!allowedModes(config.trigger.key).includes(config.trigger.mode)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['trigger', 'mode'],
-        message: 'This key can only be remapped',
-      })
-    }
-
     for (const [id, keyboard] of Object.entries(config.trigger.keyboards)) {
       if (!allowedModes(keyboard.key).includes(keyboard.mode)) {
         ctx.addIssue({
@@ -137,7 +127,7 @@ export interface ConfigErrors {
   reverse: { modifier?: string }
   hud: { duration?: string }
   collections: Record<number, { name?: string; sources?: string }>
-  trigger: { key?: string; mode?: string; keyboards?: string }
+  trigger: { keyboards?: string }
 }
 
 export interface ValidationResult {
@@ -170,8 +160,8 @@ export function validateConfig(config: Config): ValidationResult {
       errors.reverse.modifier ??= issue.message
     } else if (head === 'hud' && second === 'duration') {
       errors.hud.duration ??= issue.message
-    } else if (head === 'trigger' && (second === 'key' || second === 'mode' || second === 'keyboards')) {
-      errors.trigger[second] ??= issue.message
+    } else if (head === 'trigger' && second === 'keyboards') {
+      errors.trigger.keyboards ??= issue.message
     } else if (head === 'collections' && typeof second === 'number') {
       const field = third as 'name' | 'sources'
       errors.collections[second] ??= {}

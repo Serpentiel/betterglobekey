@@ -105,32 +105,24 @@ type Reverse struct {
 	Modifier string
 }
 
-// GlobeTrigger is the trigger of a keyboard with a Globe key of its own, unless
-// it is listed in Trigger.Keyboards.
+// GlobeTrigger is the trigger of a keyboard not listed in Trigger.Keyboards.
 var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeFn}
 
 // Trigger selects the key that switches input sources on each keyboard.
 type Trigger struct {
-	// Default is the trigger of keyboards without a Globe key that are not
-	// listed in Keyboards. Its key is the Globe key when they have no trigger.
-	Default KeyboardTrigger
 	// Keyboards are the triggers of single keyboards, by keyboard ID (see
-	// KeyboardID).
+	// KeyboardID). Any other keyboard uses GlobeTrigger.
 	Keyboards map[string]KeyboardTrigger
 }
 
-// For returns the trigger of the keyboard with the given ID, which has or lacks
-// a Globe key, and whether it is listed in Keyboards.
-func (t Trigger) For(id string, hasGlobe bool) (KeyboardTrigger, bool) {
+// For returns the trigger of the keyboard with the given ID, and whether it is
+// listed in Keyboards.
+func (t Trigger) For(id string) (KeyboardTrigger, bool) {
 	if trigger, ok := t.Keyboards[id]; ok {
 		return trigger, true
 	}
 
-	if hasGlobe {
-		return GlobeTrigger, false
-	}
-
-	return t.Default, false
+	return GlobeTrigger, false
 }
 
 // KeyboardTrigger is one keyboard's trigger key and how it is detected.
@@ -226,12 +218,8 @@ func (c Config) Validate() error {
 	return c.validateCollections()
 }
 
-// validate checks the default trigger and every keyboard's trigger.
+// validate checks every keyboard's trigger.
 func (t Trigger) validate() error {
-	if err := t.Default.validate("trigger"); err != nil {
-		return err
-	}
-
 	for id, trigger := range t.Keyboards {
 		if !keyboardIDPattern.MatchString(id) {
 			return fmt.Errorf("trigger keyboard %q must be vendor:product in hex, like 05ac:029c", id)

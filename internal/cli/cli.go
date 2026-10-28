@@ -367,15 +367,13 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// triggerStatus describes the default trigger and how many keyboards set their own.
+// triggerStatus describes how many keyboards set their own trigger.
 func triggerStatus(trigger domainconfig.Trigger) string {
-	status := describeTrigger(trigger.Default) + " on keyboards without a Globe key"
-
 	if listed := len(trigger.Keyboards); listed > 0 {
-		status += fmt.Sprintf("; %d keyboard(s) set their own", listed)
+		return fmt.Sprintf("%d keyboard(s) set their own; others use the Globe key", listed)
 	}
 
-	return status
+	return "Globe key on every keyboard"
 }
 
 // describeTrigger renders a keyboard trigger: its key and how it is detected.
@@ -603,8 +601,8 @@ func inputMonitoringStatusLine(granted bool) string {
 		return "input monitoring: granted"
 	}
 
-	return "input monitoring: not granted (only trigger.mode: dedicated needs it; enable in System Settings > " +
-		"Privacy & Security > Input Monitoring, then restart the service)"
+	return "input monitoring: not granted (only dedicated and passed-through trigger keys need it; enable in " +
+		"System Settings > Privacy & Security > Input Monitoring, then restart the service)"
 }
 
 // newRemapper returns the trigger key remapper backed by the system's HID key

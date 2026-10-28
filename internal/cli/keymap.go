@@ -62,7 +62,7 @@ func watchTriggers(resolved []keymap.Resolved) {
 
 		switch {
 		case trigger.Globe():
-			globe = globe || r.HasGlobe
+			globe = true
 		case trigger.Fn():
 			globe = globe || r.Applied
 		case trigger.PassThrough() || (trigger.Dedicated() && r.Applied):
@@ -83,10 +83,6 @@ func watchTriggers(resolved []keymap.Resolved) {
 // readsRawInput reports whether any trigger is read from raw input, which needs
 // Input Monitoring.
 func readsRawInput(trigger domainconfig.Trigger) bool {
-	if trigger.Default.Raw() {
-		return true
-	}
-
 	for _, keyboard := range trigger.Keyboards {
 		if keyboard.Raw() {
 			return true

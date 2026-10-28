@@ -90,18 +90,12 @@ func TestApplySchemaDefaults(t *testing.T) {
 		t.Errorf("duration = %q, want %q", empty.HUD.Duration, defaultHUDDuration)
 	}
 
-	if empty.Trigger.Key != defaultTriggerKey || empty.Trigger.Mode != defaultTriggerMode {
-		t.Errorf("trigger = %+v, want the defaults", empty.Trigger)
-	}
-
 	// Populated fields must be left untouched.
 	set := schemaV2{}
 	set.Logger.Level = "debug"
 	set.DoublePress.MaximumDelay = "1s"
 	set.Reverse.Modifier = "command"
 	set.HUD.Duration = "2s"
-	set.Trigger.Key = "f13"
-	set.Trigger.Mode = "pass_through"
 	set.Trigger.Keyboards = map[string]keyboardTriggerV2{"046d:c33f": {Key: "insert"}}
 	applySchemaDefaults(&set)
 
@@ -110,8 +104,7 @@ func TestApplySchemaDefaults(t *testing.T) {
 	}
 
 	if set.Logger.Level != "debug" || set.DoublePress.MaximumDelay != "1s" ||
-		set.Reverse.Modifier != "command" || set.HUD.Duration != "2s" || set.Trigger.Key != "f13" ||
-		set.Trigger.Mode != "pass_through" {
+		set.Reverse.Modifier != "command" || set.HUD.Duration != "2s" {
 		t.Errorf("applySchemaDefaults overwrote populated fields: %+v", set)
 	}
 }

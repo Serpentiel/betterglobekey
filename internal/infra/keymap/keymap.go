@@ -271,7 +271,7 @@ func (r *Remapper) wantFor(keyboard Keyboard) (Mapping, bool) {
 		return Mapping{}, false
 	}
 
-	trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+	trigger, _ := r.trigger.For(keyboard.KeyboardID())
 	if !trigger.Remapped() {
 		return Mapping{}, false
 	}
@@ -532,8 +532,6 @@ func (r *Remapper) save(entries []entry) error {
 type Resolved struct {
 	// Vendor, Product, and Location identify the keyboard.
 	Vendor, Product, Location uint32
-	// HasGlobe reports whether the keyboard has a Globe key of its own.
-	HasGlobe bool
 	// Trigger is the keyboard's trigger.
 	Trigger config.KeyboardTrigger
 	// Applied reports whether the trigger's mapping is in place, for a trigger
@@ -579,7 +577,7 @@ func (r *Remapper) notify(keyboards []Keyboard, entries []entry) {
 
 		seen[id] = true
 
-		trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+		trigger, _ := r.trigger.For(keyboard.KeyboardID())
 		want, wanted := r.wantFor(keyboard)
 		mapping, ok := applied[id]
 
@@ -587,7 +585,6 @@ func (r *Remapper) notify(keyboards []Keyboard, entries []entry) {
 			Vendor:   keyboard.Vendor,
 			Product:  keyboard.Product,
 			Location: keyboard.Location,
-			HasGlobe: keyboard.HasGlobe(),
 			Trigger:  trigger,
 			Applied:  wanted && ok && mapping == want,
 		})
@@ -649,7 +646,7 @@ func (r *Remapper) Keyboards(trigger config.Trigger) ([]Status, []Mapping, error
 			i = len(statuses)
 			index[id] = i
 
-			resolved, listed := trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
+			resolved, listed := trigger.For(keyboard.KeyboardID())
 
 			statuses = append(statuses, Status{Keyboard: keyboard, Trigger: resolved, Listed: listed})
 			statuses[i].Mappings = nil

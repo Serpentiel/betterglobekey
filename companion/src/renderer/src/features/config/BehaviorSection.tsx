@@ -4,7 +4,6 @@ import { Keyboard } from 'lucide-react'
 import type { Config } from '../../../../shared/types'
 import { REVERSE_MODIFIERS, type ConfigErrors } from '../../lib/config-schema'
 import { capitalize } from '../../lib/text'
-import { triggerName } from '../../lib/trigger-keys'
 import { Field, Input, Section, Select, Setting, Switch } from '../../ui'
 
 interface Props {
@@ -20,10 +19,8 @@ export function BehaviorSection({ config, errors, onChange }: Props): ReactEleme
   const setReverse = (patch: Partial<Config['reverse']>): void =>
     onChange({ ...config, reverse: { ...config.reverse, ...patch } })
 
-  const name = triggerName(config.trigger.key)
-
   return (
-    <Section icon={Keyboard} title="Behavior" description={`How the ${name} key responds to presses.`}>
+    <Section icon={Keyboard} title="Behavior" description="How the trigger key responds to presses.">
       <Setting
         title="Double press to switch collections"
         description="A quick second press cycles to the next collection."

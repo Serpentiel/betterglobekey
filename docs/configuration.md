@@ -36,10 +36,6 @@ hud:
   duration: 900ms
   show_collection: true
 
-trigger:
-  key: globe
-  mode: fn
-
 collections:
   - name: primary
     sources:
@@ -55,14 +51,11 @@ All options other than `collections` are optional and fall back to the defaults 
 
 ## Trigger Key
 
-Every keyboard has its own trigger key. A keyboard with a Globe key of its own, such as a MacBook's or a Magic
-Keyboard, uses it. Any other keyboard uses `trigger.key` and `trigger.mode`, and `trigger.keyboards` sets single
-keyboards apart, by the vendor and product ID that `betterglobekey doctor` and the companion show:
+Every keyboard has its own trigger key, set under `trigger.keyboards` by the vendor and product ID that
+`betterglobekey doctor` and the companion show. A keyboard not listed uses the Globe key:
 
 ```yaml
 trigger:
-  key: caps_lock # keyboards without a Globe key
-  mode: fn
   keyboards:
     "046d:c33f": # a Logitech keyboard
       key: insert
@@ -72,7 +65,7 @@ trigger:
       mode: dedicated
 ```
 
-The default `trigger.key`, `globe`, leaves keyboards without a Globe key without a trigger. The keys:
+`mode` defaults to `fn`. The keys:
 
 | Key                                           | `key`                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------ |

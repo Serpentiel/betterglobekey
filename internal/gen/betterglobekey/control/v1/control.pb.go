@@ -119,19 +119,9 @@ func (x *Config) GetTrigger() *Trigger {
 // keyboards; one without uses key and mode, unless it is listed.
 type Trigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// key is the trigger key of keyboards without a Globe key: globe (none),
-	// caps_lock, right_command, right_option, right_control, right_shift,
-	// left_command, left_option, left_control, left_shift, f13 through f20,
-	// menu, insert, print_screen, scroll_lock, or pause.
-	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// mode is how a key other than globe is detected: fn (remapped to fn, the
-	// Globe key's usage; the default when empty), dedicated (silenced and read
-	// from raw input; needs Input Monitoring), or pass_through (keeps its
-	// function and is read from raw input; needs Input Monitoring; not allowed
-	// for caps_lock).
-	Mode string `protobuf:"bytes,3,opt,name=mode,proto3" json:"mode,omitempty"`
 	// keyboards are the triggers of single keyboards, by ID: the vendor and
-	// product IDs as four lower-case hex digits each ("05ac:029c").
+	// product IDs as four lower-case hex digits each ("05ac:029c"). Any other
+	// keyboard uses the Globe key.
 	Keyboards     map[string]*KeyboardTrigger `protobuf:"bytes,5,rep,name=keyboards,proto3" json:"keyboards,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -165,20 +155,6 @@ func (x *Trigger) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Trigger.ProtoReflect.Descriptor instead.
 func (*Trigger) Descriptor() ([]byte, []int) {
 	return file_betterglobekey_control_v1_control_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Trigger) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *Trigger) GetMode() string {
-	if x != nil {
-		return x.Mode
-	}
-	return ""
 }
 
 func (x *Trigger) GetKeyboards() map[string]*KeyboardTrigger {
@@ -1423,14 +1399,12 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\areverse\x18\x03 \x01(\v2\".betterglobekey.control.v1.ReverseR\areverse\x120\n" +
 	"\x03hud\x18\x04 \x01(\v2\x1e.betterglobekey.control.v1.HudR\x03hud\x12G\n" +
 	"\vcollections\x18\x05 \x03(\v2%.betterglobekey.control.v1.CollectionR\vcollections\x12<\n" +
-	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\x84\x02\n" +
-	"\aTrigger\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
-	"\x04mode\x18\x03 \x01(\tR\x04mode\x12O\n" +
+	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\xe3\x01\n" +
+	"\aTrigger\x12O\n" +
 	"\tkeyboards\x18\x05 \x03(\v21.betterglobekey.control.v1.Trigger.KeyboardsEntryR\tkeyboards\x1ah\n" +
 	"\x0eKeyboardsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
-	"\x05value\x18\x02 \x01(\v2*.betterglobekey.control.v1.KeyboardTriggerR\x05value:\x028\x01J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05R\fpass_through\"7\n" +
+	"\x05value\x18\x02 \x01(\v2*.betterglobekey.control.v1.KeyboardTriggerR\x05value:\x028\x01J\x04\b\x01\x10\x05R\x03keyR\x04modeR\fpass_through\"7\n" +
 	"\x0fKeyboardTrigger\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04mode\x18\x02 \x01(\tR\x04mode\"\x82\x01\n" +

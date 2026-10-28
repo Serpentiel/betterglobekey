@@ -2,7 +2,15 @@ import { type ReactElement, useState } from 'react'
 
 import type { Config, Keyboard, KeyboardTrigger, KeyMapping } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
-import { allowedModes, DEDICATED_USAGE, GLOBE, MODE_FN, triggerFor, withKey } from '../../lib/trigger-keys'
+import {
+  allowedModes,
+  DEDICATED_USAGE,
+  GLOBE,
+  GLOBE_TRIGGER,
+  MODE_FN,
+  triggerFor,
+  withKey,
+} from '../../lib/trigger-keys'
 import { Banner, Button, Field, Select, Sheet } from '../../ui'
 import { KeyPicker } from './KeyPicker'
 import { describeTrigger, MODE_LABELS, modeHint } from './trigger-text'
@@ -44,8 +52,8 @@ function sameTrigger(a: KeyboardTrigger, b: KeyboardTrigger): boolean {
 }
 
 /** switchesWithGlobe reports whether a trigger makes the Globe key switch: the key itself, or a key remapped to fn. */
-function switchesWithGlobe(trigger: KeyboardTrigger, hasGlobe: boolean): boolean {
-  return trigger.key === GLOBE ? hasGlobe : trigger.mode === MODE_FN
+function switchesWithGlobe(trigger: KeyboardTrigger): boolean {
+  return trigger.key === GLOBE || trigger.mode === MODE_FN
 }
 
 /** KeyboardsSheet sets the trigger key of single keyboards, the way macOS's Modifier Keys sheet configures a chosen keyboard. */
@@ -96,18 +104,16 @@ export function KeyboardsSheet({ open, config, keyboards, onChange, onClose }: P
               keyboard={keyboard}
               config={config}
               globeElsewhere={connected.some(
-                (other) =>
-                  other.id !== keyboard.id &&
-                  switchesWithGlobe(triggerFor(trigger, other.id, other.hasGlobe)[0], other.hasGlobe),
+                (other) => other.id !== keyboard.id && switchesWithGlobe(triggerFor(trigger, other.id)[0]),
               )}
               onChange={(next) => setKeyboards({ ...trigger.keyboards, [keyboard.id]: next })}
-              onReset={() => resetKeyboard(keyboard.id)}
+              onUseGlobe={() => resetKeyboard(keyboard.id)}
             />
           ) : (
             <div className={styles.group}>
               <div className={styles.row}>
                 <div className={styles.text}>
-                  <span className={styles.name}>{describeTrigger(trigger.keyboards[selected] ?? trigger)}</span>
+                  <span className={styles.name}>{describeTrigger(trigger.keyboards[selected] ?? GLOBE_TRIGGER)}</span>
                   <span className={styles.details}>Applies when the keyboard is connected.</span>
                 </div>
                 <Button variant="ghost" onClick={() => resetKeyboard(selected)}>
@@ -152,13 +158,13 @@ interface SettingsProps {
   /** globeElsewhere reports that another connected keyboard switches with the Globe key. */
   globeElsewhere: boolean
   onChange: (trigger: KeyboardTrigger) => void
-  onReset: () => void
+  /** onUseGlobe puts the keyboard back on the Globe key. */
+  onUseGlobe: () => void
 }
 
 /** KeyboardSettings edits one connected keyboard's trigger key and mode. */
-function KeyboardSettings({ keyboard, config, globeElsewhere, onChange, onReset }: SettingsProps): ReactElement {
-  const [current, listed] = triggerFor(config.trigger, keyboard.id, keyboard.hasGlobe)
-  const defaultTrigger = keyboard.hasGlobe ? 'the Globe key' : describeTrigger(config.trigger)
+function KeyboardSettings({ keyboard, config, globeElsewhere, onChange, onUseGlobe }: SettingsProps): ReactElement {
+  const [current] = triggerFor(config.trigger, keyboard.id)
   const saved = sameTrigger(current, keyboard.trigger)
 
   let status = 'No key is remapped.'
@@ -171,14 +177,14 @@ function KeyboardSettings({ keyboard, config, globeElsewhere, onChange, onReset 
   return (
     <>
       <p className={styles.details}>{details(keyboard)}</p>
-      <Field label="Trigger key" hint={listed ? 'Set for this keyboard.' : `Uses the default: ${defaultTrigger}.`}>
+      <Field label="Trigger key">
         {({ id }) => (
           <KeyPicker
             id={id}
             value={current.key}
             keyboardId={keyboard.id}
             keyboardName={keyboardName(keyboard)}
-            onChange={(key) => onChange(withKey(current, key))}
+            onChange={(key) => (key === GLOBE ? onUseGlobe() : onChange(withKey(current, key)))}
           />
         )}
       </Field>
@@ -195,13 +201,8 @@ function KeyboardSettings({ keyboard, config, globeElsewhere, onChange, onReset 
       </Field>
       <div className={styles.footer}>
         <span className={styles.status}>{status}</span>
-        {listed ? (
-          <Button variant="ghost" onClick={onReset}>
-            Use Default
-          </Button>
-        ) : null}
       </div>
-      {keyboard.hasGlobe && !switchesWithGlobe(current, true) && globeElsewhere ? (
+      {keyboard.hasGlobe && !switchesWithGlobe(current) && globeElsewhere ? (
         <Banner tone="info">
           The Globe key still switches here: it cannot tell keyboards apart, and another keyboard switches with it.
         </Banner>

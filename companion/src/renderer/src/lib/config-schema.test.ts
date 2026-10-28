@@ -10,7 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
-    trigger: { key: 'globe', mode: 'fn', keyboards: {} },
+    trigger: { keyboards: {} },
   }
 }
 
@@ -52,15 +52,13 @@ describe('validateConfig', () => {
 
   it('accepts every trigger mode and per-keyboard triggers', () => {
     const config = validConfig()
-    const keyboards = { '046d:c33f': { key: 'insert', mode: 'pass_through' } }
-
-    config.trigger = { key: 'caps_lock', mode: 'fn', keyboards }
-    expect(validateConfig(config).valid).toBe(true)
-
-    config.trigger = { key: 'caps_lock', mode: 'dedicated', keyboards }
-    expect(validateConfig(config).valid).toBe(true)
-
-    config.trigger = { key: 'right_command', mode: 'pass_through', keyboards }
+    config.trigger = {
+      keyboards: {
+        '046d:c33f': { key: 'insert', mode: 'pass_through' },
+        '05ac:0281': { key: 'caps_lock', mode: 'dedicated' },
+        '1234:5678': { key: 'right_command', mode: 'fn' },
+      },
+    }
     expect(validateConfig(config).valid).toBe(true)
   })
 
@@ -82,18 +80,10 @@ describe('validateConfig', () => {
 
   it('rejects an unknown trigger key', () => {
     const config = validConfig()
-    config.trigger.key = 'fn'
+    config.trigger.keyboards = { '046d:c33f': { key: 'fn', mode: 'fn' } }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
-    expect(result.errors.trigger.key).toBeDefined()
-  })
-
-  it('rejects passing Caps Lock through', () => {
-    const config = validConfig()
-    config.trigger = { ...config.trigger, key: 'caps_lock', mode: 'pass_through' }
-    const result = validateConfig(config)
-    expect(result.valid).toBe(false)
-    expect(result.errors.trigger.mode).toBeDefined()
+    expect(result.errors.trigger.keyboards).toBeDefined()
   })
 
   it('requires a non-blank log path', () => {

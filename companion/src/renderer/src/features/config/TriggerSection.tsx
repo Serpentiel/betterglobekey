@@ -1,14 +1,11 @@
 import { type ReactElement, useState } from 'react'
 import { Globe } from 'lucide-react'
 
-import type { Config, KeyboardTrigger } from '../../../../shared/types'
+import type { Config } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
-import { allowedModes, GLOBE, withKey } from '../../lib/trigger-keys'
-import { Button, Field, Section, Select, Setting } from '../../ui'
+import { Button, Section, Setting } from '../../ui'
 import { KeyboardsSheet } from './KeyboardsSheet'
-import { KeyPicker } from './KeyPicker'
-import { MODE_LABELS, modeHint } from './trigger-text'
 
 interface Props {
   config: Config
@@ -36,37 +33,13 @@ function keyboardsSummary(config: Config, { report, error }: KeyboardsState): st
 
 export function TriggerSection({ config, errors, keyboards, onChange }: Props): ReactElement {
   const [sheetOpen, setSheetOpen] = useState(false)
-  const { trigger } = config
-  const defaultTrigger: KeyboardTrigger = { key: trigger.key, mode: trigger.mode }
-
-  const setDefault = (next: KeyboardTrigger): void => onChange({ ...config, trigger: { ...trigger, ...next } })
 
   return (
-    <Section icon={Globe} title="Trigger Key" description="The key that switches input sources, on each keyboard.">
-      <Field
-        label="Keyboards without a Globe key"
-        hint={
-          trigger.key === GLOBE
-            ? 'Keyboards with a Globe key use it. Record a key for keyboards without one.'
-            : 'Keyboards with a Globe key keep using it. Choose single keyboards under Keyboards.'
-        }
-        error={errors.trigger.key}
-      >
-        {({ id }) => (
-          <KeyPicker id={id} value={trigger.key} onChange={(key) => setDefault(withKey(defaultTrigger, key))} />
-        )}
-      </Field>
-      <Field label="Trigger mode" hint={errors.trigger.mode ?? modeHint(defaultTrigger)}>
-        {({ id }) => (
-          <Select
-            id={id}
-            value={trigger.mode}
-            disabled={trigger.key === GLOBE}
-            options={allowedModes(trigger.key).map((value) => ({ value, label: MODE_LABELS[value] ?? value }))}
-            onChange={(mode) => setDefault({ ...defaultTrigger, mode })}
-          />
-        )}
-      </Field>
+    <Section
+      icon={Globe}
+      title="Trigger Key"
+      description="The key that switches input sources. Keyboards use the Globe key unless you set their own."
+    >
       <Setting
         title="Keyboards"
         description={errors.trigger.keyboards ?? keyboardsSummary(config, keyboards)}

@@ -99,10 +99,8 @@ async fn reads_config_sources_and_version() {
     assert!(
         config.logger.is_some() && config.double_press.is_some() && config.reverse.is_some() && config.hud.is_some()
     );
-    // The stub predates the trigger, so the Globe default fills it in.
-    let trigger = config.trigger.unwrap();
-    assert_eq!((trigger.key.as_str(), trigger.mode.as_str()), ("globe", "fn"));
-    assert!(trigger.keyboards.is_empty());
+    // The stub predates the trigger, so an empty one fills it in.
+    assert!(config.trigger.unwrap().keyboards.is_empty());
 
     assert_eq!(daemon.list_keyboards().await.unwrap().keyboards[0].name, "Logitech");
 

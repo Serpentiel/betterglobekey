@@ -52,7 +52,8 @@ func (f fakeKeyboards) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 			{Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true}},
 			{
 				Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
-				Trigger:  trigger.Default,
+				Trigger:  trigger.Keyboards["046d:c33f"],
+				Listed:   true,
 				Ours:     &capsToGlobe,
 				Others:   []keymap.Mapping{escape},
 			},
@@ -114,8 +115,6 @@ func sampleProtoConfig() *controlv1.Config {
 		Reverse:     &controlv1.Reverse{Enabled: true, Modifier: "shift"},
 		Hud:         &controlv1.Hud{Enabled: true, Duration: "900ms", ShowCollection: true},
 		Trigger: &controlv1.Trigger{
-			Key:  "right_command",
-			Mode: "dedicated",
 			Keyboards: map[string]*controlv1.KeyboardTrigger{
 				"046d:c33f": {Key: "insert", Mode: "pass_through"},
 			},
@@ -159,9 +158,8 @@ func TestApplyThenGetConfig(t *testing.T) {
 	trigger := cfg.GetTrigger()
 
 	logitech := trigger.GetKeyboards()["046d:c33f"]
-	if trigger.GetKey() != "right_command" || trigger.GetMode() != "dedicated" ||
-		logitech.GetKey() != "insert" || logitech.GetMode() != "pass_through" {
-		t.Errorf("trigger = %+v, want dedicated right_command and Insert passed through on one keyboard", trigger)
+	if logitech.GetKey() != "insert" || logitech.GetMode() != "pass_through" {
+		t.Errorf("trigger = %+v, want Insert passed through on one keyboard", trigger)
 	}
 
 	if len(cfg.GetCollections()) != 2 {
@@ -191,7 +189,7 @@ func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
 	}
 
 	trigger := got.GetConfig().GetTrigger()
-	if trigger.GetKey() != "globe" || trigger.GetMode() != "fn" || len(trigger.GetKeyboards()) != 0 {
+	if len(trigger.GetKeyboards()) != 0 {
 		t.Errorf("trigger = %+v, want globe", trigger)
 	}
 }
@@ -267,7 +265,9 @@ func TestListKeyboards(t *testing.T) {
 	client := newTestClient(t, path, fakeSources{}, true)
 
 	config := sampleProtoConfig()
-	config.Trigger = &controlv1.Trigger{Key: "caps_lock"}
+	config.Trigger = &controlv1.Trigger{
+		Keyboards: map[string]*controlv1.KeyboardTrigger{"046d:c33f": {Key: "caps_lock"}},
+	}
 
 	if _, err := client.ApplyConfig(context.Background(), &controlv1.ApplyConfigRequest{Config: config}); err != nil {
 		t.Fatalf("ApplyConfig: %v", err)
