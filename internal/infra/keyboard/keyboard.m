@@ -71,6 +71,11 @@ static int bgkRecording = 0;
 static IOHIDManagerRef bgkHID = NULL;
 static int bgkHIDOpen = 0;
 
+// bgkHIDListen reports whether Input Monitoring was granted when raw input
+// opened. Without it raw input still opens, under Accessibility, but passes
+// only a few keys, so it is reopened once Input Monitoring is granted.
+static int bgkHIDListen = 0;
+
 // bgkHIDSignal is a run-loop source on the tap's run loop that runs bgkSyncHID
 // there when another thread changes the raw keys.
 static CFRunLoopSourceRef bgkHIDSignal = NULL;
@@ -171,42 +176,76 @@ static CFDictionaryRef bgkMatching(int page, int usage) {
 	return matching;
 }
 
+// bgkCreateHID creates the HID manager for keyboards and media keys, scheduled
+// on the current run loop.
+static IOHIDManagerRef bgkCreateHID(void) {
+	IOHIDManagerRef manager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+
+	CFDictionaryRef keyboards = bgkMatching(kHIDPage_GenericDesktop, kHIDUsage_GD_Keyboard);
+	CFDictionaryRef consumer = bgkMatching(kHIDPage_Consumer, kHIDUsage_Csmr_ConsumerControl);
+	const void *matches[] = {keyboards, consumer};
+	CFArrayRef matching = CFArrayCreate(kCFAllocatorDefault, matches, 2, &kCFTypeArrayCallBacks);
+
+	IOHIDManagerSetDeviceMatchingMultiple(manager, matching);
+	IOHIDManagerRegisterInputValueCallback(manager, bgkHIDValue, NULL);
+	IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+	CFRelease(matching);
+	CFRelease(consumer);
+	CFRelease(keyboards);
+
+	return manager;
+}
+
+// bgkReleaseHID closes and releases the HID manager. A closed manager does not
+// deliver input again once reopened, so every open starts from a new one.
+static void bgkReleaseHID(void) {
+	if (bgkHIDOpen) {
+		IOHIDManagerClose(bgkHID, kIOHIDOptionsTypeNone);
+	}
+
+	IOHIDManagerUnscheduleFromRunLoop(bgkHID, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	CFRelease(bgkHID);
+	bgkHID = NULL;
+	bgkHIDOpen = 0;
+}
+
 // bgkSyncHID opens the HID manager while there are raw keys or a recording, and
-// closes it otherwise. It runs on the tap's run loop, and retries an open that
-// failed for want of Input Monitoring each time the raw keys are set.
+// closes it otherwise. It runs on the tap's run loop, retries an open that
+// failed for want of permission each time the raw keys are set, and reopens
+// once Input Monitoring is granted.
 static void bgkSyncHID(void) {
 	pthread_mutex_lock(&bgkLock);
 	int want = bgkRawKeyCount > 0 || bgkRecording;
 	pthread_mutex_unlock(&bgkLock);
 
+	int listen = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted;
+	if (want && bgkHIDOpen && listen && !bgkHIDListen) {
+		bgkReleaseHID();
+	}
+
 	if (want && !bgkHIDOpen) {
-		if (bgkHID == NULL) {
-			bgkHID = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-
-			CFDictionaryRef keyboards = bgkMatching(kHIDPage_GenericDesktop, kHIDUsage_GD_Keyboard);
-			CFDictionaryRef consumer = bgkMatching(kHIDPage_Consumer, kHIDUsage_Csmr_ConsumerControl);
-			const void *matches[] = {keyboards, consumer};
-			CFArrayRef matching = CFArrayCreate(kCFAllocatorDefault, matches, 2, &kCFTypeArrayCallBacks);
-
-			IOHIDManagerSetDeviceMatchingMultiple(bgkHID, matching);
-			IOHIDManagerRegisterInputValueCallback(bgkHID, bgkHIDValue, NULL);
-			IOHIDManagerScheduleWithRunLoop(bgkHID, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-
-			CFRelease(matching);
-			CFRelease(consumer);
-			CFRelease(keyboards);
+		if (bgkHID != NULL) {
+			bgkReleaseHID();
 		}
+
+		bgkHID = bgkCreateHID();
 
 		// Shows the Input Monitoring prompt the first time; a no-op after.
 		IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
 
 		IOReturn status = IOHIDManagerOpen(bgkHID, kIOHIDOptionsTypeNone);
 		bgkHIDOpen = status == kIOReturnSuccess;
+		bgkHIDListen = listen;
 		goRawInput(bgkHIDOpen, bgkHIDOpen ? 0 : status);
-	} else if (!want && bgkHIDOpen) {
-		IOHIDManagerClose(bgkHID, kIOHIDOptionsTypeNone);
-		bgkHIDOpen = 0;
-		goRawInput(-1, 0);
+	} else if (!want && bgkHID != NULL) {
+		int wasOpen = bgkHIDOpen;
+
+		bgkReleaseHID();
+
+		if (wasOpen) {
+			goRawInput(-1, 0);
+		}
 	}
 }
 
