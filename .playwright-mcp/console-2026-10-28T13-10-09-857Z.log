@@ -6,3 +6,139 @@
 [  417527ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:15804
 [  435290ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:15804
 [ 3226905ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:15804
+[ 4314165ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/trigger-keys.ts?t=1793197323916' does not provide an export named 'triggerFor' @ http://localhost:5173/@vite/client:356
+[ 4314167ms] [ERROR] [vite] Failed to reload /src/features/config/TriggerSection.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:356
+[ 4314174ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/trigger-keys.ts?t=1793197323916' does not provide an export named 'triggerFor' @ http://localhost:5173/@vite/client:356
+[ 4314174ms] [ERROR] [vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:356
+[ 4321363ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/trigger-keys.ts?t=1793197323916' does not provide an export named 'triggerFor' @ http://localhost:5173/@vite/client:356
+[ 4321364ms] [ERROR] [vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:356
+[ 4354312ms] [ERROR] [vite] SyntaxError: The requested module '/src/features/config/trigger-text.ts?t=1793197364148' does not provide an export named 'modeHint' @ http://localhost:5173/@vite/client:356
+[ 4354316ms] [ERROR] [vite] Failed to reload /src/features/config/TriggerSection.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:356
+[ 4370005ms] TypeError: Cannot read properties of undefined (reading 'map')
+    at KeyPicker (http://localhost:5173/src/features/config/KeyPicker.tsx?t=1793197379746:104:24)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+    at workLoopSync (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9044:37)
+    at renderRootSync (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9028:6)
+    at performWorkOnRoot (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:8715:27)
+[ 4369991ms] [WARNING] %s
+
+%s
+ An error occurred in the <KeyPicker> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4381184ms] TypeError: Cannot read properties of undefined (reading 'map')
+    at KeyPicker (http://localhost:5173/src/features/config/KeyPicker.tsx?t=1793197390965:104:24)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+    at workLoopSync (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9044:37)
+    at renderRootSync (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9028:6)
+    at performWorkOnRoot (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:8715:27)
+[ 4381183ms] [WARNING] %s
+
+%s
+ An error occurred in the <KeyPicker> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4403256ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197413075:106:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197413075:93:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4403255ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4411144ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197420952:108:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197420952:95:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4411143ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4414350ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197424165:108:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197424165:95:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4414348ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4416224ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197425566:108:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197425566:95:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4416221ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4553774ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197563540:116:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197563540:103:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4553771ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
+[ 4578220ms] TypeError: triggers.map is not a function
+    at describeTriggers (http://localhost:5173/src/features/config/trigger-text.ts?t=1793197364148:19:61)
+    at http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197588012:116:22
+    at Array.map (<anonymous>)
+    at TriggerSection (http://localhost:5173/src/features/config/TriggerSection.tsx?t=1793197588012:103:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:14142:12)
+    at renderWithHooks (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:4400:19)
+    at updateFunctionComponent (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:5775:16)
+    at beginWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:6391:20)
+    at runWithFiberInDEV (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:944:66)
+    at performUnitOfWork (http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=02b32905:9148:92)
+[ 4578217ms] [WARNING] %s
+
+%s
+ An error occurred in the <TriggerSection> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:356
