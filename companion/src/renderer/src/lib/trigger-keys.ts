@@ -24,8 +24,11 @@ export const MODE_DEDICATED = 'dedicated'
 export const MODE_PASS_THROUGH = 'pass_through'
 export const TRIGGER_MODES = [MODE_FN, MODE_DEDICATED, MODE_PASS_THROUGH] as const
 
-/** GLOBE_TRIGGER is the trigger of a keyboard that is not listed. */
+/** GLOBE_TRIGGER is the trigger of a keyboard with a Globe key of its own, unless it is listed. */
 export const GLOBE_TRIGGER: KeyboardTrigger = { key: GLOBE, mode: MODE_FN }
+
+/** NO_TRIGGER is the trigger of a keyboard without a Globe key that is not listed: none. */
+export const NO_TRIGGER: KeyboardTrigger = { key: '', mode: MODE_FN }
 
 /** KEYBOARD_ID matches a vendor:product keyboard ID. */
 export const KEYBOARD_ID = /^[0-9a-f]{4}:[0-9a-f]{4}$/
@@ -63,9 +66,9 @@ export function triggerKey(value: string): TriggerKey | undefined {
   return TRIGGER_KEYS.find((key) => key.value === value)
 }
 
-/** triggerLabel names the key, falling back to its config name. */
+/** triggerLabel names the key, falling back to its config name, or None for no key. */
 export function triggerLabel(value: string): string {
-  return triggerKey(value)?.label ?? value
+  return value === '' ? 'None' : (triggerKey(value)?.label ?? value)
 }
 
 /** triggerName names the key inside a sentence, falling back to its config name. */
@@ -81,14 +84,17 @@ export function allowedModes(value: string): string[] {
 
 /** remapped reports whether a trigger key is remapped at the HID level, mirroring the daemon's KeyboardTrigger.Remapped. */
 export function remapped(trigger: KeyboardTrigger): boolean {
-  return trigger.key !== GLOBE && trigger.mode !== MODE_PASS_THROUGH
+  return trigger.key !== '' && trigger.key !== GLOBE && trigger.mode !== MODE_PASS_THROUGH
 }
 
 /** triggerFor returns a keyboard's trigger and whether it is listed, mirroring the daemon's Trigger.For. */
-export function triggerFor(trigger: Trigger, id: string): [KeyboardTrigger, boolean] {
+export function triggerFor(trigger: Trigger, id: string, hasGlobe: boolean): [KeyboardTrigger, boolean] {
   const listed = trigger.keyboards[id]
+  if (listed) {
+    return [listed, true]
+  }
 
-  return listed ? [listed, true] : [GLOBE_TRIGGER, false]
+  return [hasGlobe ? GLOBE_TRIGGER : NO_TRIGGER, false]
 }
 
 /** withKey sets a trigger's key, falling back to fn mode for a key that cannot use its mode. */

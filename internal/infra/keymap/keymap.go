@@ -271,7 +271,7 @@ func (r *Remapper) wantFor(keyboard Keyboard) (Mapping, bool) {
 		return Mapping{}, false
 	}
 
-	trigger, _ := r.trigger.For(keyboard.KeyboardID())
+	trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
 	if !trigger.Remapped() {
 		return Mapping{}, false
 	}
@@ -577,7 +577,7 @@ func (r *Remapper) notify(keyboards []Keyboard, entries []entry) {
 
 		seen[id] = true
 
-		trigger, _ := r.trigger.For(keyboard.KeyboardID())
+		trigger, _ := r.trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
 		want, wanted := r.wantFor(keyboard)
 		mapping, ok := applied[id]
 
@@ -646,7 +646,7 @@ func (r *Remapper) Keyboards(trigger config.Trigger) ([]Status, []Mapping, error
 			i = len(statuses)
 			index[id] = i
 
-			resolved, listed := trigger.For(keyboard.KeyboardID())
+			resolved, listed := trigger.For(keyboard.KeyboardID(), keyboard.HasGlobe())
 
 			statuses = append(statuses, Status{Keyboard: keyboard, Trigger: resolved, Listed: listed})
 			statuses[i].Mappings = nil

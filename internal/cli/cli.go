@@ -370,15 +370,17 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 // triggerStatus describes how many keyboards set their own trigger.
 func triggerStatus(trigger domainconfig.Trigger) string {
 	if listed := len(trigger.Keyboards); listed > 0 {
-		return fmt.Sprintf("%d keyboard(s) set their own; others use the Globe key", listed)
+		return fmt.Sprintf("%d keyboard(s) set their own; others use their Globe key, if any", listed)
 	}
 
-	return "Globe key on every keyboard"
+	return "Globe key on keyboards that have one"
 }
 
 // describeTrigger renders a keyboard trigger: its key and how it is detected.
 func describeTrigger(trigger domainconfig.KeyboardTrigger) string {
 	switch {
+	case trigger.None():
+		return "none"
 	case trigger.Globe():
 		return "Globe key"
 	case trigger.Fn():

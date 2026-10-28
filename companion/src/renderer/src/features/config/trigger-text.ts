@@ -14,6 +14,10 @@ export const MODE_LABELS: Record<string, string> = {
 export function modeHint(trigger: KeyboardTrigger): string {
   const name = triggerName(trigger.key)
 
+  if (trigger.key === '') {
+    return 'Record a key to switch input sources from this keyboard.'
+  }
+
   if (trigger.key === GLOBE) {
     return 'Record a key other than the Globe key to choose how it works.'
   }
@@ -30,6 +34,10 @@ export function modeHint(trigger: KeyboardTrigger): string {
 
 /** describeTrigger names a trigger and its mode, e.g. "Caps Lock, act as fn". */
 export function describeTrigger(trigger: KeyboardTrigger): string {
+  if (trigger.key === '') {
+    return 'No trigger key'
+  }
+
   if (trigger.key === GLOBE) {
     return 'Globe key'
   }

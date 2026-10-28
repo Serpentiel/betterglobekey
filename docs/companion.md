@@ -26,8 +26,8 @@ service, so building collections is a matter of picking from a list rather than 
 3. Edit your settings. Under **Trigger Key**, **Keyboards…** opens a sheet that sets each keyboard's trigger key and
    how it works: act as fn, be the only key that switches (the Globe key untouched), or keep its normal function. It
    also lists the key mappings other tools have set. **Record** reads the next key you press straight from the
-   keyboard, so a remapped key records as itself; it needs Input Monitoring. **Use Globe** puts the keyboard back on
-   the Globe key.
+   keyboard, so a remapped key records as itself; it needs Input Monitoring. **Use Globe** puts a keyboard back on its
+   Globe key; on a keyboard without one, **Clear** leaves it without a trigger key.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing

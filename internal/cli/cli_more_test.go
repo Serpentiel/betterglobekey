@@ -431,10 +431,10 @@ func TestTriggerStatus(t *testing.T) {
 		trigger domainconfig.Trigger
 		want    string
 	}{
-		{domainconfig.Trigger{}, "Globe key on every keyboard"},
+		{domainconfig.Trigger{}, "Globe key on keyboards that have one"},
 		{
 			domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": caps}},
-			"1 keyboard(s) set their own; others use the Globe key",
+			"1 keyboard(s) set their own; others use their Globe key, if any",
 		},
 	}
 
@@ -461,7 +461,8 @@ func TestKeyboardLines(t *testing.T) {
 			Ours:     &capsToFn,
 			Others:   []keymap.Mapping{escape},
 		},
-		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, Trigger: caps},
+		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, Trigger: caps, Listed: true},
+		{Keyboard: keymap.Keyboard{Vendor: 0x04d9, Product: 0x0169, Name: "Holtek"}},
 	}
 
 	got := strings.Join(keyboardLines(statuses, []keymap.Mapping{escape}), "\n")
@@ -470,7 +471,8 @@ func TestKeyboardLines(t *testing.T) {
 		"Apple Keyboard (05ac:0281, built-in, has Globe key): trigger Globe key",
 		"Logitech (046d:c33f, USB): trigger caps_lock (remapped to fn), set for this keyboard; Caps Lock → fn; " +
 			"Grave Accent → Escape (other tool)",
-		"Unnamed keyboard (1234:5678): trigger caps_lock (remapped to fn); not remapped yet",
+		"Unnamed keyboard (1234:5678): trigger caps_lock (remapped to fn), set for this keyboard; not remapped yet",
+		"Holtek (04d9:0169): trigger none",
 		"system-wide:   Grave Accent → Escape",
 	} {
 		if !strings.Contains(got, want) {

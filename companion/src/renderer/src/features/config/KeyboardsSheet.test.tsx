@@ -83,6 +83,22 @@ describe('KeyboardsSheet', () => {
     expect((screen.getByRole('combobox', { name: 'Trigger mode' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
+  it('leaves a keyboard without a Globe key unassigned, with Clear instead of Use Globe', () => {
+    renderSheet()
+    chooseKeyboard('Logitech K120')
+
+    expect(screen.getByText('None')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect((screen.getByRole('button', { name: 'Clear' }) as HTMLButtonElement).disabled).toBe(true)
+
+    cleanup()
+
+    const { onChange, trigger } = renderSheet({ keyboards: { '046d:c33f': capsFn } })
+    chooseKeyboard('Logitech K120')
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
   it('shows another keyboard with its applied mapping', () => {
     renderSheet({ keyboards: { '046d:c33f': capsFn } })
 
@@ -118,7 +134,7 @@ describe('KeyboardsSheet', () => {
   })
 
   it('notes that the Globe key still switches while another keyboard switches with it', () => {
-    renderSheet({ keyboards: { '05ac:0281': { key: 'caps_lock', mode: 'dedicated' } } })
+    renderSheet({ keyboards: { '05ac:0281': { key: 'caps_lock', mode: 'dedicated' }, '046d:c33f': capsFn } })
 
     expect(screen.getByText(/The Globe key still switches here/)).toBeTruthy()
   })

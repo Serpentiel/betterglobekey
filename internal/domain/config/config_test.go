@@ -94,6 +94,7 @@ func TestKeyboardTriggerModes(t *testing.T) {
 		trigger                                   config.KeyboardTrigger
 		remapped, fn, dedicated, passThrough, raw bool
 	}{
+		{config.KeyboardTrigger{}, false, false, false, false, false},
 		{config.GlobeTrigger, false, false, false, false, false},
 		{key(config.TriggerGlobe, config.TriggerModeDedicated), false, false, false, false, false},
 		{key(config.TriggerCapsLock, config.TriggerModeFn), true, true, false, false, false},
@@ -117,17 +118,19 @@ func TestTriggerFor(t *testing.T) {
 	trigger := config.Trigger{Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": insert}}
 
 	tests := []struct {
-		name   string
-		id     string
-		want   config.KeyboardTrigger
-		listed bool
+		name     string
+		id       string
+		hasGlobe bool
+		want     config.KeyboardTrigger
+		listed   bool
 	}{
-		{"listed", "046d:c33f", insert, true},
-		{"not listed", "1234:5678", config.GlobeTrigger, false},
+		{"listed", "046d:c33f", false, insert, true},
+		{"with Globe key", "05ac:0281", true, config.GlobeTrigger, false},
+		{"without Globe key", "1234:5678", false, config.KeyboardTrigger{}, false},
 	}
 
 	for _, test := range tests {
-		got, listed := trigger.For(test.id)
+		got, listed := trigger.For(test.id, test.hasGlobe)
 		if got != test.want || listed != test.listed {
 			t.Errorf("%s: For = %+v, %v; want %+v, %v", test.name, got, listed, test.want, test.listed)
 		}

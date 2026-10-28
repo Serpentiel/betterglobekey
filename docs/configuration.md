@@ -52,7 +52,8 @@ All options other than `collections` are optional and fall back to the defaults 
 ## Trigger Key
 
 Every keyboard has its own trigger key, set under `trigger.keyboards` by the vendor and product ID that
-`betterglobekey doctor` and the companion show. A keyboard not listed uses the Globe key:
+`betterglobekey doctor` and the companion show. A keyboard not listed uses its Globe key, if it has one (a MacBook's
+or a Magic Keyboard), and has no trigger key otherwise:
 
 ```yaml
 trigger:

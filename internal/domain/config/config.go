@@ -105,24 +105,31 @@ type Reverse struct {
 	Modifier string
 }
 
-// GlobeTrigger is the trigger of a keyboard not listed in Trigger.Keyboards.
+// GlobeTrigger is the trigger of a keyboard with a Globe key of its own, unless
+// it is listed in Trigger.Keyboards.
 var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeFn}
 
 // Trigger selects the key that switches input sources on each keyboard.
 type Trigger struct {
 	// Keyboards are the triggers of single keyboards, by keyboard ID (see
-	// KeyboardID). Any other keyboard uses GlobeTrigger.
+	// KeyboardID). Any other keyboard uses GlobeTrigger if it has a Globe key,
+	// and has no trigger otherwise.
 	Keyboards map[string]KeyboardTrigger
 }
 
-// For returns the trigger of the keyboard with the given ID, and whether it is
-// listed in Keyboards.
-func (t Trigger) For(id string) (KeyboardTrigger, bool) {
+// For returns the trigger of the keyboard with the given ID, which has or lacks
+// a Globe key, and whether it is listed in Keyboards. The zero KeyboardTrigger
+// is no trigger.
+func (t Trigger) For(id string, hasGlobe bool) (KeyboardTrigger, bool) {
 	if trigger, ok := t.Keyboards[id]; ok {
 		return trigger, true
 	}
 
-	return GlobeTrigger, false
+	if hasGlobe {
+		return GlobeTrigger, false
+	}
+
+	return KeyboardTrigger{}, false
 }
 
 // KeyboardTrigger is one keyboard's trigger key and how it is detected.
@@ -134,31 +141,41 @@ type KeyboardTrigger struct {
 	Mode string
 }
 
+// None reports whether there is no trigger key.
+func (k KeyboardTrigger) None() bool {
+	return k.Key == ""
+}
+
 // Globe reports whether the trigger is the Globe key itself.
 func (k KeyboardTrigger) Globe() bool {
 	return k.Key == TriggerGlobe
 }
 
+// other reports whether the trigger is a key other than the Globe key.
+func (k KeyboardTrigger) other() bool {
+	return !k.None() && !k.Globe()
+}
+
 // Remapped reports whether the trigger key is remapped at the HID level.
 func (k KeyboardTrigger) Remapped() bool {
-	return !k.Globe() && k.Mode != TriggerModePassThrough
+	return k.other() && k.Mode != TriggerModePassThrough
 }
 
 // Fn reports whether the trigger key is remapped to fn, so it arrives as the
 // Globe key.
 func (k KeyboardTrigger) Fn() bool {
-	return !k.Globe() && k.Mode == TriggerModeFn
+	return k.other() && k.Mode == TriggerModeFn
 }
 
 // Dedicated reports whether the trigger key is silenced and read from raw input.
 func (k KeyboardTrigger) Dedicated() bool {
-	return !k.Globe() && k.Mode == TriggerModeDedicated
+	return k.other() && k.Mode == TriggerModeDedicated
 }
 
 // PassThrough reports whether the trigger key keeps its function and is read
 // from raw input.
 func (k KeyboardTrigger) PassThrough() bool {
-	return !k.Globe() && k.Mode == TriggerModePassThrough
+	return k.other() && k.Mode == TriggerModePassThrough
 }
 
 // Raw reports whether the trigger key is read from the keyboard's raw input,
