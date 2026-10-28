@@ -54,7 +54,7 @@ describe('ConfigEditor', () => {
   it('renders every section and the version footer', () => {
     render(<ConfigEditor controller={makeController()} />)
 
-    for (const heading of ['Trigger Key', 'Behavior', 'On-screen HUD', 'Collections', 'Logging']) {
+    for (const heading of ['Trigger Keys', 'Behavior', 'On-screen HUD', 'Collections', 'Logging']) {
       expect(screen.getByText(heading)).toBeTruthy()
     }
 

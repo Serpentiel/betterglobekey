@@ -96,38 +96,44 @@ func fromProto(proto *controlv1.Config) (domainconfig.Config, error) {
 
 // triggerToProto converts the trigger, every keyboard's included.
 func triggerToProto(trigger domainconfig.Trigger) *controlv1.Trigger {
-	keyboards := make(map[string]*controlv1.KeyboardTrigger, len(trigger.Keyboards))
-	for id, keyboard := range trigger.Keyboards {
-		keyboards[id] = keyboardTriggerToProto(keyboard)
+	keyboards := make(map[string]*controlv1.KeyboardTriggers, len(trigger.Keyboards))
+	for id, triggers := range trigger.Keyboards {
+		keyboards[id] = &controlv1.KeyboardTriggers{Keys: keyboardTriggersToProto(triggers)}
 	}
 
 	return &controlv1.Trigger{Keyboards: keyboards}
 }
 
-func keyboardTriggerToProto(trigger domainconfig.KeyboardTrigger) *controlv1.KeyboardTrigger {
-	return &controlv1.KeyboardTrigger{Key: trigger.Key, Mode: trigger.Mode}
+func keyboardTriggersToProto(triggers []domainconfig.KeyboardTrigger) []*controlv1.KeyboardTrigger {
+	converted := make([]*controlv1.KeyboardTrigger, 0, len(triggers))
+	for _, trigger := range triggers {
+		converted = append(converted, &controlv1.KeyboardTrigger{Key: trigger.Key, Mode: trigger.Mode})
+	}
+
+	return converted
 }
 
-// triggerFromProto converts a protobuf trigger, defaulting what a client that
-// predates a field leaves empty: the Globe key and fn mode.
+// triggerFromProto converts a protobuf trigger, defaulting an empty mode to
+// dedicated.
 func triggerFromProto(proto *controlv1.Trigger) domainconfig.Trigger {
 	var trigger domainconfig.Trigger
 
 	if len(proto.GetKeyboards()) > 0 {
-		trigger.Keyboards = make(map[string]domainconfig.KeyboardTrigger, len(proto.GetKeyboards()))
+		trigger.Keyboards = make(map[string][]domainconfig.KeyboardTrigger, len(proto.GetKeyboards()))
 		for id, keyboard := range proto.GetKeyboards() {
-			trigger.Keyboards[id] = keyboardTriggerFromProto(keyboard.GetKey(), keyboard.GetMode())
+			triggers := make([]domainconfig.KeyboardTrigger, 0, len(keyboard.GetKeys()))
+			for _, key := range keyboard.GetKeys() {
+				triggers = append(triggers, domainconfig.KeyboardTrigger{
+					Key:  key.GetKey(),
+					Mode: cmp.Or(key.GetMode(), domainconfig.TriggerModeDedicated),
+				})
+			}
+
+			trigger.Keyboards[id] = triggers
 		}
 	}
 
 	return trigger
-}
-
-func keyboardTriggerFromProto(key, mode string) domainconfig.KeyboardTrigger {
-	return domainconfig.KeyboardTrigger{
-		Key:  cmp.Or(key, domainconfig.TriggerGlobe),
-		Mode: cmp.Or(mode, domainconfig.TriggerModeDedicated),
-	}
 }
 
 // keyboardsToProto converts the remapper's keyboard report.
@@ -136,18 +142,15 @@ func keyboardsToProto(statuses []keymap.Status, systemWide []keymap.Mapping) *co
 
 	for _, status := range statuses {
 		keyboard := &controlv1.Keyboard{
-			Id:            status.KeyboardID(),
-			Name:          status.Name,
-			Transport:     status.Transport,
-			BuiltIn:       status.BuiltIn,
-			HasGlobe:      status.HasGlobe(),
-			Trigger:       keyboardTriggerToProto(status.Trigger),
-			Listed:        status.Listed,
-			OtherMappings: mappingsToProto(status.Others),
-		}
-
-		if status.Ours != nil {
-			keyboard.TriggerMapping = mappingToProto(*status.Ours)
+			Id:              status.KeyboardID(),
+			Name:            status.Name,
+			Transport:       status.Transport,
+			BuiltIn:         status.BuiltIn,
+			HasGlobe:        status.HasGlobe(),
+			Triggers:        keyboardTriggersToProto(status.Triggers),
+			Listed:          status.Listed,
+			TriggerMappings: mappingsToProto(status.Ours),
+			OtherMappings:   mappingsToProto(status.Others),
 		}
 
 		keyboards = append(keyboards, keyboard)

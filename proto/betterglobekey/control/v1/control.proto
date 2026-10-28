@@ -59,30 +59,35 @@ message Config {
   // cycles through.
   repeated Collection collections = 5;
 
-  // trigger selects the key that switches input sources. When absent, or when
-  // its key is empty, the Globe key is used.
+  // trigger selects the keys that switch input sources. When absent, keyboards
+  // with a Globe key use it.
   Trigger trigger = 6;
 }
 
-// Trigger selects the key that switches input sources on each keyboard. A
+// Trigger selects the keys that switch input sources on each keyboard. A
 // keyboard with a Globe key of its own uses it, unless it is listed in
-// keyboards; one without has no trigger, unless it is listed.
+// keyboards; one without has none, unless it is listed.
 message Trigger {
-  reserved 1 to 4;
+  reserved 1 to 5;
   reserved "key", "mode", "pass_through";
 
-  // keyboards are the triggers of single keyboards, by ID: the vendor and
+  // keyboards are the trigger keys of single keyboards, by ID: the vendor and
   // product IDs as four lower-case hex digits each ("05ac:029c").
-  map<string, KeyboardTrigger> keyboards = 5;
+  map<string, KeyboardTriggers> keyboards = 6;
 }
 
-// KeyboardTrigger is one keyboard's trigger key and how it is detected, as in
-// Trigger.
+// KeyboardTriggers are one keyboard's trigger keys, each different; empty is
+// none.
+message KeyboardTriggers {
+  repeated KeyboardTrigger keys = 1;
+}
+
+// KeyboardTrigger is one of a keyboard's trigger keys and how it is detected.
 message KeyboardTrigger {
   // key is the trigger key: globe, caps_lock, right_command, right_option,
   // right_control, right_shift, left_command, left_option, left_control,
   // left_shift, f13 through f20, menu, insert, print_screen, scroll_lock, or
-  // pause. Empty is no trigger.
+  // pause.
   string key = 1;
 
   // mode is how a key other than globe is detected, both needing Input
@@ -224,19 +229,22 @@ message Keyboard {
   // has_globe reports whether the keyboard has a Globe key of its own.
   bool has_globe = 5;
 
-  reserved 6;
-  reserved "in_scope";
-
-  // trigger_mapping is the daemon's mapping on the keyboard, if any.
-  KeyMapping trigger_mapping = 7;
+  reserved 6, 7, 9;
+  reserved "in_scope", "trigger_mapping", "trigger";
 
   // other_mappings are the keyboard's mappings set by other tools.
   repeated KeyMapping other_mappings = 8;
 
-  // trigger is the keyboard's trigger, and listed whether it is set for the
-  // keyboard rather than a default.
-  KeyboardTrigger trigger = 9;
+  // listed reports whether the trigger keys are set for the keyboard rather
+  // than a default.
   bool listed = 10;
+
+  // trigger_mappings are the daemon's mappings on the keyboard, one per
+  // dedicated trigger key in place.
+  repeated KeyMapping trigger_mappings = 11;
+
+  // triggers are the keyboard's trigger keys.
+  repeated KeyboardTrigger triggers = 12;
 }
 
 // KeyMapping remaps one HID usage to another.

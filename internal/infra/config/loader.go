@@ -154,9 +154,14 @@ func triggerToDomain(schema schemaV2) config.Trigger {
 	var trigger config.Trigger
 
 	if len(schema.Trigger.Keyboards) > 0 {
-		trigger.Keyboards = make(map[string]config.KeyboardTrigger, len(schema.Trigger.Keyboards))
-		for id, keyboard := range schema.Trigger.Keyboards {
-			trigger.Keyboards[id] = config.KeyboardTrigger{Key: keyboard.Key, Mode: keyboard.Mode}
+		trigger.Keyboards = make(map[string][]config.KeyboardTrigger, len(schema.Trigger.Keyboards))
+		for id, keys := range schema.Trigger.Keyboards {
+			triggers := make([]config.KeyboardTrigger, 0, len(keys))
+			for _, key := range keys {
+				triggers = append(triggers, config.KeyboardTrigger{Key: key.Key, Mode: key.Mode})
+			}
+
+			trigger.Keyboards[id] = triggers
 		}
 	}
 
@@ -182,10 +187,11 @@ func applySchemaDefaults(schema *schemaV2) {
 		schema.HUD.Duration = defaultHUDDuration
 	}
 
-	for id, trigger := range schema.Trigger.Keyboards {
-		if trigger.Mode == "" {
-			trigger.Mode = defaultTriggerMode
-			schema.Trigger.Keyboards[id] = trigger
+	for _, keys := range schema.Trigger.Keyboards {
+		for i := range keys {
+			if keys[i].Mode == "" {
+				keys[i].Mode = defaultTriggerMode
+			}
 		}
 	}
 }

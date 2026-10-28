@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	domainconfig "github.com/Serpentiel/betterglobekey/internal/domain/config"
 	"github.com/Serpentiel/betterglobekey/internal/infra/control"
@@ -50,27 +51,27 @@ func logRawInput(logger *logging.Logger) func(keyboard.RawInputState, int32) {
 	}
 }
 
-// watchTriggers points the event tap at every connected keyboard's trigger:
-// the Globe key while any keyboard switches with it, and raw input for
+// watchTriggers points the event tap at every connected keyboard's trigger
+// keys: the Globe key while any keyboard switches with it, and raw input for
 // dedicated and passed-through keys.
 func watchTriggers(resolved []keymap.Resolved) {
 	globe := len(resolved) == 0
 	keys := make([]keyboard.RawKey, 0, len(resolved))
 
 	for _, r := range resolved {
-		trigger := r.Trigger
-
-		switch {
-		case trigger.Globe():
-			globe = true
-		case trigger.PassThrough() || (trigger.Dedicated() && r.Applied):
-			keys = append(keys, keyboard.RawKey{
-				Vendor:   r.Vendor,
-				Product:  r.Product,
-				Location: r.Location,
-				Usage:    keymap.KeyUsage(keymap.Usages[trigger.Key]),
-				Key:      trigger.Key,
-			})
+		for _, trigger := range r.Triggers {
+			switch {
+			case trigger.Globe():
+				globe = true
+			case trigger.PassThrough() || (trigger.Dedicated() && trigger.Applied):
+				keys = append(keys, keyboard.RawKey{
+					Vendor:   r.Vendor,
+					Product:  r.Product,
+					Location: r.Location,
+					Usage:    keymap.KeyUsage(keymap.Usages[trigger.Key]),
+					Key:      trigger.Key,
+				})
+			}
 		}
 	}
 
@@ -78,11 +79,11 @@ func watchTriggers(resolved []keymap.Resolved) {
 	keyboard.SetRawKeys(keys)
 }
 
-// readsRawInput reports whether any trigger is read from raw input, which needs
-// Input Monitoring.
+// readsRawInput reports whether any trigger key is read from raw input, which
+// needs Input Monitoring.
 func readsRawInput(trigger domainconfig.Trigger) bool {
-	for _, keyboard := range trigger.Keyboards {
-		if keyboard.Raw() {
+	for _, triggers := range trigger.Keyboards {
+		if slices.ContainsFunc(triggers, domainconfig.KeyboardTrigger.Raw) {
 			return true
 		}
 	}

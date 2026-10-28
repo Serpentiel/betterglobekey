@@ -23,11 +23,8 @@ export const MODE_DEDICATED = 'dedicated'
 export const MODE_PASS_THROUGH = 'pass_through'
 export const TRIGGER_MODES = [MODE_DEDICATED, MODE_PASS_THROUGH] as const
 
-/** GLOBE_TRIGGER is the trigger of a keyboard with a Globe key of its own, unless it is listed. */
+/** GLOBE_TRIGGER is the trigger key of a keyboard with a Globe key of its own, unless it is listed. */
 export const GLOBE_TRIGGER: KeyboardTrigger = { key: GLOBE, mode: MODE_DEDICATED }
-
-/** NO_TRIGGER is the trigger of a keyboard without a Globe key that is not listed: none. */
-export const NO_TRIGGER: KeyboardTrigger = { key: '', mode: MODE_DEDICATED }
 
 /** KEYBOARD_ID matches a vendor:product keyboard ID. */
 export const KEYBOARD_ID = /^[0-9a-f]{4}:[0-9a-f]{4}$/
@@ -65,9 +62,9 @@ export function triggerKey(value: string): TriggerKey | undefined {
   return TRIGGER_KEYS.find((key) => key.value === value)
 }
 
-/** triggerLabel names the key, falling back to its config name, or None for no key. */
+/** triggerLabel names the key, falling back to its config name. */
 export function triggerLabel(value: string): string {
-  return value === '' ? 'None' : (triggerKey(value)?.label ?? value)
+  return triggerKey(value)?.label ?? value
 }
 
 /** triggerName names the key inside a sentence, falling back to its config name. */
@@ -83,17 +80,27 @@ export function allowedModes(value: string): string[] {
 
 /** remapped reports whether a trigger key is remapped at the HID level, mirroring the daemon's KeyboardTrigger.Remapped. */
 export function remapped(trigger: KeyboardTrigger): boolean {
-  return trigger.key !== '' && trigger.key !== GLOBE && trigger.mode === MODE_DEDICATED
+  return trigger.key !== GLOBE && trigger.mode === MODE_DEDICATED
 }
 
-/** triggerFor returns a keyboard's trigger and whether it is listed, mirroring the daemon's Trigger.For. */
-export function triggerFor(trigger: Trigger, id: string, hasGlobe: boolean): [KeyboardTrigger, boolean] {
+/** defaultTriggers are the trigger keys of a keyboard that is not listed: its Globe key, if it has one. */
+export function defaultTriggers(hasGlobe: boolean): KeyboardTrigger[] {
+  return hasGlobe ? [GLOBE_TRIGGER] : []
+}
+
+/** triggersFor returns a keyboard's trigger keys and whether they are listed, mirroring the daemon's Trigger.For. */
+export function triggersFor(trigger: Trigger, id: string, hasGlobe: boolean): [KeyboardTrigger[], boolean] {
   const listed = trigger.keyboards[id]
   if (listed) {
     return [listed, true]
   }
 
-  return [hasGlobe ? GLOBE_TRIGGER : NO_TRIGGER, false]
+  return [defaultTriggers(hasGlobe), false]
+}
+
+/** switchesWithGlobe reports whether trigger keys include the Globe key. */
+export function switchesWithGlobe(triggers: KeyboardTrigger[]): boolean {
+  return triggers.some((trigger) => trigger.key === GLOBE)
 }
 
 /** withKey sets a trigger's key, falling back to dedicated mode for a key that cannot use its mode. */

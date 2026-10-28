@@ -55,7 +55,7 @@ static bgkState bgkPressState = {0};
 // bgkMaxRawKeys caps the trigger keys read from raw HID input.
 #define bgkMaxRawKeys 64
 
-// bgkRawKeys are the trigger keys read from raw input, at most one per
+// bgkRawKeys are the trigger keys read from raw input, any number per
 // keyboard. bgkRawState tracks their presses, and bgkRawTrigger is the
 // descriptor raw presses are decided against, with the pressed key's flags.
 static bgkRawKey bgkRawKeys[bgkMaxRawKeys];

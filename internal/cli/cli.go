@@ -367,7 +367,7 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// triggerStatus describes how many keyboards set their own trigger.
+// triggerStatus describes how many keyboards set their own trigger keys.
 func triggerStatus(trigger domainconfig.Trigger) string {
 	if listed := len(trigger.Keyboards); listed > 0 {
 		return fmt.Sprintf("%d keyboard(s) set their own; others use their Globe key, if any", listed)
@@ -376,11 +376,23 @@ func triggerStatus(trigger domainconfig.Trigger) string {
 	return "Globe key on keyboards that have one"
 }
 
-// describeTrigger renders a keyboard trigger: its key and how it is detected.
+// describeTriggers renders a keyboard's trigger keys, or "none".
+func describeTriggers(triggers []domainconfig.KeyboardTrigger) string {
+	if len(triggers) == 0 {
+		return "none"
+	}
+
+	described := make([]string, 0, len(triggers))
+	for _, trigger := range triggers {
+		described = append(described, describeTrigger(trigger))
+	}
+
+	return strings.Join(described, ", ")
+}
+
+// describeTrigger renders a trigger key and how it is detected.
 func describeTrigger(trigger domainconfig.KeyboardTrigger) string {
 	switch {
-	case trigger.None():
-		return "none"
 	case trigger.Globe():
 		return "Globe key"
 	case trigger.Dedicated():
@@ -434,8 +446,8 @@ func keyboardLines(statuses []keymap.Status, systemWide []keymap.Mapping) []stri
 	return lines
 }
 
-// keyboardLine renders one keyboard: its identity, its trigger, and its key
-// mappings.
+// keyboardLine renders one keyboard: its identity, its trigger keys, and its
+// key mappings.
 func keyboardLine(status keymap.Status) string {
 	details := []string{status.KeyboardID()}
 
@@ -449,18 +461,22 @@ func keyboardLine(status keymap.Status) string {
 		details = append(details, "has Globe key")
 	}
 
-	trigger := "trigger " + describeTrigger(status.Trigger)
+	trigger := "trigger " + describeTriggers(status.Triggers)
 	if status.Listed {
 		trigger += ", set for this keyboard"
 	}
 
 	mappings := []string{trigger}
 
-	switch {
-	case status.Ours != nil:
-		mappings = append(mappings, keymap.UsageName(status.Ours.Src)+" silenced")
-	case status.Trigger.Remapped():
-		mappings = append(mappings, "not remapped yet (is the service running?)")
+	for _, ours := range status.Ours {
+		mappings = append(mappings, keymap.UsageName(ours.Src)+" silenced")
+	}
+
+	for _, key := range status.Triggers {
+		src := keymap.Usages[key.Key]
+		if key.Remapped() && !slices.ContainsFunc(status.Ours, func(m keymap.Mapping) bool { return m.Src == src }) {
+			mappings = append(mappings, key.Key+" not remapped yet (is the service running?)")
+		}
 	}
 
 	for _, other := range status.Others {

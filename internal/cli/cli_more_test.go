@@ -433,7 +433,7 @@ func TestTriggerStatus(t *testing.T) {
 	}{
 		{domainconfig.Trigger{}, "Globe key on keyboards that have one"},
 		{
-			domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": caps}},
+			domainconfig.Trigger{Keyboards: map[string][]domainconfig.KeyboardTrigger{"046d:c33f": {caps}}},
 			"1 keyboard(s) set their own; others use their Globe key, if any",
 		},
 	}
@@ -449,20 +449,31 @@ func TestKeyboardLines(t *testing.T) {
 	capsSilenced := keymap.Mapping{Src: keymap.Usages["caps_lock"], Dst: keymap.DedicatedUsage}
 	escape := keymap.Mapping{Src: 0x7_0000_0035, Dst: 0x7_0000_0029}
 	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
+	insert := domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}
 	statuses := []keymap.Status{
 		{
 			Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true},
-			Trigger:  domainconfig.GlobeTrigger,
+			Triggers: []domainconfig.KeyboardTrigger{domainconfig.GlobeTrigger},
 		},
 		{
 			Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
-			Trigger:  caps,
+			Triggers: []domainconfig.KeyboardTrigger{caps},
 			Listed:   true,
-			Ours:     &capsSilenced,
+			Ours:     []keymap.Mapping{capsSilenced},
 			Others:   []keymap.Mapping{escape},
 		},
-		{Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678}, Trigger: caps, Listed: true},
+		{
+			Keyboard: keymap.Keyboard{Vendor: 0x1234, Product: 0x5678},
+			Triggers: []domainconfig.KeyboardTrigger{caps},
+			Listed:   true,
+		},
 		{Keyboard: keymap.Keyboard{Vendor: 0x04d9, Product: 0x0169, Name: "Holtek"}},
+		{
+			Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x029c, Name: "Magic Keyboard"},
+			Triggers: []domainconfig.KeyboardTrigger{domainconfig.GlobeTrigger, caps, insert},
+			Listed:   true,
+			Ours:     []keymap.Mapping{capsSilenced},
+		},
 	}
 
 	got := strings.Join(keyboardLines(statuses, []keymap.Mapping{escape}), "\n")
@@ -472,8 +483,10 @@ func TestKeyboardLines(t *testing.T) {
 		"Logitech (046d:c33f, USB): trigger caps_lock (silenced, read directly), set for this keyboard; " +
 			"Caps Lock silenced; Grave Accent → Escape (other tool)",
 		"Unnamed keyboard (1234:5678): trigger caps_lock (silenced, read directly), set for this keyboard; " +
-			"not remapped yet",
+			"caps_lock not remapped yet",
 		"Holtek (04d9:0169): trigger none",
+		"Magic Keyboard (05ac:029c, has Globe key): trigger Globe key, caps_lock (silenced, read directly), " +
+			"insert (passed through, read directly), set for this keyboard; Caps Lock silenced",
 		"system-wide:   Grave Accent → Escape",
 	} {
 		if !strings.Contains(got, want) {
@@ -486,8 +499,8 @@ func TestReadsRawInput(t *testing.T) {
 	insert := domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}
 
 	dedicated := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
-	on := func(trigger domainconfig.KeyboardTrigger) domainconfig.Trigger {
-		return domainconfig.Trigger{Keyboards: map[string]domainconfig.KeyboardTrigger{"046d:c33f": trigger}}
+	on := func(triggers ...domainconfig.KeyboardTrigger) domainconfig.Trigger {
+		return domainconfig.Trigger{Keyboards: map[string][]domainconfig.KeyboardTrigger{"046d:c33f": triggers}}
 	}
 
 	if readsRawInput(domainconfig.Trigger{}) || readsRawInput(on(domainconfig.GlobeTrigger)) {
@@ -500,6 +513,10 @@ func TestReadsRawInput(t *testing.T) {
 
 	if !readsRawInput(on(dedicated)) {
 		t.Error("a dedicated trigger does not read raw input")
+	}
+
+	if !readsRawInput(on(domainconfig.GlobeTrigger, insert)) {
+		t.Error("a passed-through key beside the Globe key does not read raw input")
 	}
 }
 

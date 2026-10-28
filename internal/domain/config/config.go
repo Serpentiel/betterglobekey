@@ -67,7 +67,7 @@ type Config struct {
 	Reverse Reverse
 	// HUD configures the on-screen overlay shown when the input source changes.
 	HUD HUD
-	// Trigger selects the key that switches input sources on each keyboard.
+	// Trigger selects the keys that switch input sources on each keyboard.
 	Trigger Trigger
 	// Collections are the ordered input source collections the Globe key cycles through.
 	Collections []Collection
@@ -102,34 +102,38 @@ type Reverse struct {
 	Modifier string
 }
 
-// GlobeTrigger is the trigger of a keyboard with a Globe key of its own, unless
-// it is listed in Trigger.Keyboards.
+// GlobeTrigger is the trigger key of a keyboard with a Globe key of its own,
+// unless it is listed in Trigger.Keyboards.
 var GlobeTrigger = KeyboardTrigger{Key: TriggerGlobe, Mode: TriggerModeDedicated}
 
-// Trigger selects the key that switches input sources on each keyboard.
+// Trigger selects the keys that switch input sources on each keyboard.
 type Trigger struct {
-	// Keyboards are the triggers of single keyboards, by keyboard ID (see
-	// KeyboardID). Any other keyboard uses GlobeTrigger if it has a Globe key,
-	// and has no trigger otherwise.
-	Keyboards map[string]KeyboardTrigger
+	// Keyboards are the trigger keys of single keyboards, by keyboard ID (see
+	// KeyboardID); an empty list is none. Any other keyboard uses GlobeTrigger
+	// if it has a Globe key, and has none otherwise.
+	Keyboards map[string][]KeyboardTrigger
 }
 
-// For returns the trigger of the keyboard with the given ID, which has or lacks
-// a Globe key, and whether it is listed in Keyboards. The zero KeyboardTrigger
-// is no trigger.
-func (t Trigger) For(id string, hasGlobe bool) (KeyboardTrigger, bool) {
-	if trigger, ok := t.Keyboards[id]; ok {
-		return trigger, true
+// For returns the trigger keys of the keyboard with the given ID, which has or
+// lacks a Globe key, and whether it is listed in Keyboards.
+func (t Trigger) For(id string, hasGlobe bool) ([]KeyboardTrigger, bool) {
+	if triggers, ok := t.Keyboards[id]; ok {
+		return triggers, true
 	}
 
 	if hasGlobe {
-		return GlobeTrigger, false
+		return []KeyboardTrigger{GlobeTrigger}, false
 	}
 
-	return KeyboardTrigger{}, false
+	return nil, false
 }
 
-// KeyboardTrigger is one keyboard's trigger key and how it is detected.
+// SwitchesWithGlobe reports whether triggers include the Globe key.
+func SwitchesWithGlobe(triggers []KeyboardTrigger) bool {
+	return slices.ContainsFunc(triggers, KeyboardTrigger.Globe)
+}
+
+// KeyboardTrigger is one of a keyboard's trigger keys and how it is detected.
 type KeyboardTrigger struct {
 	// Key is the trigger key (see TriggerKeys).
 	Key string
@@ -138,19 +142,9 @@ type KeyboardTrigger struct {
 	Mode string
 }
 
-// None reports whether there is no trigger key.
-func (k KeyboardTrigger) None() bool {
-	return k.Key == ""
-}
-
-// Globe reports whether the trigger is the Globe key itself.
+// Globe reports whether the trigger key is the Globe key itself.
 func (k KeyboardTrigger) Globe() bool {
 	return k.Key == TriggerGlobe
-}
-
-// other reports whether the trigger is a key other than the Globe key.
-func (k KeyboardTrigger) other() bool {
-	return !k.None() && !k.Globe()
 }
 
 // Remapped reports whether the trigger key is remapped at the HID level.
@@ -160,13 +154,13 @@ func (k KeyboardTrigger) Remapped() bool {
 
 // Dedicated reports whether the trigger key is silenced and read from raw input.
 func (k KeyboardTrigger) Dedicated() bool {
-	return k.other() && k.Mode == TriggerModeDedicated
+	return !k.Globe() && k.Mode == TriggerModeDedicated
 }
 
 // PassThrough reports whether the trigger key keeps its function and is read
 // from raw input.
 func (k KeyboardTrigger) PassThrough() bool {
-	return k.other() && k.Mode == TriggerModePassThrough
+	return !k.Globe() && k.Mode == TriggerModePassThrough
 }
 
 // Raw reports whether the trigger key is read from the keyboard's raw input,
@@ -226,15 +220,23 @@ func (c Config) Validate() error {
 	return c.validateCollections()
 }
 
-// validate checks every keyboard's trigger.
+// validate checks every keyboard's trigger keys, which must differ.
 func (t Trigger) validate() error {
-	for id, trigger := range t.Keyboards {
+	for id, triggers := range t.Keyboards {
 		if !keyboardIDPattern.MatchString(id) {
 			return fmt.Errorf("trigger keyboard %q must be vendor:product in hex, like 05ac:029c", id)
 		}
 
-		if err := trigger.validate(fmt.Sprintf("trigger for keyboard %s", id)); err != nil {
-			return err
+		name := fmt.Sprintf("trigger for keyboard %s", id)
+
+		for i, trigger := range triggers {
+			if err := trigger.validate(name); err != nil {
+				return err
+			}
+
+			if slices.ContainsFunc(triggers[:i], func(other KeyboardTrigger) bool { return other.Key == trigger.Key }) {
+				return fmt.Errorf("%s lists key %q more than once", name, trigger.Key)
+			}
 		}
 	}
 

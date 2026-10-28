@@ -16,6 +16,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ".betterglobekey.control.v1",
             "#[derive(serde::Serialize, serde::Deserialize)] #[serde(rename_all = \"camelCase\", default)]",
         )
+        // A keyboard's trigger keys are a plain list in the UI, as in the YAML.
+        .type_attribute(".betterglobekey.control.v1.KeyboardTriggers", "#[serde(transparent)]")
         .compile_fds(descriptors)?;
 
     tauri_build::build();

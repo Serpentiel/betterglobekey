@@ -24,7 +24,7 @@ brew install betterglobekey
 automatically; grant it under _System Settings > Privacy & Security > Accessibility_ by enabling the switch next to
 **betterglobekey**.
 
-A [trigger key](configuration.md#trigger-key) other than the Globe key, and recording keys in the companion, also
+A [trigger key](configuration.md#trigger-keys) other than the Globe key, and recording keys in the companion, also
 need Input Monitoring, under _System Settings > Privacy & Security > Input Monitoring_.
 
 You can check the permissions (and the rest of your setup) at any time with:
@@ -38,7 +38,7 @@ betterglobekey doctor
 So that macOS does not also switch the input source on its own — which would conflict with **betterglobekey** — set the
 Globe key to do nothing: open _System Settings > Keyboard_ and set **"Press 🌐 key to"** to **"Do Nothing"**.
 
-No Globe key on your keyboard? Choose another [trigger key](configuration.md#trigger-key), such as Caps Lock or Right
+No Globe key on your keyboard? Choose another [trigger key](configuration.md#trigger-keys), such as Caps Lock or Right
 Command.
 
 ## Starting the Service

@@ -9,32 +9,22 @@ export const MODE_LABELS: Record<string, string> = {
   [MODE_PASS_THROUGH]: "Keep the key's function",
 }
 
-/** modeHint explains what a trigger's mode does. */
-export function modeHint(trigger: KeyboardTrigger): string {
-  const name = triggerName(trigger.key)
+/** MODES_HINT explains the trigger modes and what they need. */
+export const MODES_HINT =
+  `Keys other than the Globe key are read straight from the keyboard, which needs Input Monitoring. ` +
+  `“${MODE_LABELS[MODE_DEDICATED]}” silences the key; “${MODE_LABELS[MODE_PASS_THROUGH]}” switches only ` +
+  `when the key is pressed alone.`
 
-  if (trigger.key === '') {
-    return 'Record a key to switch input sources from this keyboard.'
-  }
-
-  if (trigger.key === GLOBE) {
-    return 'Record a key other than the Globe key to choose how it works.'
-  }
-
-  return trigger.mode === MODE_PASS_THROUGH
-    ? `${name} keeps working as itself and switches only when pressed alone. It is read straight from the keyboard, which needs Input Monitoring.`
-    : `${name} only switches input sources: it is silenced and read straight from the keyboard, which needs Input Monitoring.`
-}
-
-/** describeTrigger names a trigger and its mode, e.g. "Caps Lock, switch input sources only". */
+/** describeTrigger names a trigger key and its mode, e.g. "Caps Lock (switch input sources only)". */
 export function describeTrigger(trigger: KeyboardTrigger): string {
-  if (trigger.key === '') {
-    return 'No trigger key'
-  }
-
   if (trigger.key === GLOBE) {
     return 'Globe key'
   }
 
-  return `${triggerName(trigger.key)}, ${(MODE_LABELS[trigger.mode] ?? trigger.mode).toLowerCase()}`
+  return `${triggerName(trigger.key)} (${(MODE_LABELS[trigger.mode] ?? trigger.mode).toLowerCase()})`
+}
+
+/** describeTriggers names a keyboard's trigger keys, or says it has none. */
+export function describeTriggers(triggers: KeyboardTrigger[]): string {
+  return triggers.length === 0 ? 'No trigger key' : triggers.map(describeTrigger).join(', ')
 }

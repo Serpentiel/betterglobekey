@@ -49,22 +49,27 @@ collections:
 
 All options other than `collections` are optional and fall back to the defaults shown above.
 
-## Trigger Key
+## Trigger Keys
 
-Every keyboard has its own trigger key, set under `trigger.keyboards` by the vendor and product ID that
-`betterglobekey doctor` and the companion show. A keyboard not listed uses its Globe key, if it has one (a MacBook's
-or a Magic Keyboard), and has no trigger key otherwise:
+Every keyboard has its own trigger keys, listed under `trigger.keyboards` by the vendor and product ID that
+`betterglobekey doctor` and the companion show; each switches input sources. A keyboard not listed uses its Globe key,
+if it has one (a MacBook's or a Magic Keyboard), and has none otherwise. An empty list (`[]`) turns a keyboard's
+trigger keys off, its Globe key included:
 
 ```yaml
 trigger:
   keyboards:
     "046d:c33f": # a Logitech keyboard
-      key: insert
-      mode: pass_through
-    "05ac:0281": # the MacBook's own keyboard
-      key: caps_lock
-      mode: dedicated
+      - key: insert
+        mode: pass_through
+    "05ac:0281": # the MacBook's own keyboard: its Globe key, plus Caps Lock and Left Command
+      - key: globe
+      - key: caps_lock
+      - key: left_command
+    "05ac:029c": [] # a Magic Keyboard that switches nothing
 ```
+
+A key appears at most once per keyboard.
 
 The keys:
 
@@ -79,7 +84,7 @@ The keys:
 
 A key other than the Globe key is read straight from the keyboard's raw input, which needs **Input Monitoring**
 (_System Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a
-restart after you grant it). How it is used depends on `mode`:
+restart after you grant it). How it is used depends on its `mode`:
 
 | `mode`                | The key                                                 |
 | --------------------- | ------------------------------------------------------- |
@@ -104,7 +109,7 @@ dedicated key:
 - It does not apply to keyboards that Karabiner-Elements has taken over; use Karabiner to map the key instead.
 - It sits on top of _System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys_. Leave the chosen key set to
   itself there.
-- `betterglobekey doctor` lists every connected keyboard with its trigger and mappings, including other tools'.
+- `betterglobekey doctor` lists every connected keyboard with its trigger keys and mappings, including other tools'.
 - To undo every remapping on a keyboard by hand:
   `hidutil property --matching '{"VendorID":0x046d,"ProductID":0xc33f}' --set '{"UserKeyMapping":[]}'`.
 

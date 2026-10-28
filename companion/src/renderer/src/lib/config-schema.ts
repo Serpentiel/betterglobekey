@@ -89,19 +89,24 @@ export const configSchema = z
     trigger: z.object({
       keyboards: z.record(
         z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'),
-        z.object({ key: z.enum(TRIGGER_KEY_VALUES), mode: z.enum(TRIGGER_MODES) }),
+        z.array(z.object({ key: z.enum(TRIGGER_KEY_VALUES), mode: z.enum(TRIGGER_MODES) })),
       ),
     }),
   })
   .superRefine((config, ctx) => {
-    for (const [id, keyboard] of Object.entries(config.trigger.keyboards)) {
-      if (!allowedModes(keyboard.key).includes(keyboard.mode)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['trigger', 'keyboards', id],
-          message: 'This key can only be remapped',
-        })
-      }
+    for (const [id, keys] of Object.entries(config.trigger.keyboards)) {
+      keys.forEach((trigger, index) => {
+        let message: string | null = null
+        if (!allowedModes(trigger.key).includes(trigger.mode)) {
+          message = 'This key can only be remapped'
+        } else if (keys.findIndex((other) => other.key === trigger.key) !== index) {
+          message = 'A keyboard lists a trigger key more than once'
+        }
+
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['trigger', 'keyboards', id, index], message })
+        }
+      })
     }
 
     const seen = new Set<string>()

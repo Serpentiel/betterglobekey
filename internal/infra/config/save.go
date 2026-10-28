@@ -47,9 +47,21 @@ func fromDomain(cfg config.Config) schemaV2 {
 	schema.HUD.ShowCollection = boolPtr(cfg.HUD.ShowCollection)
 
 	if len(cfg.Trigger.Keyboards) > 0 {
-		schema.Trigger.Keyboards = make(map[string]keyboardTriggerV2, len(cfg.Trigger.Keyboards))
-		for id, keyboard := range cfg.Trigger.Keyboards {
-			schema.Trigger.Keyboards[id] = keyboardTriggerV2{Key: keyboard.Key, Mode: keyboard.Mode}
+		schema.Trigger.Keyboards = make(map[string][]keyboardTriggerV2, len(cfg.Trigger.Keyboards))
+		for id, triggers := range cfg.Trigger.Keyboards {
+			keys := make([]keyboardTriggerV2, 0, len(triggers))
+
+			// The Globe key has no mode to write.
+			for _, trigger := range triggers {
+				key := keyboardTriggerV2{Key: trigger.Key, Mode: trigger.Mode}
+				if trigger.Globe() {
+					key.Mode = ""
+				}
+
+				keys = append(keys, key)
+			}
+
+			schema.Trigger.Keyboards[id] = keys
 		}
 	}
 

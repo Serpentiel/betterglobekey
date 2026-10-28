@@ -50,21 +50,38 @@ describe('validateConfig', () => {
     expect(validateConfig(validConfig()).valid).toBe(true)
   })
 
-  it('accepts every trigger mode and per-keyboard triggers', () => {
+  it('accepts every trigger mode, several keys per keyboard, and none', () => {
     const config = validConfig()
     config.trigger = {
       keyboards: {
-        '046d:c33f': { key: 'insert', mode: 'pass_through' },
-        '05ac:0281': { key: 'caps_lock', mode: 'dedicated' },
-        '1234:5678': { key: 'right_command', mode: 'dedicated' },
+        '046d:c33f': [{ key: 'insert', mode: 'pass_through' }],
+        '05ac:0281': [
+          { key: 'globe', mode: 'dedicated' },
+          { key: 'caps_lock', mode: 'dedicated' },
+          { key: 'left_command', mode: 'pass_through' },
+        ],
+        '1234:5678': [],
       },
     }
     expect(validateConfig(config).valid).toBe(true)
   })
 
+  it('rejects a key listed twice on a keyboard', () => {
+    const config = validConfig()
+    config.trigger.keyboards = {
+      '046d:c33f': [
+        { key: 'insert', mode: 'dedicated' },
+        { key: 'insert', mode: 'pass_through' },
+      ],
+    }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.keyboards).toBe('A keyboard lists a trigger key more than once')
+  })
+
   it('rejects an invalid keyboard ID', () => {
     const config = validConfig()
-    config.trigger.keyboards = { Logitech: { key: 'insert', mode: 'dedicated' } }
+    config.trigger.keyboards = { Logitech: [{ key: 'insert', mode: 'dedicated' }] }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()
@@ -72,7 +89,7 @@ describe('validateConfig', () => {
 
   it('rejects passing Caps Lock through on a keyboard', () => {
     const config = validConfig()
-    config.trigger.keyboards = { '046d:c33f': { key: 'caps_lock', mode: 'pass_through' } }
+    config.trigger.keyboards = { '046d:c33f': [{ key: 'caps_lock', mode: 'pass_through' }] }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()
@@ -80,7 +97,7 @@ describe('validateConfig', () => {
 
   it('rejects an unknown trigger key', () => {
     const config = validConfig()
-    config.trigger.keyboards = { '046d:c33f': { key: 'fn', mode: 'dedicated' } }
+    config.trigger.keyboards = { '046d:c33f': [{ key: 'fn', mode: 'dedicated' }] }
     const result = validateConfig(config)
     expect(result.valid).toBe(false)
     expect(result.errors.trigger.keyboards).toBeDefined()

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   allowedModes,
   GLOBE,
-  triggerFor,
+  switchesWithGlobe,
+  triggersFor,
   withKey,
   TRIGGER_KEYS,
   triggerKey,
@@ -53,11 +54,17 @@ describe('trigger keys', () => {
 
   it('resolves keyboard triggers like the daemon', () => {
     const insert = { key: 'insert', mode: 'pass_through' }
-    const trigger = { keyboards: { '046d:c33f': insert } }
+    const globe = { key: 'globe', mode: 'dedicated' }
+    const trigger = { keyboards: { '046d:c33f': [insert], '05ac:029c': [globe, insert], '05ac:0342': [] } }
 
-    expect(triggerFor(trigger, '046d:c33f', false)).toEqual([insert, true])
-    expect(triggerFor(trigger, '05ac:0281', true)).toEqual([{ key: 'globe', mode: 'dedicated' }, false])
-    expect(triggerFor(trigger, '1234:5678', false)).toEqual([{ key: '', mode: 'dedicated' }, false])
+    expect(triggersFor(trigger, '046d:c33f', false)).toEqual([[insert], true])
+    expect(triggersFor(trigger, '05ac:029c', true)).toEqual([[globe, insert], true])
+    expect(triggersFor(trigger, '05ac:0342', true)).toEqual([[], true])
+    expect(triggersFor(trigger, '05ac:0281', true)).toEqual([[globe], false])
+    expect(triggersFor(trigger, '1234:5678', false)).toEqual([[], false])
+
+    expect(switchesWithGlobe([insert, globe])).toBe(true)
+    expect(switchesWithGlobe([insert])).toBe(false)
   })
 
   it('keeps a mode the new key allows', () => {

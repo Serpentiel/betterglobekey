@@ -96,11 +96,11 @@ func TestApplySchemaDefaults(t *testing.T) {
 	set.DoublePress.MaximumDelay = "1s"
 	set.Reverse.Modifier = "command"
 	set.HUD.Duration = "2s"
-	set.Trigger.Keyboards = map[string]keyboardTriggerV2{"046d:c33f": {Key: "insert"}}
+	set.Trigger.Keyboards = map[string][]keyboardTriggerV2{"046d:c33f": {{Key: "insert"}}}
 	applySchemaDefaults(&set)
 
-	if set.Trigger.Keyboards["046d:c33f"].Mode != defaultTriggerMode {
-		t.Errorf("keyboard trigger mode = %q, want %q", set.Trigger.Keyboards["046d:c33f"].Mode, defaultTriggerMode)
+	if mode := set.Trigger.Keyboards["046d:c33f"][0].Mode; mode != defaultTriggerMode {
+		t.Errorf("keyboard trigger mode = %q, want %q", mode, defaultTriggerMode)
 	}
 
 	if set.Logger.Level != "debug" || set.DoublePress.MaximumDelay != "1s" ||

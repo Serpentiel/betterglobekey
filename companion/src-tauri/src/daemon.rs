@@ -135,7 +135,7 @@ fn complete(mut config: Config) -> Config {
 mod tests {
     use serde_json::json;
 
-    use super::proto::{KeyMapping, Keyboard, KeyboardTrigger, Trigger};
+    use super::proto::{KeyMapping, Keyboard, KeyboardTrigger, KeyboardTriggers, Trigger};
     use super::*;
 
     #[test]
@@ -163,7 +163,12 @@ mod tests {
             "reverse": { "enabled": true, "modifier": "shift" },
             "hud": { "enabled": true, "duration": "900ms", "showCollection": true },
             "collections": [{ "name": "primary", "sources": ["com.apple.keylayout.US"] }],
-            "trigger": { "keyboards": { "046d:c33f": { "key": "insert", "mode": "pass_through" } } },
+            "trigger": {
+                "keyboards": {
+                    "046d:c33f": [{ "key": "globe", "mode": "dedicated" }, { "key": "insert", "mode": "pass_through" }],
+                    "05ac:0281": [],
+                },
+            },
         }))
         .unwrap();
 
@@ -172,8 +177,11 @@ mod tests {
         assert!(config.hud.unwrap().show_collection);
         assert_eq!(config.collections[0].sources, ["com.apple.keylayout.US"]);
 
-        let logitech = &config.trigger.unwrap().keyboards["046d:c33f"];
-        assert_eq!((logitech.key.as_str(), logitech.mode.as_str()), ("insert", "pass_through"));
+        let trigger = config.trigger.unwrap();
+        let logitech = &trigger.keyboards["046d:c33f"].keys;
+        assert_eq!(logitech.len(), 2);
+        assert_eq!((logitech[1].key.as_str(), logitech[1].mode.as_str()), ("insert", "pass_through"));
+        assert!(trigger.keyboards["05ac:0281"].keys.is_empty());
     }
 
     #[test]
@@ -182,14 +190,17 @@ mod tests {
             trigger: Some(Trigger {
                 keyboards: [(
                     "046d:c33f".to_owned(),
-                    KeyboardTrigger { key: "insert".to_owned(), mode: "pass_through".to_owned() },
+                    KeyboardTriggers {
+                        keys: vec![KeyboardTrigger { key: "insert".to_owned(), mode: "pass_through".to_owned() }],
+                    },
                 )]
                 .into(),
             }),
             ..Config::default()
         });
 
-        assert_eq!(config.trigger.unwrap().keyboards["046d:c33f"].key, "insert");
+        let value = serde_json::to_value(config).unwrap();
+        assert_eq!(value["trigger"]["keyboards"]["046d:c33f"], json!([{ "key": "insert", "mode": "pass_through" }]));
     }
 
     #[test]
@@ -197,23 +208,23 @@ mod tests {
         let response = ListKeyboardsResponse {
             keyboards: vec![Keyboard {
                 id: "046d:c33f".to_owned(),
-                trigger: Some(KeyboardTrigger { key: "caps_lock".to_owned(), mode: "fn".to_owned() }),
+                triggers: vec![KeyboardTrigger { key: "caps_lock".to_owned(), mode: "dedicated".to_owned() }],
                 listed: true,
-                trigger_mapping: Some(KeyMapping {
+                trigger_mappings: vec![KeyMapping {
                     src: 0x7_0000_0039,
-                    dst: 0xFF_0000_0003,
+                    dst: 0x7_0000_0073,
                     src_name: "Caps Lock".to_owned(),
-                    dst_name: "fn".to_owned(),
-                }),
+                    dst_name: "F24".to_owned(),
+                }],
                 ..Keyboard::default()
             }],
             system_mappings: vec![],
         };
 
         let value = serde_json::to_value(response).unwrap();
-        assert_eq!(value["keyboards"][0]["trigger"], json!({ "key": "caps_lock", "mode": "fn" }));
+        assert_eq!(value["keyboards"][0]["triggers"], json!([{ "key": "caps_lock", "mode": "dedicated" }]));
         assert_eq!(value["keyboards"][0]["listed"], json!(true));
-        assert_eq!(value["keyboards"][0]["triggerMapping"]["srcName"], json!("Caps Lock"));
+        assert_eq!(value["keyboards"][0]["triggerMappings"][0]["srcName"], json!("Caps Lock"));
         assert_eq!(value["keyboards"][0]["otherMappings"], json!([]));
         assert_eq!(value["systemMappings"], json!([]));
     }

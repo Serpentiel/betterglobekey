@@ -27,9 +27,14 @@
 
 .modeRow {
   display: flex;
+  margin-bottom: var(--space-2);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+.modeRow:last-child {
+  margin-bottom: 0;
 }
 
 .modeLabel {
@@ -41,7 +46,7 @@
 }
 
 .hint {
-  margin: var(--space-2) 0 0;
+  margin: calc(-1 * var(--space-2)) var(--space-1) 0;
   font-size: var(--text-sm);
   color: var(--text-tertiary);
 }

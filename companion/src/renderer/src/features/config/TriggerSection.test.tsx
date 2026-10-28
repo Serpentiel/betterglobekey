@@ -31,9 +31,9 @@ const builtIn: Keyboard = {
   transport: 'SPI',
   builtIn: true,
   hasGlobe: true,
-  trigger: globe,
+  triggers: [globe],
   listed: false,
-  triggerMapping: null,
+  triggerMappings: [],
   otherMappings: [],
 }
 
@@ -43,9 +43,9 @@ const logitech: Keyboard = {
   transport: 'USB',
   builtIn: false,
   hasGlobe: false,
-  trigger: capsDedicated,
-  listed: false,
-  triggerMapping: capsSilenced,
+  triggers: [capsDedicated],
+  listed: true,
+  triggerMappings: [capsSilenced],
   otherMappings: [graveToEscape],
 }
 
@@ -72,66 +72,83 @@ describe('TriggerSection', () => {
 
     expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281')).toBeTruthy()
     expect(row('Apple Internal Keyboard').getByText('🌐 Globe')).toBeTruthy()
-    expect(row('Apple Internal Keyboard').queryByRole('button', { name: 'Use Globe key' })).toBeNull()
-    expect(row('Apple Internal Keyboard').queryByRole('combobox', { name: 'Mode' })).toBeNull()
+    expect(row('Apple Internal Keyboard').queryByRole('combobox')).toBeNull()
     expect(screen.getByRole('group', { name: 'Logitech K120' })).toBeTruthy()
   })
 
-  it('leaves a keyboard without a Globe key unassigned, with Clear instead of Use Globe', () => {
+  it('leaves a keyboard without a Globe key without a trigger key', () => {
     renderSection()
 
-    expect(row('Logitech K120').getByText('None')).toBeTruthy()
-    expect(row('Logitech K120').queryByRole('button', { name: 'Use Globe key' })).toBeNull()
-    expect(row('Logitech K120').queryByRole('button', { name: 'Clear' })).toBeNull()
+    expect(row('Logitech K120').getByText('Add key')).toBeTruthy()
+    expect(row('Logitech K120').queryByText('⇪ Caps Lock')).toBeNull()
+  })
 
-    cleanup()
+  it('unlists a keyboard whose last key is removed when it has no Globe key', () => {
+    const { onChange, trigger } = renderSection({ keyboards: { '046d:c33f': [capsDedicated] } })
 
-    const { onChange, trigger } = renderSection({ keyboards: { '046d:c33f': capsDedicated } })
-    fireEvent.click(row('Logitech K120').getByRole('button', { name: 'Clear' }))
+    fireEvent.click(row('Logitech K120').getByRole('button', { name: 'Remove Caps Lock' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
+  it('keeps an Apple keyboard listed without keys once its Globe key is removed', () => {
+    const { onChange, trigger } = renderSection()
+
+    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Remove Globe' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: { '05ac:0281': [] } } })
+  })
+
   it('shows a keyboard with its applied mapping', () => {
-    renderSection({ keyboards: { '046d:c33f': capsDedicated } })
+    renderSection({ keyboards: { '046d:c33f': [capsDedicated] } })
 
     expect(row('Logitech K120').getByText('USB · 046d:c33f · Caps Lock silenced')).toBeTruthy()
     expect(row('Logitech K120').getByText('⇪ Caps Lock')).toBeTruthy()
   })
 
-  it('sets a keyboard its own mode', () => {
-    const { onChange, trigger } = renderSection({ keyboards: { '046d:c33f': { key: 'insert', mode: 'dedicated' } } })
+  it('lists several keys on one keyboard, the Globe key among them, each other key with its own mode', () => {
+    const insert = { key: 'insert', mode: 'dedicated' }
+    const { onChange, trigger } = renderSection({ keyboards: { '05ac:0281': [globe, capsDedicated, insert] } })
 
-    fireEvent.click(row('Logitech K120').getByRole('combobox', { name: 'Mode' }))
+    const apple = row('Apple Internal Keyboard')
+    expect(apple.getByText('🌐 Globe')).toBeTruthy()
+    expect(apple.getByText('⇪ Caps Lock')).toBeTruthy()
+    expect(apple.getByText('Insert', { selector: 'span[aria-live]' })).toBeTruthy()
+    expect((apple.getByRole('combobox', { name: 'Caps Lock' }) as HTMLButtonElement).disabled).toBe(true)
+
+    fireEvent.click(apple.getByRole('combobox', { name: 'Insert' }))
     fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))
 
     expect(onChange).toHaveBeenCalledWith({
       ...config,
-      trigger: { ...trigger, keyboards: { '046d:c33f': { key: 'insert', mode: 'pass_through' } } },
+      trigger: {
+        ...trigger,
+        keyboards: { '05ac:0281': [globe, capsDedicated, { key: 'insert', mode: 'pass_through' }] },
+      },
     })
   })
 
-  it('puts a listed keyboard back on the Globe key', () => {
+  it('unlists a keyboard set back to its Globe key alone', () => {
     const insert = { key: 'insert', mode: 'pass_through' }
-    const { onChange, trigger } = renderSection({ keyboards: { '05ac:0281': insert } })
+    const { onChange, trigger } = renderSection({ keyboards: { '05ac:0281': [globe, insert] } })
 
-    expect(row('Apple Internal Keyboard').getByText('Insert')).toBeTruthy()
     expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281 · applies once saved')).toBeTruthy()
 
-    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Use Globe key' }))
+    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Remove Insert' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
   it('notes that the Globe key still switches while another keyboard switches with it', () => {
-    renderSection({ keyboards: { '05ac:0281': capsDedicated, '046d:c33f': globe } })
+    renderSection({ keyboards: { '05ac:0281': [capsDedicated], '046d:c33f': [globe] } })
 
     expect(row('Apple Internal Keyboard').getByText(/The Globe key still switches here/)).toBeTruthy()
   })
 
   it('folds keyboards set here that are not connected, and forgets them', () => {
-    const { onChange, trigger } = renderSection({ keyboards: { '1234:5678': { key: 'insert', mode: 'dedicated' } } })
+    const { onChange, trigger } = renderSection({
+      keyboards: { '1234:5678': [{ key: 'insert', mode: 'dedicated' }, globe] },
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Other keyboards (1)' }))
-    expect(screen.getByText('Insert, switch input sources only · applies when connected')).toBeTruthy()
+    expect(screen.getByText('Insert (switch input sources only), Globe key · applies when connected')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })

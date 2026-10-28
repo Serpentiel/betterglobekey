@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -101,16 +102,16 @@ func caps(mode string) config.KeyboardTrigger {
 	return config.KeyboardTrigger{Key: config.TriggerCapsLock, Mode: mode}
 }
 
-// everywhere makes trigger the trigger of every keyboard in the store.
-func everywhere(trigger config.KeyboardTrigger) config.Trigger {
+// everywhere makes triggers the trigger keys of every keyboard in the store.
+func everywhere(triggers ...config.KeyboardTrigger) config.Trigger {
 	return config.Trigger{
-		Keyboards: map[string]config.KeyboardTrigger{builtInID: trigger, magicID: trigger, logitechID: trigger},
+		Keyboards: map[string][]config.KeyboardTrigger{builtInID: triggers, magicID: triggers, logitechID: triggers},
 	}
 }
 
-// onLogitech makes trigger the trigger of the third-party keyboard.
-func onLogitech(trigger config.KeyboardTrigger) config.Trigger {
-	return config.Trigger{Keyboards: map[string]config.KeyboardTrigger{logitechID: trigger}}
+// onLogitech makes triggers the trigger keys of the third-party keyboard.
+func onLogitech(triggers ...config.KeyboardTrigger) config.Trigger {
+	return config.Trigger{Keyboards: map[string][]config.KeyboardTrigger{logitechID: triggers}}
 }
 
 // capsDedicated silences Caps Lock on the third-party keyboard.
@@ -199,15 +200,24 @@ func TestObserveReportsResolvedTriggers(t *testing.T) {
 
 	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
 	apply(t, remapper, config.Trigger{
-		Keyboards: map[string]config.KeyboardTrigger{magicID: insert, logitechID: caps(config.TriggerModeDedicated)},
+		Keyboards: map[string][]config.KeyboardTrigger{
+			magicID:    {config.GlobeTrigger, insert},
+			logitechID: {caps(config.TriggerModeDedicated)},
+		},
 	})
 
 	want := []Resolved{
-		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, Trigger: config.GlobeTrigger},
-		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, Trigger: insert},
-		{Vendor: 0x046d, Product: 0xc33f, Location: 3, Trigger: caps(config.TriggerModeDedicated), Applied: true},
+		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, Triggers: []ResolvedTrigger{
+			{KeyboardTrigger: config.GlobeTrigger},
+		}},
+		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, Triggers: []ResolvedTrigger{
+			{KeyboardTrigger: config.GlobeTrigger}, {KeyboardTrigger: insert},
+		}},
+		{Vendor: 0x046d, Product: 0xc33f, Location: 3, Triggers: []ResolvedTrigger{
+			{KeyboardTrigger: caps(config.TriggerModeDedicated), Applied: true},
+		}},
 	}
-	if !slices.Equal(got, want) {
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("resolved = %+v, want %+v", got, want)
 	}
 
@@ -257,15 +267,25 @@ func TestApplyPerKeyboard(t *testing.T) {
 			1: {capsSilenced}, 2: {capsSilenced}, 3: {capsSilenced},
 		}},
 		{"apple keyboard listed", config.Trigger{
-			Keyboards: map[string]config.KeyboardTrigger{magicID: caps(config.TriggerModeDedicated)},
+			Keyboards: map[string][]config.KeyboardTrigger{magicID: {caps(config.TriggerModeDedicated)}},
 		}, map[uint64][]Mapping{2: {capsSilenced}}},
 		{"none listed", config.Trigger{}, map[uint64][]Mapping{}},
 		{"a key and mode per keyboard", config.Trigger{
-			Keyboards: map[string]config.KeyboardTrigger{
-				magicID:    {Key: "right_command", Mode: config.TriggerModeDedicated},
-				logitechID: caps(config.TriggerModeDedicated),
+			Keyboards: map[string][]config.KeyboardTrigger{
+				magicID:    {{Key: "right_command", Mode: config.TriggerModeDedicated}},
+				logitechID: {caps(config.TriggerModeDedicated)},
 			},
 		}, map[uint64][]Mapping{2: {commandSilenced}, 3: {capsSilenced}}},
+		{"several keys on one keyboard", config.Trigger{
+			Keyboards: map[string][]config.KeyboardTrigger{
+				builtInID: {
+					config.GlobeTrigger,
+					caps(config.TriggerModeDedicated),
+					{Key: "insert", Mode: config.TriggerModePassThrough},
+					{Key: "right_command", Mode: config.TriggerModeDedicated},
+				},
+			},
+		}, map[uint64][]Mapping{1: {capsSilenced, commandSilenced}}},
 	}
 
 	for _, test := range tests {
@@ -387,6 +407,37 @@ func TestApplySwitchesKeys(t *testing.T) {
 	apply(t, remapper, onLogitech(rightCommandDedicated))
 
 	assertMappings(t, store, 3, userMapping, Mapping{Src: rightCommand, Dst: DedicatedUsage})
+}
+
+func TestApplyAddsAndDropsOneOfSeveralKeys(t *testing.T) {
+	store := newStore(userMapping)
+	remapper, path := newRemapper(t, store)
+
+	command := config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeDedicated}
+	commandSilenced := Mapping{Src: rightCommand, Dst: DedicatedUsage}
+
+	apply(t, remapper, onLogitech(caps(config.TriggerModeDedicated)))
+	apply(t, remapper, onLogitech(caps(config.TriggerModeDedicated), command))
+	assertMappings(t, store, 3, userMapping, capsSilenced, commandSilenced)
+
+	apply(t, remapper, onLogitech(command))
+	assertMappings(t, store, 3, userMapping, commandSilenced)
+
+	apply(t, remapper, onLogitech())
+	assertMappings(t, store, 3, userMapping)
+	assertNoState(t, path)
+}
+
+func TestRestoreRemovesSeveralKeys(t *testing.T) {
+	store := newStore(userMapping)
+	remapper, path := newRemapper(t, store)
+
+	apply(t, remapper, onLogitech(caps(config.TriggerModeDedicated),
+		config.KeyboardTrigger{Key: "right_command", Mode: config.TriggerModeDedicated}))
+	restore(t, remapper)
+
+	assertMappings(t, store, 3, userMapping)
+	assertNoState(t, path)
 }
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
@@ -580,8 +631,8 @@ func TestKeyboards(t *testing.T) {
 	}
 
 	logitech := statuses[2]
-	if logitech.Trigger != caps(config.TriggerModeDedicated) || !logitech.Listed || logitech.Ours == nil ||
-		*logitech.Ours != capsSilenced {
+	if !slices.Equal(logitech.Triggers, []config.KeyboardTrigger{caps(config.TriggerModeDedicated)}) ||
+		!logitech.Listed || !slices.Equal(logitech.Ours, []Mapping{capsSilenced}) {
 		t.Errorf("logitech = %+v, want our caps lock mapping", logitech)
 	}
 
@@ -589,7 +640,7 @@ func TestKeyboards(t *testing.T) {
 		t.Errorf("logitech = %+v, want the user's mapping once", logitech)
 	}
 
-	if statuses[0].Trigger != config.GlobeTrigger || statuses[0].Ours != nil {
+	if !slices.Equal(statuses[0].Triggers, []config.KeyboardTrigger{config.GlobeTrigger}) || statuses[0].Ours != nil {
 		t.Errorf("built-in = %+v, want out of scope", statuses[0])
 	}
 

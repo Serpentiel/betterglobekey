@@ -65,12 +65,12 @@ type schemaV2 struct {
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
 	Trigger struct {
-		Keyboards map[string]keyboardTriggerV2 `yaml:"keyboards,omitempty"`
+		Keyboards map[string][]keyboardTriggerV2 `yaml:"keyboards,omitempty"`
 	} `yaml:"trigger,omitempty"`
 	Collections []collectionV2 `yaml:"collections"`
 }
 
-// keyboardTriggerV2 is one keyboard's trigger in the v2 schema.
+// keyboardTriggerV2 is one of a keyboard's trigger keys in the v2 schema.
 type keyboardTriggerV2 struct {
 	Key  string `yaml:"key"`
 	Mode string `yaml:"mode,omitempty"`

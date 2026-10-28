@@ -3,10 +3,16 @@
   gap: var(--space-1);
 }
 
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 .keycap {
   display: inline-flex;
   align-items: center;
-  min-width: 160px;
   height: 30px;
   padding-right: 2px;
   background: var(--surface-inset);
@@ -18,7 +24,7 @@
     box-shadow var(--transition);
 }
 
-.keycap:not(.disabled):hover {
+.keycap:hover {
   border-color: var(--text-tertiary);
 }
 
@@ -28,8 +34,11 @@
 }
 
 .key {
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 0 var(--space-3);
+  height: 100%;
+  padding: 0 var(--space-1) 0 var(--space-3);
   border: none;
   border-radius: inherit;
   background: transparent;
@@ -37,12 +46,8 @@
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 500;
-  text-align: left;
+  white-space: nowrap;
   cursor: pointer;
-}
-
-.key:disabled {
-  cursor: not-allowed;
 }
 
 .key:focus-visible {
@@ -56,6 +61,7 @@
 }
 
 .recording {
+  min-width: 150px;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
@@ -65,17 +71,46 @@
   cursor: default;
 }
 
-.disabled {
-  opacity: 0.5;
+/* add looks like an empty keycap: dashed, with only a plus, or "Add key" while there are none. */
+.add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 30px;
+  height: 30px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    color var(--transition);
 }
 
-/* status wraps within the keycap's width rather than widening the picker. */
+.add:hover {
+  border-color: var(--text-tertiary);
+  color: var(--text);
+}
+
+.add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* status wraps within the keys' width rather than widening the picker. */
 .status {
   width: 0;
   min-width: 100%;
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
+  text-align: right;
 }
 
 .error {

@@ -37,7 +37,7 @@ func TestValidateAllowsNoCollections(t *testing.T) {
 
 // keyboardTrigger returns a trigger setting key and mode for one keyboard.
 func keyboardTrigger(key, mode string) config.Trigger {
-	return config.Trigger{Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": {Key: key, Mode: mode}}}
+	return config.Trigger{Keyboards: map[string][]config.KeyboardTrigger{"046d:c33f": {{Key: key, Mode: mode}}}}
 }
 
 func TestValidateRejectsInvalidConfigs(t *testing.T) {
@@ -55,7 +55,11 @@ func TestValidateRejectsInvalidConfigs(t *testing.T) {
 			c.Trigger = keyboardTrigger(config.TriggerCapsLock, config.TriggerModePassThrough)
 		},
 		"invalid keyboard id": func(c *config.Config) {
-			c.Trigger.Keyboards = map[string]config.KeyboardTrigger{"05AC:29C": config.GlobeTrigger}
+			c.Trigger.Keyboards = map[string][]config.KeyboardTrigger{"05AC:29C": {config.GlobeTrigger}}
+		},
+		"duplicate trigger key": func(c *config.Config) {
+			insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModeDedicated}
+			c.Trigger.Keyboards = map[string][]config.KeyboardTrigger{"046d:c33f": {insert, insert}}
 		},
 		"negative retention":    func(c *config.Config) { c.Logger.RetentionFiles = -1 },
 		"empty collection name": func(c *config.Config) { c.Collections[0].Name = "" },
@@ -88,6 +92,22 @@ func TestValidateAcceptsEveryTriggerKey(t *testing.T) {
 	}
 }
 
+func TestValidateAcceptsSeveralTriggerKeys(t *testing.T) {
+	cfg := validConfig()
+	cfg.Trigger.Keyboards = map[string][]config.KeyboardTrigger{
+		"05ac:0281": {
+			config.GlobeTrigger,
+			{Key: config.TriggerCapsLock, Mode: config.TriggerModeDedicated},
+			{Key: "left_command", Mode: config.TriggerModePassThrough},
+		},
+		"046d:c33f": {},
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestKeyboardTriggerModes(t *testing.T) {
 	key := func(key, mode string) config.KeyboardTrigger { return config.KeyboardTrigger{Key: key, Mode: mode} }
 
@@ -115,25 +135,43 @@ func TestKeyboardTriggerModes(t *testing.T) {
 
 func TestTriggerFor(t *testing.T) {
 	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
-	trigger := config.Trigger{Keyboards: map[string]config.KeyboardTrigger{"046d:c33f": insert}}
+	trigger := config.Trigger{Keyboards: map[string][]config.KeyboardTrigger{
+		"046d:c33f": {insert},
+		"05ac:0342": {config.GlobeTrigger, insert},
+		"05ac:0343": {},
+	}}
 
 	tests := []struct {
 		name     string
 		id       string
 		hasGlobe bool
-		want     config.KeyboardTrigger
+		want     []config.KeyboardTrigger
 		listed   bool
 	}{
-		{"listed", "046d:c33f", false, insert, true},
-		{"with Globe key", "05ac:0281", true, config.GlobeTrigger, false},
-		{"without Globe key", "1234:5678", false, config.KeyboardTrigger{}, false},
+		{"listed", "046d:c33f", false, []config.KeyboardTrigger{insert}, true},
+		{"listed with the Globe key", "05ac:0342", true, []config.KeyboardTrigger{config.GlobeTrigger, insert}, true},
+		{"listed without keys", "05ac:0343", true, []config.KeyboardTrigger{}, true},
+		{"with Globe key", "05ac:0281", true, []config.KeyboardTrigger{config.GlobeTrigger}, false},
+		{"without Globe key", "1234:5678", false, nil, false},
 	}
 
 	for _, test := range tests {
 		got, listed := trigger.For(test.id, test.hasGlobe)
-		if got != test.want || listed != test.listed {
+		if !slices.Equal(got, test.want) || listed != test.listed {
 			t.Errorf("%s: For = %+v, %v; want %+v, %v", test.name, got, listed, test.want, test.listed)
 		}
+	}
+}
+
+func TestSwitchesWithGlobe(t *testing.T) {
+	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModeDedicated}
+
+	if config.SwitchesWithGlobe([]config.KeyboardTrigger{insert}) || config.SwitchesWithGlobe(nil) {
+		t.Error("SwitchesWithGlobe without the Globe key = true")
+	}
+
+	if !config.SwitchesWithGlobe([]config.KeyboardTrigger{insert, config.GlobeTrigger}) {
+		t.Error("SwitchesWithGlobe with the Globe key = false")
 	}
 }
 

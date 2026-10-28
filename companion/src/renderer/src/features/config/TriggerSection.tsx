@@ -4,10 +4,18 @@ import { Globe } from 'lucide-react'
 import type { Config, Keyboard, KeyboardTrigger, KeyMapping } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
-import { allowedModes, DEDICATED_USAGE, GLOBE, triggerFor, withKey } from '../../lib/trigger-keys'
+import {
+  allowedModes,
+  DEDICATED_USAGE,
+  defaultTriggers,
+  GLOBE,
+  switchesWithGlobe,
+  triggerName,
+  triggersFor,
+} from '../../lib/trigger-keys'
 import { Banner, Button, Disclosure, Section, Select } from '../../ui'
 import { KeyPicker } from './KeyPicker'
-import { describeTrigger, MODE_LABELS, modeHint } from './trigger-text'
+import { describeTriggers, MODE_LABELS, MODES_HINT } from './trigger-text'
 import styles from './TriggerSection.module.css'
 
 interface Props {
@@ -30,16 +38,17 @@ function keyboardName(keyboard: Keyboard): string {
   return keyboard.name || keyboard.id
 }
 
-function sameTrigger(a: KeyboardTrigger, b: KeyboardTrigger): boolean {
-  return a.key === b.key && (a.key === '' || a.key === GLOBE || a.mode === b.mode)
+/** sameTriggers reports whether two lists hold the same keys in the same modes; the Globe key has none. */
+function sameTriggers(a: KeyboardTrigger[], b: KeyboardTrigger[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (trigger, index) => trigger.key === b[index].key && (trigger.key === GLOBE || trigger.mode === b[index].mode),
+    )
+  )
 }
 
-/** switchesWithGlobe reports whether a trigger makes the Globe key switch. */
-function switchesWithGlobe(trigger: KeyboardTrigger): boolean {
-  return trigger.key === GLOBE
-}
-
-/** TriggerSection lists the keyboards, each with its own trigger key; ones set here but not connected are folded away. */
+/** TriggerSection lists the keyboards, each with its own trigger keys; ones set here but not connected are folded away. */
 export function TriggerSection({ config, errors, keyboards, onChange }: Props): ReactElement {
   const { trigger } = config
 
@@ -52,7 +61,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
   const others = connected.filter((candidate) => candidate.otherMappings.length > 0)
   const systemMappings = keyboards.report?.systemMappings ?? []
 
-  const setKeyboards = (next: Record<string, KeyboardTrigger>): void =>
+  const setKeyboards = (next: Record<string, KeyboardTrigger[]>): void =>
     onChange({ ...config, trigger: { ...trigger, keyboards: next } })
 
   const resetKeyboard = (id: string): void =>
@@ -61,7 +70,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
   return (
     <Section
       icon={Globe}
-      title="Trigger Key"
+      title="Trigger Keys"
       description={errors.trigger.keyboards ?? "Keyboards you don't set use their Globe key, if they have one."}
     >
       {keyboards.error ? <Banner tone="error">{`Keyboards unavailable: ${keyboards.error}`}</Banner> : null}
@@ -77,13 +86,18 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
               config={config}
               globeElsewhere={connected.some(
                 (other) =>
-                  other.id !== keyboard.id && switchesWithGlobe(triggerFor(trigger, other.id, other.hasGlobe)[0]),
+                  other.id !== keyboard.id && switchesWithGlobe(triggersFor(trigger, other.id, other.hasGlobe)[0]),
               )}
               onChange={(next) => setKeyboards({ ...trigger.keyboards, [keyboard.id]: next })}
               onReset={() => resetKeyboard(keyboard.id)}
             />
           ))}
         </div>
+      ) : null}
+      {connected.some((keyboard) =>
+        triggersFor(trigger, keyboard.id, keyboard.hasGlobe)[0].some((key) => key.key !== GLOBE),
+      ) ? (
+        <p className={styles.hint}>{MODES_HINT}</p>
       ) : null}
 
       {disconnected.length > 0 ? (
@@ -94,7 +108,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
                 <div className={styles.text}>
                   <span className={styles.name}>{id}</span>
                   <span className={styles.details}>
-                    {`${describeTrigger(trigger.keyboards[id])} · applies when connected`}
+                    {`${describeTriggers(trigger.keyboards[id])} · applies when connected`}
                   </span>
                 </div>
                 <Button variant="ghost" onClick={() => resetKeyboard(id)}>
@@ -137,23 +151,26 @@ interface RowProps {
   config: Config
   /** globeElsewhere reports that another connected keyboard switches with the Globe key. */
   globeElsewhere: boolean
-  onChange: (trigger: KeyboardTrigger) => void
-  /** onReset puts the keyboard back on its Globe key, or on no key without one. */
+  onChange: (triggers: KeyboardTrigger[]) => void
+  /** onReset unlists the keyboard, putting it back on its Globe key, or on none without one. */
   onReset: () => void
 }
 
-/** KeyboardRow edits one connected keyboard's trigger key, and its mode once a key other than the Globe key is set. */
+/** KeyboardRow edits one connected keyboard's trigger keys, and the mode of each key other than the Globe key. */
 function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: RowProps): ReactElement {
-  const [current] = triggerFor(config.trigger, keyboard.id, keyboard.hasGlobe)
-  const reset = keyboard.hasGlobe ? GLOBE : ''
+  const [current] = triggersFor(config.trigger, keyboard.id, keyboard.hasGlobe)
   const name = keyboardName(keyboard)
-  const modeId = useId()
+  const others = current.filter((trigger) => trigger.key !== GLOBE)
+
+  // A list that matches the default is unlisted, so the keyboard keeps following it.
+  const set = (next: KeyboardTrigger[]): void =>
+    sameTriggers(next, defaultTriggers(keyboard.hasGlobe)) ? onReset() : onChange(next)
 
   const details = [keyboard.builtIn ? 'Built-in' : keyboard.transport || 'Keyboard', keyboard.id]
-  if (!sameTrigger(current, keyboard.trigger)) {
+  if (!sameTriggers(current, keyboard.triggers)) {
     details.push('applies once saved')
-  } else if (keyboard.triggerMapping) {
-    details.push(describe(keyboard.triggerMapping))
+  } else {
+    details.push(...keyboard.triggerMappings.map(describe))
   }
 
   return (
@@ -165,31 +182,23 @@ function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: Ro
         </div>
         <div className={styles.control}>
           <KeyPicker
-            value={current.key}
+            triggers={current}
             keyboardId={keyboard.id}
             keyboardName={name}
             hasGlobe={keyboard.hasGlobe}
-            onChange={(key) => (key === reset ? onReset() : onChange(withKey(current, key)))}
+            onChange={set}
           />
         </div>
       </div>
-      {current.key !== '' && current.key !== GLOBE ? (
+      {others.length > 0 ? (
         <div className={styles.mode}>
-          <div className={styles.modeRow}>
-            <label className={styles.modeLabel} htmlFor={modeId}>
-              Mode
-            </label>
-            <div className={styles.modeSelect}>
-              <Select
-                id={modeId}
-                value={current.mode}
-                disabled={allowedModes(current.key).length < 2}
-                options={allowedModes(current.key).map((value) => ({ value, label: MODE_LABELS[value] ?? value }))}
-                onChange={(mode) => onChange({ ...current, mode })}
-              />
-            </div>
-          </div>
-          <p className={styles.hint}>{modeHint(current)}</p>
+          {others.map((trigger) => (
+            <ModeRow
+              key={trigger.key}
+              trigger={trigger}
+              onChange={(mode) => set(current.map((other) => (other.key === trigger.key ? { ...other, mode } : other)))}
+            />
+          ))}
         </div>
       ) : null}
       {keyboard.hasGlobe && !switchesWithGlobe(current) && globeElsewhere ? (
@@ -199,6 +208,34 @@ function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: Ro
           </Banner>
         </div>
       ) : null}
+    </div>
+  )
+}
+
+interface ModeRowProps {
+  trigger: KeyboardTrigger
+  onChange: (mode: string) => void
+}
+
+/** ModeRow chooses how one trigger key other than the Globe key works. */
+function ModeRow({ trigger, onChange }: ModeRowProps): ReactElement {
+  const id = useId()
+  const modes = allowedModes(trigger.key)
+
+  return (
+    <div className={styles.modeRow}>
+      <label className={styles.modeLabel} htmlFor={id}>
+        {triggerName(trigger.key)}
+      </label>
+      <div className={styles.modeSelect}>
+        <Select
+          id={id}
+          value={trigger.mode}
+          disabled={modes.length < 2}
+          options={modes.map((value) => ({ value, label: MODE_LABELS[value] ?? value }))}
+          onChange={onChange}
+        />
+      </div>
     </div>
   )
 }
