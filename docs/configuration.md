@@ -99,7 +99,7 @@ restart after you grant it). How it is used depends on its `mode`:
 - No trigger key acts as fn: a third-party keyboard has none of the fn combinations an Apple keyboard has, so a key
   remapped to fn would only half work there.
 - The Globe key cannot tell keyboards apart: while any keyboard switches with it, the Globe key switches on every
-  keyboard.
+  keyboard. The companion therefore adds or removes it on every keyboard with one at once.
 
 Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping a
 dedicated key:

@@ -6,12 +6,15 @@ import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
 import {
   allowedModes,
+  appleKeyboard,
   DEDICATED_USAGE,
   defaultTriggers,
   GLOBE,
   switchesWithGlobe,
   triggerName,
   triggersFor,
+  withGlobe,
+  withoutGlobe,
 } from '../../lib/trigger-keys'
 import { Banner, Button, Disclosure, Section, Select } from '../../ui'
 import { KeyPicker } from './KeyPicker'
@@ -67,6 +70,39 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
   const resetKeyboard = (id: string): void =>
     setKeyboards(Object.fromEntries(Object.entries(trigger.keyboards).filter(([other]) => other !== id)))
 
+  // Every keyboard with a Globe key, connected or set here, by whether it has one.
+  const globeKeyboards = [
+    ...connected.filter((keyboard) => keyboard.hasGlobe).map((keyboard) => keyboard.id),
+    ...disconnected.filter(appleKeyboard),
+  ]
+
+  /**
+   * setTriggers sets a keyboard's trigger keys, unlisting it when they match its default. The Globe key cannot tell
+   * keyboards apart, so adding or removing it does the same on every keyboard with one.
+   */
+  const setTriggers = (keyboard: Keyboard, next: KeyboardTrigger[]): void => {
+    const lists = { ...trigger.keyboards }
+    const put = (id: string, hasGlobe: boolean, triggers: KeyboardTrigger[]): void => {
+      if (sameTriggers(triggers, defaultTriggers(hasGlobe))) {
+        delete lists[id]
+      } else {
+        lists[id] = triggers
+      }
+    }
+
+    put(keyboard.id, keyboard.hasGlobe, next)
+
+    const globe = switchesWithGlobe(next)
+    if (keyboard.hasGlobe && globe !== switchesWithGlobe(triggersFor(trigger, keyboard.id, true)[0])) {
+      for (const id of globeKeyboards.filter((other) => other !== keyboard.id)) {
+        const [theirs] = triggersFor(trigger, id, true)
+        put(id, true, globe ? withGlobe(theirs) : withoutGlobe(theirs))
+      }
+    }
+
+    setKeyboards(lists)
+  }
+
   return (
     <Section
       icon={Globe}
@@ -88,8 +124,8 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
                 (other) =>
                   other.id !== keyboard.id && switchesWithGlobe(triggersFor(trigger, other.id, other.hasGlobe)[0]),
               )}
-              onChange={(next) => setKeyboards({ ...trigger.keyboards, [keyboard.id]: next })}
-              onReset={() => resetKeyboard(keyboard.id)}
+              globeShared={keyboard.hasGlobe && globeKeyboards.length > 1}
+              onChange={(next) => setTriggers(keyboard, next)}
             />
           ))}
         </div>
@@ -151,20 +187,16 @@ interface RowProps {
   config: Config
   /** globeElsewhere reports that another connected keyboard switches with the Globe key. */
   globeElsewhere: boolean
+  /** globeShared reports that other keyboards have a Globe key, so adding or removing it here does so there too. */
+  globeShared: boolean
   onChange: (triggers: KeyboardTrigger[]) => void
-  /** onReset unlists the keyboard, putting it back on its Globe key, or on none without one. */
-  onReset: () => void
 }
 
 /** KeyboardRow edits one connected keyboard's trigger keys, and the mode of each key other than the Globe key. */
-function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: RowProps): ReactElement {
+function KeyboardRow({ keyboard, config, globeElsewhere, globeShared, onChange }: RowProps): ReactElement {
   const [current] = triggersFor(config.trigger, keyboard.id, keyboard.hasGlobe)
   const name = keyboardName(keyboard)
   const others = current.filter((trigger) => trigger.key !== GLOBE)
-
-  // A list that matches the default is unlisted, so the keyboard keeps following it.
-  const set = (next: KeyboardTrigger[]): void =>
-    sameTriggers(next, defaultTriggers(keyboard.hasGlobe)) ? onReset() : onChange(next)
 
   const details = [keyboard.builtIn ? 'Built-in' : keyboard.transport || 'Keyboard', keyboard.id]
   if (!sameTriggers(current, keyboard.triggers)) {
@@ -186,7 +218,8 @@ function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: Ro
             keyboardId={keyboard.id}
             keyboardName={name}
             hasGlobe={keyboard.hasGlobe}
-            onChange={set}
+            globeShared={globeShared}
+            onChange={onChange}
           />
         </div>
       </div>
@@ -196,7 +229,9 @@ function KeyboardRow({ keyboard, config, globeElsewhere, onChange, onReset }: Ro
             <ModeRow
               key={trigger.key}
               trigger={trigger}
-              onChange={(mode) => set(current.map((other) => (other.key === trigger.key ? { ...other, mode } : other)))}
+              onChange={(mode) =>
+                onChange(current.map((other) => (other.key === trigger.key ? { ...other, mode } : other)))
+              }
             />
           ))}
         </div>

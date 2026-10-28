@@ -98,6 +98,22 @@ export function triggersFor(trigger: Trigger, id: string, hasGlobe: boolean): [K
   return [defaultTriggers(hasGlobe), false]
 }
 
+/** appleKeyboard reports whether a keyboard ID has Apple's USB or Bluetooth vendor ID, so the keyboard has a Globe
+ * key, mirroring the daemon's Keyboard.HasGlobe for a keyboard that is not connected. */
+export function appleKeyboard(id: string): boolean {
+  return id.startsWith('05ac:') || id.startsWith('004c:')
+}
+
+/** withGlobe puts the Globe key first among trigger keys, unless they have it. */
+export function withGlobe(triggers: KeyboardTrigger[]): KeyboardTrigger[] {
+  return switchesWithGlobe(triggers) ? triggers : [GLOBE_TRIGGER, ...triggers]
+}
+
+/** withoutGlobe drops the Globe key from trigger keys. */
+export function withoutGlobe(triggers: KeyboardTrigger[]): KeyboardTrigger[] {
+  return triggers.filter((trigger) => trigger.key !== GLOBE)
+}
+
 /** switchesWithGlobe reports whether trigger keys include the Globe key. */
 export function switchesWithGlobe(triggers: KeyboardTrigger[]): boolean {
   return triggers.some((trigger) => trigger.key === GLOBE)

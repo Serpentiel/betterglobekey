@@ -18,6 +18,8 @@ interface Props {
   keyboardName?: string
   /** hasGlobe offers the Globe key while recording, for a keyboard with one. */
   hasGlobe?: boolean
+  /** globeShared labels the Globe key's controls as acting on every keyboard with one. */
+  globeShared?: boolean
 }
 
 /** Slot is the key being recorded: an index into triggers, or a new key. */
@@ -30,7 +32,14 @@ type Slot = number | 'new'
  * While recording, icons inside the keycap use the Globe key, on a keyboard with
  * one, or cancel; otherwise a keycap's icon removes its key.
  */
-export function KeyPicker({ triggers, onChange, keyboardId, keyboardName, hasGlobe = true }: Props): ReactElement {
+export function KeyPicker({
+  triggers,
+  onChange,
+  keyboardId,
+  keyboardName,
+  hasGlobe = true,
+  globeShared = false,
+}: Props): ReactElement {
   const [recording, setRecording] = useState<Slot | null>(null)
   const [error, setError] = useState<string | null>(null)
   // attempt identifies the recording in progress, so a cancelled one is ignored.
@@ -101,7 +110,12 @@ export function KeyPicker({ triggers, onChange, keyboardId, keyboardName, hasGlo
   const recordingIcons = (slot: Slot): ReactElement => (
     <>
       {hasGlobe && !takenElsewhere(slot, GLOBE) && (slot === 'new' || triggers[slot]?.key !== GLOBE) ? (
-        <IconButton icon={Globe} label="Use Globe key" className={styles.icon} onClick={() => choose(slot, GLOBE)} />
+        <IconButton
+          icon={Globe}
+          label={globeShared ? 'Use Globe key on every keyboard' : 'Use Globe key'}
+          className={styles.icon}
+          onClick={() => choose(slot, GLOBE)}
+        />
       ) : null}
       <IconButton icon={X} label="Cancel" className={styles.icon} onClick={cancel} />
     </>
@@ -132,7 +146,12 @@ export function KeyPicker({ triggers, onChange, keyboardId, keyboardName, hasGlo
               {active ? (
                 recordingIcons(index)
               ) : (
-                <IconButton icon={X} label={`Remove ${name}`} className={styles.icon} onClick={() => remove(index)} />
+                <IconButton
+                  icon={X}
+                  label={trigger.key === GLOBE && globeShared ? 'Remove Globe from every keyboard' : `Remove ${name}`}
+                  className={styles.icon}
+                  onClick={() => remove(index)}
+                />
               )}
             </div>
           )

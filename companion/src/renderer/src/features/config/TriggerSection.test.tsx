@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Config, Keyboard, KeyboardReport, KeyboardTrigger } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
+import { api } from '../../lib/api'
 import type { ConfigErrors } from '../../lib/config-schema'
 import { TriggerSection } from './TriggerSection'
 
@@ -134,6 +135,53 @@ describe('TriggerSection', () => {
 
     fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Remove Insert' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
+  describe('with two keyboards that have a Globe key', () => {
+    const magic: Keyboard = { ...builtIn, id: '05ac:029c', name: 'Magic Keyboard', builtIn: false, transport: 'USB' }
+    const twoApple: KeyboardsState = {
+      report: { keyboards: [builtIn, magic, logitech], systemMappings: [] },
+      error: null,
+    }
+
+    it('removes the Globe key from every keyboard with one', () => {
+      const { onChange, trigger } = renderSection({ keyboards: { '05ac:029c': [globe, capsDedicated] } }, twoApple)
+
+      fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Remove Globe from every keyboard' }))
+      expect(onChange).toHaveBeenCalledWith({
+        ...config,
+        trigger: { ...trigger, keyboards: { '05ac:0281': [], '05ac:029c': [capsDedicated] } },
+      })
+    })
+
+    it('adds the Globe key back to every keyboard with one, unlisting those it leaves at their default', async () => {
+      Object.assign(api, { recordKey: vi.fn(() => new Promise(() => undefined)) })
+      const { onChange, trigger } = renderSection(
+        { keyboards: { '05ac:0281': [], '05ac:029c': [capsDedicated], '004c:0267': [] } },
+        twoApple,
+      )
+
+      fireEvent.click(row('Magic Keyboard').getByRole('button', { name: 'Add a trigger key' }))
+      fireEvent.click(row('Magic Keyboard').getByRole('button', { name: 'Use Globe key on every keyboard' }))
+
+      expect(onChange).toHaveBeenCalledWith({
+        ...config,
+        trigger: { ...trigger, keyboards: { '05ac:029c': [capsDedicated, globe] } },
+      })
+    })
+
+    it('leaves keyboards without a Globe key alone', () => {
+      const { onChange } = renderSection({ keyboards: { '046d:c33f': [capsDedicated] } }, twoApple)
+
+      fireEvent.click(row('Magic Keyboard').getByRole('button', { name: 'Remove Globe from every keyboard' }))
+      expect(onChange.mock.calls[0][0].trigger.keyboards['046d:c33f']).toEqual([capsDedicated])
+    })
+  })
+
+  it('names Globe controls for this keyboard alone when no other keyboard has a Globe key', () => {
+    renderSection()
+
+    expect(row('Apple Internal Keyboard').getByRole('button', { name: 'Remove Globe' })).toBeTruthy()
   })
 
   it('notes that the Globe key still switches while another keyboard switches with it', () => {

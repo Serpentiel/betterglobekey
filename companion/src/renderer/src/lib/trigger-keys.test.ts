@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import {
   allowedModes,
+  appleKeyboard,
   GLOBE,
   switchesWithGlobe,
   triggersFor,
+  withGlobe,
   withKey,
+  withoutGlobe,
   TRIGGER_KEYS,
   triggerKey,
   triggerLabel,
@@ -65,6 +68,19 @@ describe('trigger keys', () => {
 
     expect(switchesWithGlobe([insert, globe])).toBe(true)
     expect(switchesWithGlobe([insert])).toBe(false)
+  })
+
+  it('adds and drops the Globe key, and spots Apple keyboards', () => {
+    const globe = { key: 'globe', mode: 'dedicated' }
+    const caps = { key: 'caps_lock', mode: 'dedicated' }
+
+    expect(withGlobe([caps])).toEqual([globe, caps])
+    expect(withGlobe([caps, globe])).toEqual([caps, globe])
+    expect(withoutGlobe([globe, caps])).toEqual([caps])
+
+    expect(appleKeyboard('05ac:029c')).toBe(true)
+    expect(appleKeyboard('004c:0267')).toBe(true)
+    expect(appleKeyboard('046d:c33f')).toBe(false)
   })
 
   it('keeps a mode the new key allows', () => {
