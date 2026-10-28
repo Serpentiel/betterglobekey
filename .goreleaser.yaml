@@ -14,8 +14,17 @@ builds:
       - darwin
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
+    # The linker's own ad-hoc signature (identifier a.out, x86_64 left
+    # unsigned) does not hold Accessibility and Input Monitoring grants; a
+    # codesign ad-hoc signature with a real identifier does.
+    hooks:
+      post:
+        - codesign --force --sign - --identifier tl.srpn.betterglobekey "{{ .Path }}"
 universal_binaries:
   - replace: false
+    hooks:
+      post:
+        - codesign --force --sign - --identifier tl.srpn.betterglobekey "{{ .Path }}"
 release:
   extra_files:
     - glob: ./companion/dist/*.zip

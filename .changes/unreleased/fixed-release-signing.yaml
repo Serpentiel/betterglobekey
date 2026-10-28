@@ -1,0 +1,3 @@
+kind: Fixed
+body: Release binaries are signed with the identifier tl.srpn.betterglobekey instead of only the linker's minimal ad-hoc signature, so macOS keeps the Accessibility and Input Monitoring permissions granted to a binary downloaded from the release page.
+time: 2026-10-28T19:00:00.000000+02:00
