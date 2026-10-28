@@ -1,9 +1,10 @@
+/* picker leaves its keys and status to the grid it sits in. */
 .picker {
-  display: grid;
-  gap: var(--space-1);
+  display: contents;
 }
 
 .keys {
+  max-width: 340px;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -119,16 +120,31 @@
   outline-offset: 1px;
 }
 
-/* status wraps within the keys' width rather than widening the picker. */
+/* status spans the whole row, below the keyboard's name and keys. */
 .status {
-  width: 0;
-  min-width: 100%;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   margin: 0;
-  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--text);
   font-size: var(--text-sm);
-  text-align: right;
+  line-height: 1.4;
+}
+
+.statusIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
 }
 
 .error {
+  background: var(--danger-soft);
+}
+
+.error .statusIcon {
   color: var(--danger);
 }

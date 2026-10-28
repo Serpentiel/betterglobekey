@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Plus, X } from 'lucide-react'
+import { AlertCircle, Keyboard, Plus, X } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 
 import type { KeyboardTrigger } from '../../../../shared/types'
@@ -31,7 +31,8 @@ type Slot = number | 'new'
  * from the keyboard, before any remapping, so a remapped key records as itself.
  * A keycap's icon cancels recording, or removes its key otherwise. The Globe
  * key is not one of a keyboard's own keys: recording it turns it on for every
- * keyboard.
+ * keyboard. Its keys and status are laid out by the grid it sits in: the
+ * status spans the grid's full width, below the keys.
  */
 export function KeyPicker({
   triggers,
@@ -165,7 +166,12 @@ export function KeyPicker({
       </div>
       {status ? (
         <p className={clsx(styles.status, error && styles.error)} role="status">
-          {status}
+          {error ? (
+            <AlertCircle size={14} strokeWidth={2.25} className={styles.statusIcon} aria-hidden />
+          ) : (
+            <Keyboard size={14} strokeWidth={2.25} className={styles.statusIcon} aria-hidden />
+          )}
+          <span>{status}</span>
         </p>
       ) : null}
     </div>
