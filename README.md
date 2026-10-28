@@ -41,12 +41,7 @@
       <a href="#about-the-project">1. About the Project</a>
     </li>
     <li>
-      <a href="#getting-started">2. Getting Started</a>
-      <ul>
-        <li>
-          <a href="#installation">2.1. Installation</a>
-        </li>
-      </ul>
+      <a href="#quick-start">2. Quick Start</a>
     </li>
     <li>
       <a href="#contributing">3. Contributing</a>
@@ -65,97 +60,64 @@ brilliant in design, in practice, however, the key is coded in a very intrusive 
 prevent some users—especially those who tend to switch their input source often—from enjoying their overall user
 experience.
 
-This utility completely reworks the way the Globe key functions and provides users with an improved overall user
-experience, and I sincerely hope that one day Apple is going to make it this way out-of-box.
+This utility completely reworks the way the Globe key functions:
+
+- **Press** switches to the next input source in the current collection: your own ordered list of input sources.
+- **Double press** switches to the next collection, such as from your everyday layouts to the ones you use less often.
+- **Shift** goes back: to the previous input source, or with a double press, to the previous collection.
+- An on-screen HUD shows the new input source and its collection.
+- Any keyboard can switch with keys of its own as well, such as Caps Lock or Right Command, which also covers keyboards
+  without a Globe key.
+
+The configuration is a YAML file, reloaded as soon as it changes; an optional companion app edits it for you. I
+sincerely hope that one day Apple is going to make it this way out-of-box.
 
 <!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
 <!-- markdownlint-restore -->
 
-## Getting Started
+## Quick Start
 
-### Installation
+1. Install **betterglobekey**:
 
-**betterglobekey** ships in `homebrew/core`:
+   ```bash
+   brew install betterglobekey
+   ```
 
-```bash
-brew install betterglobekey
-brew services start betterglobekey
-```
-
-Then grant Accessibility permission when prompted, and set the Globe key to **"Do Nothing"** under _System Settings ›
-Keyboard_ so macOS stops switching the input source on its own. `betterglobekey doctor` checks both.
-
-Full walkthrough: [Getting Started](docs/getting-started.md).
-
-The utility enhances the functionality of the Globe key by introducing two distinct modes of operation and starting
-from the currently active input source:
-
-1. **Single Press Mode**
-
-   Single press mode is activated when the Globe key is pressed once.
-
-   In this mode, the utility cycles through a collection of input sources. Each press of the Globe key switches to the
-   next input source within the current collection.
-
-   The collections of input sources are defined in the configuration under `collections`, an ordered list of named
-   collections. For example:
+2. Write the configuration to `~/.betterglobekey.yaml`, with your own input sources (`betterglobekey list` shows
+   them):
 
    ```yaml
+   version: 2
+   trigger:
+     globe: true
    collections:
      - name: primary
        sources:
          - com.apple.keylayout.US
-         - com.apple.keylayout.Spanish
+         - com.apple.keylayout.Russian
      - name: secondary
        sources:
          - com.apple.keylayout.US
-         - com.apple.keylayout.Dvorak
          - com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese
    ```
 
-   Upon initialization, the utility determines the current active input source and starts from that particular source
-   within its respective collection.
+3. Start the service, or restart it if it is already running:
 
-2. **Double Press Mode**
+   ```bash
+   brew services restart betterglobekey
+   ```
 
-   Double press mode is activated when the Globe key is double-pressed.
+4. Grant Accessibility permission when prompted, and set **"Press 🌐 key to"** to **"Do Nothing"** under _System
+   Settings > Keyboard_ so macOS stops switching the input source on its own. `betterglobekey doctor` checks both.
 
-   In this mode, the utility switches between different collections of input sources. Each double press of the Globe
-   key cycles to the next collection in the configuration.
-
-   The maximum time interval between the first and second press that is considered a double press can be configured
-   in the `double_press.maximum_delay` property. This delay is specified as a Go duration, e.g. `250ms`.
-
-Hold **Shift** while pressing the Globe key to go back: a single press returns to the previously used input source
-(toggling between the two most recent), and a double press switches to the previous collection.
-
-On each change, an on-screen HUD briefly shows the new input source with its collection name. It is enabled by default;
-set `hud.enabled: false` in the configuration to turn it off. The configuration is reloaded automatically when the file
-changes, so edits take effect without restarting the service.
-
-betterglobekey requires macOS Accessibility permission to observe the Globe key, and works best with the Globe key set
-to **"No Action"** (System Settings › Keyboard) so macOS does not switch the input source as well. Run
-`betterglobekey doctor` to check your setup.
-
-These enhancements aim to provide a more versatile and user-friendly experience for managing multiple input sources,
-especially for users who frequently switch between different languages or keyboard layouts.
-
-The utility also provides helper commands: `betterglobekey list` (available input sources, with names),
-`betterglobekey current`, `betterglobekey doctor` (diagnose configuration and permissions), and
-`betterglobekey edit` (open the configuration file). See the [documentation](docs/) for more information on how to set
-up and configure the utility.
-
-Prefer a graphical interface? An optional [companion app](docs/companion.md) lets you edit your configuration—behavior,
-collections, and logging—without touching the YAML file, applying changes to the running service instantly.
+Done. For other trigger keys, every option, and the optional [companion app](docs/companion.md), see
+[Getting Started](docs/getting-started.md).
 
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="https://github.com/Serpentiel/betterglobekey/blob/repo-assets/README.md/companion.png" alt="betterglobekey-companion" width="760">
 </div>
-<!-- markdownlint-restore -->
-
-<!-- markdownlint-disable -->
 <p align="right"><a href="#top">(back to top)</a></p>
 <!-- markdownlint-restore -->
 

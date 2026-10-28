@@ -36,6 +36,9 @@ hud:
   duration: 900ms
   show_collection: true
 
+trigger:
+  globe: true
+
 collections:
   - name: primary
     sources:
@@ -51,7 +54,7 @@ All options other than `collections` are optional and fall back to the defaults 
 
 ## Trigger Keys
 
-"`trigger.globe` (default `true`) makes the Globe key switch input sources on every keyboard that has one (a
+`trigger.globe` (default `true`) makes the Globe key switch input sources on every keyboard that has one (a
 MacBook's or a Magic Keyboard). macOS cannot tell which keyboard a Globe press came from, so it is on or off for all
 of them at once.
 
