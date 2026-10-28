@@ -96,8 +96,6 @@ restart after you grant it). How it is used depends on its `mode`:
   Stopping the service puts the key back.
 - `pass_through` switches input sources when the key is pressed on its own; in a combination (such as Right Command +
   C) the key works as usual. Caps Lock cannot be passed through.
-- No trigger key acts as fn: a third-party keyboard has none of the fn combinations an Apple keyboard has, so a key
-  remapped to fn would only half work there.
 
 Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping a
 dedicated key:
