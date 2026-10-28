@@ -12,6 +12,10 @@
   margin-bottom: var(--space-5);
 }
 
+.header:last-child {
+  margin-bottom: 0;
+}
+
 .icon {
   display: flex;
   align-items: center;

@@ -9,7 +9,7 @@ interface SectionProps {
   title: string
   description?: string
   actions?: ReactNode
-  children: ReactNode
+  children?: ReactNode
 }
 
 /** Section is a titled, elevated panel grouping related controls. */
@@ -26,7 +26,7 @@ export function Section({ icon: Icon, title, description, actions, children }: S
         </div>
         {actions ? <div className={styles.actions}>{actions}</div> : null}
       </header>
-      <Stack gap={16}>{children}</Stack>
+      {children ? <Stack gap={16}>{children}</Stack> : null}
     </section>
   )
 }
