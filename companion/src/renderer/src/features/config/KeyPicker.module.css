@@ -1,34 +1,74 @@
 .picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  display: grid;
+  gap: var(--space-1);
 }
 
 .keycap {
   display: inline-flex;
   align-items: center;
-  min-width: 96px;
+  min-width: 160px;
   height: 30px;
-  padding: 0 var(--space-3);
+  padding-right: 2px;
   background: var(--surface-inset);
   border: 1px solid var(--border-strong);
   border-bottom-width: 2px;
   border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.keycap:not(.disabled):hover {
+  border-color: var(--text-tertiary);
+}
+
+.key {
+  flex: 1;
+  align-self: stretch;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: inherit;
+  background: transparent;
   color: var(--text);
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.key:disabled {
+  cursor: not-allowed;
+}
+
+.key:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
 }
 
 .recording {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
-  color: var(--text-secondary);
 }
 
+.recording .key {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.disabled {
+  opacity: 0.5;
+}
+
+/* status wraps within the keycap's width rather than widening the picker. */
 .status {
-  flex-basis: 100%;
+  width: 0;
+  min-width: 100%;
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);

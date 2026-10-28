@@ -29,7 +29,7 @@ describe('KeyPicker', () => {
     const onChange = vi.fn()
     render(<KeyPicker value="globe" keyboardId="046d:c33f" keyboardName="Logitech K120" onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record a trigger key' }))
     expect(screen.getByText('Press a key…')).toBeTruthy()
     expect(screen.getByRole('status').textContent).toBe('Press a key on Logitech K120.')
 
@@ -42,7 +42,7 @@ describe('KeyPicker', () => {
     const fake = recordKey(Promise.resolve({ key: 'caps_lock', keyName: 'Caps Lock', keyboardId: '046d:c33f' }))
     render(<KeyPicker value="globe" onChange={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record a trigger key' }))
     expect(screen.getByRole('status').textContent).toBe('Press a key on any keyboard.')
 
     await waitFor(() => expect(fake).toHaveBeenCalledWith(''))
@@ -53,7 +53,7 @@ describe('KeyPicker', () => {
     const onChange = vi.fn()
     render(<KeyPicker value="globe" onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record a trigger key' }))
 
     await waitFor(() =>
       expect(screen.getByRole('status').textContent).toBe("A can't switch input sources. Try another key."),
@@ -65,7 +65,7 @@ describe('KeyPicker', () => {
     recordKey(Promise.reject(new Error('enable Input Monitoring')))
     render(<KeyPicker value="globe" onChange={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record a trigger key' }))
 
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('enable Input Monitoring'))
   })
@@ -76,7 +76,7 @@ describe('KeyPicker', () => {
     const onChange = vi.fn()
     render(<KeyPicker value="globe" onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record a trigger key' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     resolve({ key: 'insert', keyName: 'Insert', keyboardId: '' })
 
@@ -93,9 +93,23 @@ describe('KeyPicker', () => {
     expect(onChange).toHaveBeenCalledWith('globe')
   })
 
+  it('hides Use Globe on the Globe key, and offers Clear only without a Globe key', () => {
+    render(<KeyPicker value="globe" onChange={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
+
+    cleanup()
+
+    const onChange = vi.fn()
+    render(<KeyPicker value="caps_lock" hasGlobe={false} onChange={onChange} />)
+    expect(screen.queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+    expect(onChange).toHaveBeenCalledWith('')
+  })
+
   it('disables recording', () => {
     render(<KeyPicker value="caps_lock" disabled onChange={vi.fn()} />)
 
-    expect((screen.getByRole('button', { name: 'Record' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Record a trigger key' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

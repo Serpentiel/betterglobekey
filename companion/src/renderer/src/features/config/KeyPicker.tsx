@@ -1,11 +1,11 @@
 import { clsx } from 'clsx'
-import { Globe, Keyboard, X } from 'lucide-react'
+import { Globe, X } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 
 import { api } from '../../lib/api'
 import { toMessage } from '../../lib/errors'
 import { GLOBE, triggerLabel } from '../../lib/trigger-keys'
-import { Button } from '../../ui'
+import { IconButton } from '../../ui'
 import styles from './KeyPicker.module.css'
 
 interface Props {
@@ -23,10 +23,11 @@ interface Props {
 }
 
 /**
- * KeyPicker shows a trigger key and records a new one: the daemon reads the next
- * key pressed straight from the keyboard, before any remapping, so a remapped
- * key records as itself. Use Globe, or Clear for a keyboard without a Globe key,
- * resets it.
+ * KeyPicker shows a trigger key on a keycap; clicking it records a new one: the
+ * daemon reads the next key pressed straight from the keyboard, before any
+ * remapping, so a remapped key records as itself. Icons inside the keycap use
+ * the Globe key, on a keyboard with one, cancel recording, or clear the key on a
+ * keyboard without a Globe key.
  */
 export function KeyPicker({
   value,
@@ -79,36 +80,37 @@ export function KeyPicker({
     setRecording(false)
   }
 
-  const reset = hasGlobe ? GLOBE : ''
-
   const status = error ?? (recording ? `Press a key on ${keyboardName ?? 'any keyboard'}.` : null)
+
+  const choose = (key: string): void => {
+    cancel()
+    setError(null)
+    onChange(key)
+  }
 
   return (
     <div className={styles.picker}>
-      <kbd className={clsx(styles.keycap, recording && styles.recording)} aria-live="polite">
-        {recording ? 'Press a key…' : triggerLabel(value)}
-      </kbd>
-      <Button
-        id={id}
-        icon={Keyboard}
-        aria-pressed={recording}
-        disabled={disabled}
-        onClick={recording ? cancel : record}
-      >
-        {recording ? 'Cancel' : 'Record'}
-      </Button>
-      <Button
-        variant="ghost"
-        icon={hasGlobe ? Globe : X}
-        disabled={value === reset}
-        onClick={() => {
-          cancel()
-          setError(null)
-          onChange(reset)
-        }}
-      >
-        {hasGlobe ? 'Use Globe' : 'Clear'}
-      </Button>
+      <div className={clsx(styles.keycap, recording && styles.recording, disabled && styles.disabled)}>
+        <button
+          id={id}
+          type="button"
+          className={styles.key}
+          aria-label="Record a trigger key"
+          title="Click, then press a key"
+          aria-pressed={recording}
+          disabled={disabled}
+          onClick={recording ? undefined : record}
+        >
+          <span aria-live="polite">{recording ? 'Press a key…' : triggerLabel(value)}</span>
+        </button>
+        {hasGlobe && value !== GLOBE ? (
+          <IconButton icon={Globe} label="Use Globe" className={styles.icon} onClick={() => choose(GLOBE)} />
+        ) : null}
+        {recording ? <IconButton icon={X} label="Cancel" className={styles.icon} onClick={cancel} /> : null}
+        {!recording && !hasGlobe && value !== '' ? (
+          <IconButton icon={X} label="Clear" className={styles.icon} onClick={() => choose('')} />
+        ) : null}
+      </div>
       {status ? (
         <p className={clsx(styles.status, error && styles.error)} role="status">
           {status}

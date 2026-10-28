@@ -72,6 +72,7 @@ describe('TriggerSection', () => {
 
     expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281')).toBeTruthy()
     expect(row('Apple Internal Keyboard').getByText('🌐 Globe')).toBeTruthy()
+    expect(row('Apple Internal Keyboard').queryByRole('button', { name: 'Use Globe' })).toBeNull()
     expect(row('Apple Internal Keyboard').queryByRole('combobox', { name: 'Mode' })).toBeNull()
     expect(screen.getByRole('group', { name: 'Logitech K120' })).toBeTruthy()
   })
@@ -81,7 +82,7 @@ describe('TriggerSection', () => {
 
     expect(row('Logitech K120').getByText('None')).toBeTruthy()
     expect(row('Logitech K120').queryByRole('button', { name: 'Use Globe' })).toBeNull()
-    expect((row('Logitech K120').getByRole('button', { name: 'Clear' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(row('Logitech K120').queryByRole('button', { name: 'Clear' })).toBeNull()
 
     cleanup()
 

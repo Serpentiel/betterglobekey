@@ -26,9 +26,10 @@ service, so building collections is a matter of picking from a list rather than 
 3. Edit your settings. **Trigger Key** lists each connected keyboard with its trigger key; once a key other than the
    Globe key is set, **Mode** chooses how it works: switch input sources only, or keep its normal function too.
    Keyboards set but not connected fold under **Other keyboards**, and key mappings other tools have set under
-   **Mappings from other tools**. **Record** reads the next key you press straight from the keyboard, so a remapped key
-   records as itself; it needs Input Monitoring. **Use Globe** puts a keyboard back on its Globe key; on a keyboard
-   without one, **Clear** leaves it without a trigger key.
+   **Mappings from other tools**. Click a keyboard's key to record a new one: the next key you press is read straight
+   from the keyboard, so a remapped key records as itself; it needs Input Monitoring. The 🌐 icon in the key, on
+   keyboards with a Globe key, puts it back on the Globe key; the ✕ icon cancels recording, or clears the key on a
+   keyboard without a Globe key.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing
