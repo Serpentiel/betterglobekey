@@ -225,7 +225,6 @@ mod tests {
             }],
             system_mappings: vec![],
             input_monitoring_granted: false,
-            executable: "/opt/homebrew/opt/betterglobekey/bin/betterglobekey".to_owned(),
         };
 
         let value = serde_json::to_value(response).unwrap();
@@ -235,6 +234,5 @@ mod tests {
         assert_eq!(value["keyboards"][0]["otherMappings"], json!([]));
         assert_eq!(value["systemMappings"], json!([]));
         assert_eq!(value["inputMonitoringGranted"], json!(false));
-        assert_eq!(value["executable"], json!("/opt/homebrew/opt/betterglobekey/bin/betterglobekey"));
     }
 }

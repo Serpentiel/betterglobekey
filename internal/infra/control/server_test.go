@@ -19,9 +19,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// testExecutable is the daemon binary the test server reports.
-const testExecutable = "/opt/homebrew/opt/betterglobekey/bin/betterglobekey"
-
 // fakeKeyboards reports a built-in keyboard and a remapped third-party one,
 // and records the keys in recorded.
 type fakeKeyboards struct {
@@ -90,7 +87,7 @@ func newTestClient(t *testing.T, path string, sources Sources, trusted bool) con
 	server := NewServer(
 		path, sources, fakeKeyboards{}, func(fn func()) { fn() }, "1.2.3", "abc1234",
 		func() Permissions {
-			return Permissions{Accessibility: trusted, Executable: testExecutable}
+			return Permissions{Accessibility: trusted}
 		},
 	)
 
@@ -305,8 +302,8 @@ func TestListKeyboards(t *testing.T) {
 		t.Fatalf("response = %+v", got)
 	}
 
-	if got.GetInputMonitoringGranted() || got.GetExecutable() != testExecutable {
-		t.Errorf("input monitoring = %v, executable = %q", got.GetInputMonitoringGranted(), got.GetExecutable())
+	if got.GetInputMonitoringGranted() {
+		t.Errorf("input monitoring = %v", got.GetInputMonitoringGranted())
 	}
 
 	builtIn, logitech := got.GetKeyboards()[0], got.GetKeyboards()[1]

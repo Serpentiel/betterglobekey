@@ -57,8 +57,9 @@ type ConfigServiceClient interface {
 	// configuration on disk.
 	ListKeyboards(ctx context.Context, in *ListKeyboardsRequest, opts ...grpc.CallOption) (*ListKeyboardsResponse, error)
 	// RecordKey returns the next key pressed, read from raw keyboard input, which
-	// needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
-	// a key before any remapping, so a remapped key records as itself. It waits
+	// needs Input Monitoring: FAILED_PRECONDITION without it. macOS grants Input
+	// Monitoring with Accessibility, once the daemon asks. Raw input reports a
+	// key before any remapping, so a remapped key records as itself. It waits
 	// until the caller's deadline, or 30 seconds.
 	RecordKey(ctx context.Context, in *RecordKeyRequest, opts ...grpc.CallOption) (*RecordKeyResponse, error)
 }
@@ -170,8 +171,9 @@ type ConfigServiceServer interface {
 	// configuration on disk.
 	ListKeyboards(context.Context, *ListKeyboardsRequest) (*ListKeyboardsResponse, error)
 	// RecordKey returns the next key pressed, read from raw keyboard input, which
-	// needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
-	// a key before any remapping, so a remapped key records as itself. It waits
+	// needs Input Monitoring: FAILED_PRECONDITION without it. macOS grants Input
+	// Monitoring with Accessibility, once the daemon asks. Raw input reports a
+	// key before any remapping, so a remapped key records as itself. It waits
 	// until the caller's deadline, or 30 seconds.
 	RecordKey(context.Context, *RecordKeyRequest) (*RecordKeyResponse, error)
 	mustEmbedUnimplementedConfigServiceServer()

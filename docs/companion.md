@@ -26,11 +26,10 @@ service, so building collections is a matter of picking from a list rather than 
 3. Edit your settings. Under **Trigger Keys**, **Globe key** turns the Globe key on or off for every keyboard that
    has one, since macOS cannot tell them apart. Below it, each connected keyboard lists its own trigger keys; **+** adds
    one, and ✕ on a key removes it. Click a key, or **+**, to record one: the next key you press is read straight from
-   the keyboard, so a remapped key records as itself; it needs Input Monitoring, and while it is off a notice above the
-   keyboards opens its settings and names the binary to add. Recording the Globe key turns **Globe key** on. Each key
-   gets a menu for how it works: switch input sources only, or keep its normal function too. Keyboards set but not
-   connected fold under **Other keyboards**, and key mappings other tools have set under **Mappings from other
-   tools**.
+   the keyboard, so a remapped key records as itself; a key that cannot switch input sources is explained below the
+   keyboard. Recording the Globe key turns **Globe key** on. Each key gets a menu for how it works: switch input sources
+   only, or keep its normal function too. Keyboards set but not connected fold under **Other keyboards**, and key
+   mappings other tools have set under **Mappings from other tools**.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing

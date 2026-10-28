@@ -8,7 +8,7 @@ import { KEYBOARDS_POLL_MS, useKeyboards } from './useKeyboards'
 
 vi.mock('../lib/api', () => ({ api: {} }))
 
-const report: KeyboardReport = { keyboards: [], systemMappings: [], inputMonitoringGranted: true, executable: '' }
+const report: KeyboardReport = { keyboards: [], systemMappings: [] }
 
 afterEach(() => {
   cleanup()

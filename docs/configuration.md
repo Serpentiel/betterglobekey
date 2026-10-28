@@ -85,9 +85,8 @@ The keys:
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 | Insert, Print Screen, Scroll Lock, Pause      | `insert`, `print_screen`, `scroll_lock`, `pause`                         |
 
-A keyboard's own key is read straight from the keyboard's raw input, which needs **Input Monitoring**
-(_System Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a
-restart after you grant it). How it is used depends on its `mode`:
+A keyboard's own key is read straight from the keyboard's raw input, which macOS allows once the service has
+Accessibility. How it is used depends on its `mode`:
 
 | `mode`                | The key                                                 |
 | --------------------- | ------------------------------------------------------- |

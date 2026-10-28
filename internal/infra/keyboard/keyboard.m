@@ -213,7 +213,7 @@ static void bgkReleaseHID(void) {
 // bgkSyncHID opens the HID manager while there are raw keys or a recording, and
 // closes it otherwise. It runs on the tap's run loop, retries an open that
 // failed for want of permission each time the raw keys are set, and reopens
-// once Input Monitoring is granted.
+// once Input Monitoring is granted, which comes with Accessibility.
 static void bgkSyncHID(void) {
 	pthread_mutex_lock(&bgkLock);
 	int want = bgkRawKeyCount > 0 || bgkRecording;
@@ -231,8 +231,8 @@ static void bgkSyncHID(void) {
 
 		bgkHID = bgkCreateHID();
 
-		// Shows the Input Monitoring prompt the first time; a no-op after.
-		IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
+		// Granted at once while the process holds Accessibility.
+		listen = listen || IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
 
 		IOReturn status = IOHIDManagerOpen(bgkHID, kIOHIDOptionsTypeNone);
 		bgkHIDOpen = status == kIOReturnSuccess;

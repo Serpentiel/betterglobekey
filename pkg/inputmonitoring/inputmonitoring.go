@@ -1,5 +1,6 @@
-// Package inputmonitoring reports the macOS Input Monitoring permission that
-// reading a keyboard's raw HID input requires.
+// Package inputmonitoring obtains the macOS Input Monitoring access that
+// reading a keyboard's raw HID input requires. macOS grants it without asking
+// to a process that holds Accessibility, once the process requests it.
 package inputmonitoring
 
 /*
@@ -22,9 +23,8 @@ func Granted() bool {
 	return C.bgkInputMonitoringGranted() != 0
 }
 
-// Request asks for Input Monitoring: macOS prompts the first time, and lists
-// the process under Input Monitoring either way. It reports whether access is
-// granted.
-func Request() bool {
-	return C.bgkInputMonitoringRequest() != 0
+// Ensure requests Input Monitoring unless it is granted, and reports whether
+// it is. It is granted at once with Accessibility, and refused without it.
+func Ensure() bool {
+	return Granted() || C.bgkInputMonitoringRequest() != 0
 }

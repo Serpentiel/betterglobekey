@@ -1105,12 +1105,10 @@ type ListKeyboardsResponse struct {
 	SystemMappings []*KeyMapping `protobuf:"bytes,2,rep,name=system_mappings,json=systemMappings,proto3" json:"system_mappings,omitempty"`
 	// input_monitoring_granted reports whether the daemon holds Input
 	// Monitoring, which recording keys and a keyboard's own trigger keys need.
+	// macOS grants it with Accessibility, once the daemon asks.
 	InputMonitoringGranted bool `protobuf:"varint,3,opt,name=input_monitoring_granted,json=inputMonitoringGranted,proto3" json:"input_monitoring_granted,omitempty"`
-	// executable is the path of the daemon's binary: what to add under Input
-	// Monitoring when macOS does not list it.
-	Executable    string `protobuf:"bytes,4,opt,name=executable,proto3" json:"executable,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ListKeyboardsResponse) Reset() {
@@ -1162,13 +1160,6 @@ func (x *ListKeyboardsResponse) GetInputMonitoringGranted() bool {
 		return x.InputMonitoringGranted
 	}
 	return false
-}
-
-func (x *ListKeyboardsResponse) GetExecutable() string {
-	if x != nil {
-		return x.Executable
-	}
-	return ""
 }
 
 // Keyboard is a connected keyboard.
@@ -1534,14 +1525,11 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x11GetStatusResponse\x123\n" +
 	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrusted\x128\n" +
 	"\x18input_monitoring_granted\x18\x02 \x01(\bR\x16inputMonitoringGranted\"\x16\n" +
-	"\x14ListKeyboardsRequest\"\x84\x02\n" +
+	"\x14ListKeyboardsRequest\"\xea\x01\n" +
 	"\x15ListKeyboardsResponse\x12A\n" +
 	"\tkeyboards\x18\x01 \x03(\v2#.betterglobekey.control.v1.KeyboardR\tkeyboards\x12N\n" +
 	"\x0fsystem_mappings\x18\x02 \x03(\v2%.betterglobekey.control.v1.KeyMappingR\x0esystemMappings\x128\n" +
-	"\x18input_monitoring_granted\x18\x03 \x01(\bR\x16inputMonitoringGranted\x12\x1e\n" +
-	"\n" +
-	"executable\x18\x04 \x01(\tR\n" +
-	"executable\"\xba\x03\n" +
+	"\x18input_monitoring_granted\x18\x03 \x01(\bR\x16inputMonitoringGrantedJ\x04\b\x04\x10\x05\"\xba\x03\n" +
 	"\bKeyboard\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +

@@ -35,8 +35,9 @@ service ConfigService {
   rpc ListKeyboards(ListKeyboardsRequest) returns (ListKeyboardsResponse);
 
   // RecordKey returns the next key pressed, read from raw keyboard input, which
-  // needs Input Monitoring: FAILED_PRECONDITION without it. Raw input reports
-  // a key before any remapping, so a remapped key records as itself. It waits
+  // needs Input Monitoring: FAILED_PRECONDITION without it. macOS grants Input
+  // Monitoring with Accessibility, once the daemon asks. Raw input reports a
+  // key before any remapping, so a remapped key records as itself. It waits
   // until the caller's deadline, or 30 seconds.
   rpc RecordKey(RecordKeyRequest) returns (RecordKeyResponse);
 }
@@ -215,13 +216,12 @@ message ListKeyboardsResponse {
   // system_mappings are the system-wide key mappings (`hidutil property --set`).
   repeated KeyMapping system_mappings = 2;
 
+  reserved 4;
+
   // input_monitoring_granted reports whether the daemon holds Input
   // Monitoring, which recording keys and a keyboard's own trigger keys need.
+  // macOS grants it with Accessibility, once the daemon asks.
   bool input_monitoring_granted = 3;
-
-  // executable is the path of the daemon's binary: what to add under Input
-  // Monitoring when macOS does not list it.
-  string executable = 4;
 }
 
 // Keyboard is a connected keyboard.

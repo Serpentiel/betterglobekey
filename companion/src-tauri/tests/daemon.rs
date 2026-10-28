@@ -65,7 +65,6 @@ impl ConfigService for Stub {
             keyboards: vec![keyboard],
             system_mappings: vec![],
             input_monitoring_granted: true,
-            executable: String::new(),
         }))
     }
 

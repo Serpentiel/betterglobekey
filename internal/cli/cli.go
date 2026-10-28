@@ -222,10 +222,9 @@ func newSwitcherBuilder(
 		keyboard.SetReverseModifier(c.Reverse.Modifier)
 		keyboard.SetGlobe(c.Trigger.Globe)
 
-		if readsRawInput(c.Trigger) && !inputmonitoring.Granted() {
-			logger.Error("input monitoring permission not granted; trigger keys other than the Globe key are " +
-				"ignored until it is enabled in System Settings > Privacy & Security > Input Monitoring")
-			inputmonitoring.Request()
+		if readsRawInput(c.Trigger) && !inputmonitoring.Ensure() {
+			logger.Error("reading keyboards is not permitted; trigger keys other than the Globe key are " +
+				"ignored until Accessibility is granted")
 		}
 
 		if err := remapper.Apply(c.Trigger); err != nil {
@@ -282,15 +281,11 @@ func watchConfig(
 	}
 }
 
-// permissions reports the macOS permissions this process holds, and the binary
-// they are granted to.
+// permissions reports the macOS permissions this process holds.
 func permissions() control.Permissions {
-	executable, _ := os.Executable()
-
 	return control.Permissions{
 		Accessibility:   accessibility.Trusted(),
 		InputMonitoring: inputmonitoring.Granted(),
-		Executable:      executable,
 	}
 }
 
@@ -348,10 +343,6 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 
 	status, running := queryDaemonStatus(socketPath)
 	fmt.Fprintln(out, accessibilityStatusLine(running, status.GetAccessibilityTrusted()))
-
-	if running {
-		fmt.Fprintln(out, inputMonitoringStatusLine(status.GetInputMonitoringGranted()))
-	}
 
 	path, err := resolveConfigPath(cmd)
 	if err != nil {
@@ -622,17 +613,6 @@ func accessibilityStatusLine(running, trusted bool) string {
 	default:
 		return "accessibility: NOT granted (enable in System Settings > Privacy & Security > Accessibility)"
 	}
-}
-
-// inputMonitoringStatusLine renders the doctor's Input Monitoring line from the
-// daemon's reported state.
-func inputMonitoringStatusLine(granted bool) string {
-	if granted {
-		return "input monitoring: granted"
-	}
-
-	return "input monitoring: not granted (recording keys and trigger keys other than the Globe key need it; " +
-		"enable in System Settings > Privacy & Security > Input Monitoring)"
 }
 
 // newRemapper returns the trigger key remapper backed by the system's HID key

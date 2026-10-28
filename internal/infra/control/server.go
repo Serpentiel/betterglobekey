@@ -53,12 +53,12 @@ type RecordedKey struct {
 }
 
 // ErrRawInput reports that raw keyboard input cannot be read, typically for
-// want of Input Monitoring.
+// want of Accessibility.
 var ErrRawInput = errors.New("reading raw keyboard input failed")
 
-// ErrInputMonitoring reports that Input Monitoring is not granted, so keys
-// cannot be recorded: without it, macOS passes only a few keys, such as Caps
-// Lock, through raw input.
+// ErrInputMonitoring reports that Input Monitoring is refused, so keys cannot
+// be recorded: without it, macOS passes only a few keys, such as Caps Lock,
+// through raw input. macOS grants it with Accessibility.
 var ErrInputMonitoring = errors.New("input monitoring is not granted")
 
 // recordTimeout caps how long RecordKey waits for a key.
@@ -69,11 +69,8 @@ type Permissions struct {
 	// Accessibility is required by the global event tap.
 	Accessibility bool
 	// InputMonitoring is required to record keys and to read a keyboard's own
-	// trigger keys from raw input.
+	// trigger keys from raw input; macOS grants it with Accessibility.
 	InputMonitoring bool
-	// Executable is the path of the daemon's binary, which the permissions are
-	// granted to.
-	Executable string
 }
 
 // OnMain runs fn on the main thread, blocking until it returns. Input-source
@@ -236,9 +233,7 @@ func (s *Server) ListKeyboards(
 	}
 
 	response := keyboardsToProto(statuses, systemWide)
-	permissions := s.permissions()
-	response.InputMonitoringGranted = permissions.InputMonitoring
-	response.Executable = permissions.Executable
+	response.InputMonitoringGranted = s.permissions().InputMonitoring
 
 	return response, nil
 }
@@ -256,11 +251,11 @@ func (s *Server) RecordKey(
 	switch {
 	case errors.Is(err, ErrInputMonitoring):
 		return nil, status.Error(codes.FailedPrecondition,
-			"Input Monitoring is not granted; enable betterglobekey under System Settings > Privacy & Security > "+
-				"Input Monitoring")
+			"betterglobekey can't read keyboards without Accessibility. Turn on betterglobekey under System "+
+				"Settings > Privacy & Security > Accessibility.")
 	case errors.Is(err, ErrRawInput):
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"%v; enable betterglobekey under System Settings > Privacy & Security > Input Monitoring", err)
+			"%v. Turn on betterglobekey under System Settings > Privacy & Security > Accessibility.", err)
 	case err != nil:
 		return nil, status.FromContextError(err).Err()
 	}

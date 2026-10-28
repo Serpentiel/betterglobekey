@@ -10,16 +10,6 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/control"
 )
 
-func TestInputMonitoringStatusLine(t *testing.T) {
-	if got := inputMonitoringStatusLine(true); got != "input monitoring: granted" {
-		t.Errorf("granted line = %q", got)
-	}
-
-	if got := inputMonitoringStatusLine(false); !strings.Contains(got, "not granted") {
-		t.Errorf("denied line = %q", got)
-	}
-}
-
 func TestAccessibilityStatusLine(t *testing.T) {
 	cases := []struct {
 		name    string

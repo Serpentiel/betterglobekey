@@ -542,7 +542,7 @@ func TestLogRawInput(t *testing.T) {
 	}
 
 	log := string(data)
-	if strings.Count(log, "Input Monitoring not granted") != 1 {
+	if strings.Count(log, "not permitted; grant Accessibility") != 1 {
 		t.Errorf("want the failure logged once; got:\n%s", log)
 	}
 

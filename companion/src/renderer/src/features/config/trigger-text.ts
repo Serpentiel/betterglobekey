@@ -9,9 +9,8 @@ export const MODE_LABELS: Record<string, string> = {
   [MODE_PASS_THROUGH]: "Keep the key's function",
 }
 
-/** MODES_HINT explains the trigger modes and what they need. */
+/** MODES_HINT explains the trigger modes. */
 export const MODES_HINT =
-  `A keyboard's own keys are read straight from the keyboard, which needs Input Monitoring. ` +
   `“${MODE_LABELS[MODE_DEDICATED]}” silences the key; “${MODE_LABELS[MODE_PASS_THROUGH]}” switches only ` +
   `when the key is pressed alone.`
 

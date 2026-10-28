@@ -24,10 +24,9 @@ brew install betterglobekey
 automatically; grant it under _System Settings > Privacy & Security > Accessibility_ by enabling the switch next to
 **betterglobekey**.
 
-A keyboard's own [trigger keys](configuration.md#trigger-keys), and recording keys in the companion, also need Input
-Monitoring, under _System Settings > Privacy & Security > Input Monitoring_. If **betterglobekey** is not listed there,
-click **+** and add `$(brew --prefix)/opt/betterglobekey/bin/betterglobekey` (in the file picker, ⌘⇧G opens a path).
-The service picks it up without a restart.
+Accessibility is the only permission to grant. A keyboard's own [trigger keys](configuration.md#trigger-keys), and
+recording keys in the companion, read the keyboard directly, which also takes Input Monitoring; macOS grants that
+without asking once Accessibility is on, and the service picks it up without a restart.
 
 You can check the permissions (and the rest of your setup) at any time with:
 

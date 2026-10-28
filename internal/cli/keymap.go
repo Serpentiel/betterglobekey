@@ -16,7 +16,7 @@ import (
 )
 
 // ioReturnNotPermitted is kIOReturnNotPermitted, what opening raw input fails
-// with while Input Monitoring is not granted.
+// with while it is not permitted, that is, without Accessibility.
 const ioReturnNotPermitted = 0xE00002E2
 
 // logRawInput returns a raw input handler that logs it opening and closing, and
@@ -43,7 +43,7 @@ func logRawInput(logger *logging.Logger) func(keyboard.RawInputState, int32) {
 
 			reason := "unknown"
 			if code == ioReturnNotPermitted {
-				reason = "Input Monitoring not granted"
+				reason = "not permitted; grant Accessibility"
 			}
 
 			logger.Error("reading raw keyboard input failed; the dedicated trigger key is ignored",
@@ -98,11 +98,8 @@ func (p keyboardsPort) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 
 func (keyboardsPort) Record(ctx context.Context, keyboardID string) (control.RecordedKey, error) {
 	// Without Input Monitoring raw input still opens, but passes only a few
-	// keys, so a recording would wait for keys it never sees. Ask for it, which
-	// lists betterglobekey under Input Monitoring, and fail at once instead.
-	if !inputmonitoring.Granted() {
-		inputmonitoring.Request()
-
+	// keys, so a recording would wait for keys it never sees: fail at once.
+	if !inputmonitoring.Ensure() {
 		return control.RecordedKey{}, control.ErrInputMonitoring
 	}
 

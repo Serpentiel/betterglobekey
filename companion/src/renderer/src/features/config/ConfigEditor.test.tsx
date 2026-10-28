@@ -46,8 +46,7 @@ function makeController(overrides: Partial<ConfigController> = {}): ConfigContro
 // The keyboards panel polls the daemon; give it an empty report.
 vi.mock('../../lib/api', () => ({
   api: {
-    listKeyboards: () =>
-      Promise.resolve({ keyboards: [], systemMappings: [], inputMonitoringGranted: true, executable: '' }),
+    listKeyboards: () => Promise.resolve({ keyboards: [], systemMappings: [] }),
   },
 }))
 
