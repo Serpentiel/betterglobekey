@@ -5,7 +5,7 @@ import type { Config, Keyboard, KeyboardTrigger, KeyMapping } from '../../../../
 import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
 import { allowedModes, DEDICATED_USAGE, GLOBE, triggerFor, withKey } from '../../lib/trigger-keys'
-import { Banner, Button, Section, Select } from '../../ui'
+import { Banner, Button, Disclosure, Section, Select } from '../../ui'
 import { KeyPicker } from './KeyPicker'
 import { describeTrigger, MODE_LABELS, modeHint } from './trigger-text'
 import styles from './TriggerSection.module.css'
@@ -87,8 +87,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
       ) : null}
 
       {disconnected.length > 0 ? (
-        <details className={styles.disclosure}>
-          <summary className={styles.heading}>{`Other keyboards (${disconnected.length})`}</summary>
+        <Disclosure title={`Other keyboards (${disconnected.length})`}>
           <div className={styles.group}>
             {disconnected.map((id) => (
               <div key={id} className={styles.row}>
@@ -104,12 +103,11 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
               </div>
             ))}
           </div>
-        </details>
+        </Disclosure>
       ) : null}
 
       {others.length > 0 || systemMappings.length > 0 ? (
-        <details className={styles.disclosure}>
-          <summary className={styles.heading}>Mappings from other tools</summary>
+        <Disclosure title="Mappings from other tools">
           <div className={styles.group}>
             {others.map((candidate) => (
               <div key={candidate.id} className={styles.row}>
@@ -128,7 +126,7 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
               </div>
             ) : null}
           </div>
-        </details>
+        </Disclosure>
       ) : null}
     </Section>
   )

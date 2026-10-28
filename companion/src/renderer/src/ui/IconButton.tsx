@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import type { ReactElement, ButtonHTMLAttributes } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
+import { Tooltip } from './Tooltip'
 import styles from './IconButton.module.css'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,17 +11,13 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tone?: 'default' | 'danger'
 }
 
-/** IconButton is an accessible, icon-only button (label is required for a11y). */
+/** IconButton is an accessible, icon-only button; its label is its accessible name and its tooltip. */
 export function IconButton({ icon: Icon, label, tone = 'default', className, ...rest }: IconButtonProps): ReactElement {
   return (
-    <button
-      type="button"
-      className={clsx(styles.iconButton, styles[tone], className)}
-      aria-label={label}
-      title={label}
-      {...rest}
-    >
-      <Icon size={16} strokeWidth={2} />
-    </button>
+    <Tooltip label={label}>
+      <button type="button" className={clsx(styles.iconButton, styles[tone], className)} aria-label={label} {...rest}>
+        <Icon size={16} strokeWidth={2} />
+      </button>
+    </Tooltip>
   )
 }

@@ -72,7 +72,7 @@ describe('TriggerSection', () => {
 
     expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281')).toBeTruthy()
     expect(row('Apple Internal Keyboard').getByText('🌐 Globe')).toBeTruthy()
-    expect(row('Apple Internal Keyboard').queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect(row('Apple Internal Keyboard').queryByRole('button', { name: 'Use Globe key' })).toBeNull()
     expect(row('Apple Internal Keyboard').queryByRole('combobox', { name: 'Mode' })).toBeNull()
     expect(screen.getByRole('group', { name: 'Logitech K120' })).toBeTruthy()
   })
@@ -81,7 +81,7 @@ describe('TriggerSection', () => {
     renderSection()
 
     expect(row('Logitech K120').getByText('None')).toBeTruthy()
-    expect(row('Logitech K120').queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect(row('Logitech K120').queryByRole('button', { name: 'Use Globe key' })).toBeNull()
     expect(row('Logitech K120').queryByRole('button', { name: 'Clear' })).toBeNull()
 
     cleanup()
@@ -117,7 +117,7 @@ describe('TriggerSection', () => {
     expect(row('Apple Internal Keyboard').getByText('Insert')).toBeTruthy()
     expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281 · applies once saved')).toBeTruthy()
 
-    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Use Globe' }))
+    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Use Globe key' }))
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
@@ -130,7 +130,7 @@ describe('TriggerSection', () => {
   it('folds keyboards set here that are not connected, and forgets them', () => {
     const { onChange, trigger } = renderSection({ keyboards: { '1234:5678': { key: 'insert', mode: 'dedicated' } } })
 
-    expect(screen.getByText('Other keyboards (1)')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Other keyboards (1)' }))
     expect(screen.getByText('Insert, switch input sources only · applies when connected')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
@@ -140,7 +140,8 @@ describe('TriggerSection', () => {
   it('shows other tools’ mappings behind a disclosure', () => {
     renderSection()
 
-    expect(screen.getByText('Mappings from other tools')).toBeTruthy()
+    expect(screen.queryByText('Every keyboard')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Mappings from other tools' }))
     expect(screen.getAllByText('Grave Accent → Escape')).toHaveLength(2)
     expect(screen.getByText('Every keyboard')).toBeTruthy()
   })

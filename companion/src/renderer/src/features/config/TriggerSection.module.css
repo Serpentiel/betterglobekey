@@ -70,14 +70,3 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
-
-.heading {
-  margin: 0 0 var(--space-2) var(--space-1);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.disclosure summary {
-  cursor: pointer;
-}

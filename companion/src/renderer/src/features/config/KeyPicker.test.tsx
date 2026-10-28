@@ -89,20 +89,20 @@ describe('KeyPicker', () => {
     const onChange = vi.fn()
     render(<KeyPicker value="caps_lock" onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Use Globe' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use Globe key' }))
     expect(onChange).toHaveBeenCalledWith('globe')
   })
 
   it('hides Use Globe on the Globe key, and offers Clear only without a Globe key', () => {
     render(<KeyPicker value="globe" onChange={vi.fn()} />)
-    expect(screen.queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Use Globe key' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
 
     cleanup()
 
     const onChange = vi.fn()
     render(<KeyPicker value="caps_lock" hasGlobe={false} onChange={onChange} />)
-    expect(screen.queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Use Globe key' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
     expect(onChange).toHaveBeenCalledWith('')
   })

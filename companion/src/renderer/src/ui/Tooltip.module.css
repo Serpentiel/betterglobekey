@@ -1,0 +1,45 @@
+.anchor {
+  display: inline-flex;
+}
+
+/* Measured hidden first, then placed and faded in. */
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1100;
+  max-width: 260px;
+  padding: 3px var(--space-2);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.shown {
+  visibility: visible;
+  animation: tooltip-in 120ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.below.shown {
+  animation-name: tooltip-in-below;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@keyframes tooltip-in-below {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}

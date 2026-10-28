@@ -22,9 +22,13 @@
   border-color: var(--text-tertiary);
 }
 
-.key {
+.anchor {
   flex: 1;
   align-self: stretch;
+}
+
+.key {
+  width: 100%;
   padding: 0 var(--space-3);
   border: none;
   border-radius: inherit;

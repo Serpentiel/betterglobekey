@@ -5,7 +5,7 @@ import { type ReactElement, useEffect, useRef, useState } from 'react'
 import { api } from '../../lib/api'
 import { toMessage } from '../../lib/errors'
 import { GLOBE, triggerLabel } from '../../lib/trigger-keys'
-import { IconButton } from '../../ui'
+import { IconButton, Tooltip } from '../../ui'
 import styles from './KeyPicker.module.css'
 
 interface Props {
@@ -91,20 +91,21 @@ export function KeyPicker({
   return (
     <div className={styles.picker}>
       <div className={clsx(styles.keycap, recording && styles.recording, disabled && styles.disabled)}>
-        <button
-          id={id}
-          type="button"
-          className={styles.key}
-          aria-label="Record a trigger key"
-          title="Click, then press a key"
-          aria-pressed={recording}
-          disabled={disabled}
-          onClick={recording ? undefined : record}
-        >
-          <span aria-live="polite">{recording ? 'Press a key…' : triggerLabel(value)}</span>
-        </button>
+        <Tooltip label="Click, then press a key" className={styles.anchor} disabled={recording || disabled}>
+          <button
+            id={id}
+            type="button"
+            className={styles.key}
+            aria-label="Record a trigger key"
+            aria-pressed={recording}
+            disabled={disabled}
+            onClick={recording ? undefined : record}
+          >
+            <span aria-live="polite">{recording ? 'Press a key…' : triggerLabel(value)}</span>
+          </button>
+        </Tooltip>
         {hasGlobe && value !== GLOBE ? (
-          <IconButton icon={Globe} label="Use Globe" className={styles.icon} onClick={() => choose(GLOBE)} />
+          <IconButton icon={Globe} label="Use Globe key" className={styles.icon} onClick={() => choose(GLOBE)} />
         ) : null}
         {recording ? <IconButton icon={X} label="Cancel" className={styles.icon} onClick={cancel} /> : null}
         {!recording && !hasGlobe && value !== '' ? (
