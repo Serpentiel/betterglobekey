@@ -57,7 +57,7 @@ func TestQueryDaemonAccessibilityRunning(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			socketPath := shortSocketPath(t)
 			server := control.NewServer("", nil, nil, func(fn func()) { fn() }, "", "", func() control.Permissions {
-				return control.Permissions{Accessibility: trusted, InputMonitoring: !trusted}
+				return control.Permissions{Accessibility: trusted}
 			})
 
 			go func() { _ = server.Serve(socketPath) }()
@@ -71,8 +71,8 @@ func TestQueryDaemonAccessibilityRunning(t *testing.T) {
 				t.Fatal("running = false, want true")
 			}
 
-			if status.GetAccessibilityTrusted() != trusted || status.GetInputMonitoringGranted() == trusted {
-				t.Errorf("status = %+v, want accessibility %v and input monitoring %v", status, trusted, !trusted)
+			if status.GetAccessibilityTrusted() != trusted {
+				t.Errorf("status = %+v, want accessibility %v", status, trusted)
 			}
 		})
 	}

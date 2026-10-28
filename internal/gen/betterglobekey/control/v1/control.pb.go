@@ -1010,11 +1010,8 @@ type GetStatusResponse struct {
 	// accessibility_trusted reports whether the daemon holds the Accessibility
 	// permission required by the global event tap.
 	AccessibilityTrusted bool `protobuf:"varint,1,opt,name=accessibility_trusted,json=accessibilityTrusted,proto3" json:"accessibility_trusted,omitempty"`
-	// input_monitoring_granted reports whether the daemon holds Input
-	// Monitoring, which recording keys and a keyboard's own trigger keys need.
-	InputMonitoringGranted bool `protobuf:"varint,2,opt,name=input_monitoring_granted,json=inputMonitoringGranted,proto3" json:"input_monitoring_granted,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *GetStatusResponse) Reset() {
@@ -1050,13 +1047,6 @@ func (*GetStatusResponse) Descriptor() ([]byte, []int) {
 func (x *GetStatusResponse) GetAccessibilityTrusted() bool {
 	if x != nil {
 		return x.AccessibilityTrusted
-	}
-	return false
-}
-
-func (x *GetStatusResponse) GetInputMonitoringGranted() bool {
-	if x != nil {
-		return x.InputMonitoringGranted
 	}
 	return false
 }
@@ -1103,12 +1093,8 @@ type ListKeyboardsResponse struct {
 	Keyboards []*Keyboard `protobuf:"bytes,1,rep,name=keyboards,proto3" json:"keyboards,omitempty"`
 	// system_mappings are the system-wide key mappings (`hidutil property --set`).
 	SystemMappings []*KeyMapping `protobuf:"bytes,2,rep,name=system_mappings,json=systemMappings,proto3" json:"system_mappings,omitempty"`
-	// input_monitoring_granted reports whether the daemon holds Input
-	// Monitoring, which recording keys and a keyboard's own trigger keys need.
-	// macOS grants it with Accessibility, once the daemon asks.
-	InputMonitoringGranted bool `protobuf:"varint,3,opt,name=input_monitoring_granted,json=inputMonitoringGranted,proto3" json:"input_monitoring_granted,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ListKeyboardsResponse) Reset() {
@@ -1153,13 +1139,6 @@ func (x *ListKeyboardsResponse) GetSystemMappings() []*KeyMapping {
 		return x.SystemMappings
 	}
 	return nil
-}
-
-func (x *ListKeyboardsResponse) GetInputMonitoringGranted() bool {
-	if x != nil {
-		return x.InputMonitoringGranted
-	}
-	return false
 }
 
 // Keyboard is a connected keyboard.
@@ -1521,15 +1500,13 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\x12GetVersionResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x16\n" +
 	"\x06commit\x18\x02 \x01(\tR\x06commit\"\x12\n" +
-	"\x10GetStatusRequest\"\x82\x01\n" +
+	"\x10GetStatusRequest\"N\n" +
 	"\x11GetStatusResponse\x123\n" +
-	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrusted\x128\n" +
-	"\x18input_monitoring_granted\x18\x02 \x01(\bR\x16inputMonitoringGranted\"\x16\n" +
-	"\x14ListKeyboardsRequest\"\xea\x01\n" +
+	"\x15accessibility_trusted\x18\x01 \x01(\bR\x14accessibilityTrustedJ\x04\b\x02\x10\x03\"\x16\n" +
+	"\x14ListKeyboardsRequest\"\xb6\x01\n" +
 	"\x15ListKeyboardsResponse\x12A\n" +
 	"\tkeyboards\x18\x01 \x03(\v2#.betterglobekey.control.v1.KeyboardR\tkeyboards\x12N\n" +
-	"\x0fsystem_mappings\x18\x02 \x03(\v2%.betterglobekey.control.v1.KeyMappingR\x0esystemMappings\x128\n" +
-	"\x18input_monitoring_granted\x18\x03 \x01(\bR\x16inputMonitoringGrantedJ\x04\b\x04\x10\x05\"\xba\x03\n" +
+	"\x0fsystem_mappings\x18\x02 \x03(\v2%.betterglobekey.control.v1.KeyMappingR\x0esystemMappingsJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05\"\xba\x03\n" +
 	"\bKeyboard\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +

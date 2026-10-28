@@ -18,13 +18,13 @@ static int bgkInputMonitoringRequest(void) {
 */
 import "C"
 
-// Granted reports whether the process may read raw keyboard input.
-func Granted() bool {
+// granted reports whether the process may read raw keyboard input.
+func granted() bool {
 	return C.bgkInputMonitoringGranted() != 0
 }
 
 // Ensure requests Input Monitoring unless it is granted, and reports whether
 // it is. It is granted at once with Accessibility, and refused without it.
 func Ensure() bool {
-	return Granted() || C.bgkInputMonitoringRequest() != 0
+	return granted() || C.bgkInputMonitoringRequest() != 0
 }

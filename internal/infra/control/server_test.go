@@ -302,10 +302,6 @@ func TestListKeyboards(t *testing.T) {
 		t.Fatalf("response = %+v", got)
 	}
 
-	if got.GetInputMonitoringGranted() {
-		t.Errorf("input monitoring = %v", got.GetInputMonitoringGranted())
-	}
-
 	builtIn, logitech := got.GetKeyboards()[0], got.GetKeyboards()[1]
 	if builtIn.GetId() != "05ac:0281" || !builtIn.GetHasGlobe() || !builtIn.GetBuiltIn() ||
 		len(builtIn.GetTriggerMappings()) != 0 {

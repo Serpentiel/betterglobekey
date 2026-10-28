@@ -224,7 +224,6 @@ mod tests {
                 ..Keyboard::default()
             }],
             system_mappings: vec![],
-            input_monitoring_granted: false,
         };
 
         let value = serde_json::to_value(response).unwrap();
@@ -233,6 +232,5 @@ mod tests {
         assert_eq!(value["keyboards"][0]["triggerMappings"][0]["srcName"], json!("Caps Lock"));
         assert_eq!(value["keyboards"][0]["otherMappings"], json!([]));
         assert_eq!(value["systemMappings"], json!([]));
-        assert_eq!(value["inputMonitoringGranted"], json!(false));
     }
 }

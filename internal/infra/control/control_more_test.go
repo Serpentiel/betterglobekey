@@ -75,7 +75,7 @@ func TestServeOverUnixSocket(t *testing.T) {
 
 	server := NewServer(
 		"", fakeSources{}, fakeKeyboards{}, func(fn func()) { fn() }, "9.9.9", "cafe",
-		func() Permissions { return Permissions{Accessibility: true, InputMonitoring: true} },
+		func() Permissions { return Permissions{Accessibility: true} },
 	)
 
 	serveErr := make(chan error, 1)
@@ -122,8 +122,8 @@ func TestServeOverUnixSocket(t *testing.T) {
 	}
 
 	status, err := client.GetStatus(context.Background(), &controlv1.GetStatusRequest{})
-	if err != nil || !status.GetAccessibilityTrusted() || !status.GetInputMonitoringGranted() {
-		t.Errorf("status = %+v, %v; want both permissions granted", status, err)
+	if err != nil || !status.GetAccessibilityTrusted() {
+		t.Errorf("status = %+v, %v; want Accessibility granted", status, err)
 	}
 
 	server.Stop()

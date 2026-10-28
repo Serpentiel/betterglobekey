@@ -283,10 +283,7 @@ func watchConfig(
 
 // permissions reports the macOS permissions this process holds.
 func permissions() control.Permissions {
-	return control.Permissions{
-		Accessibility:   accessibility.Trusted(),
-		InputMonitoring: inputmonitoring.Granted(),
-	}
+	return control.Permissions{Accessibility: accessibility.Trusted()}
 }
 
 // startControlServer launches the local gRPC control server on a background

@@ -66,11 +66,9 @@ const recordTimeout = 30 * time.Second
 
 // Permissions are the macOS permissions the daemon holds.
 type Permissions struct {
-	// Accessibility is required by the global event tap.
+	// Accessibility is required by the global event tap, and brings the
+	// Input Monitoring that reading keyboards' raw input needs.
 	Accessibility bool
-	// InputMonitoring is required to record keys and to read a keyboard's own
-	// trigger keys from raw input; macOS grants it with Accessibility.
-	InputMonitoring bool
 }
 
 // OnMain runs fn on the main thread, blocking until it returns. Input-source
@@ -212,8 +210,7 @@ func (s *Server) GetStatus(
 	permissions := s.permissions()
 
 	return &controlv1.GetStatusResponse{
-		AccessibilityTrusted:   permissions.Accessibility,
-		InputMonitoringGranted: permissions.InputMonitoring,
+		AccessibilityTrusted: permissions.Accessibility,
 	}, nil
 }
 
@@ -232,10 +229,7 @@ func (s *Server) ListKeyboards(
 		return nil, status.Errorf(codes.Unavailable, "listing keyboards: %v", err)
 	}
 
-	response := keyboardsToProto(statuses, systemWide)
-	response.InputMonitoringGranted = s.permissions().InputMonitoring
-
-	return response, nil
+	return keyboardsToProto(statuses, systemWide), nil
 }
 
 // RecordKey returns the next key pressed, as a trigger key when it can be one.
