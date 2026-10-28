@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 )
 
 // fakeKeyboards reports a built-in keyboard and a remapped third-party one,
@@ -115,9 +116,10 @@ func sampleProtoConfig() *controlv1.Config {
 		Reverse:     &controlv1.Reverse{Enabled: true, Modifier: "shift"},
 		Hud:         &controlv1.Hud{Enabled: true, Duration: "900ms", ShowCollection: true},
 		Trigger: &controlv1.Trigger{
+			Globe: proto.Bool(false),
 			Keyboards: map[string]*controlv1.KeyboardTriggers{
 				"046d:c33f": {Keys: []*controlv1.KeyboardTrigger{
-					{Key: "globe"},
+					{Key: "left_command"},
 					{Key: "insert", Mode: "pass_through"},
 					{Key: "caps_lock"},
 				}},
@@ -163,9 +165,13 @@ func TestApplyThenGetConfig(t *testing.T) {
 	trigger := cfg.GetTrigger()
 
 	keys := trigger.GetKeyboards()["046d:c33f"].GetKeys()
-	if len(keys) != 3 || keys[0].GetKey() != "globe" || keys[1].GetKey() != "insert" ||
+	if len(keys) != 3 || keys[0].GetKey() != "left_command" || keys[1].GetKey() != "insert" ||
 		keys[1].GetMode() != "pass_through" || keys[2].GetKey() != "caps_lock" || keys[2].GetMode() != "dedicated" {
-		t.Errorf("trigger = %+v, want Globe, Insert passed through and Caps Lock dedicated on one keyboard", trigger)
+		t.Errorf("trigger = %+v, want Left Command, Insert passed through and Caps Lock on one keyboard", trigger)
+	}
+
+	if trigger.Globe == nil || trigger.GetGlobe() {
+		t.Errorf("trigger.globe = %v, want false", trigger.Globe)
 	}
 
 	if none, ok := trigger.GetKeyboards()["05ac:0281"]; !ok || len(none.GetKeys()) != 0 {
@@ -199,8 +205,8 @@ func TestApplyConfigWithoutTriggerKeepsGlobe(t *testing.T) {
 	}
 
 	trigger := got.GetConfig().GetTrigger()
-	if len(trigger.GetKeyboards()) != 0 {
-		t.Errorf("trigger = %+v, want globe", trigger)
+	if len(trigger.GetKeyboards()) != 0 || !trigger.GetGlobe() {
+		t.Errorf("trigger = %+v, want the Globe key alone", trigger)
 	}
 }
 

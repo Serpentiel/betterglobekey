@@ -51,38 +51,38 @@ All options other than `collections` are optional and fall back to the defaults 
 
 ## Trigger Keys
 
-Every keyboard has its own trigger keys, listed under `trigger.keyboards` by the vendor and product ID that
-`betterglobekey doctor` and the companion show; each switches input sources. A keyboard not listed uses its Globe key,
-if it has one (a MacBook's or a Magic Keyboard), and has none otherwise. An empty list (`[]`) turns a keyboard's
-trigger keys off, its Globe key included:
+"`trigger.globe` (default `true`) makes the Globe key switch input sources on every keyboard that has one (a
+MacBook's or a Magic Keyboard). macOS cannot tell which keyboard a Globe press came from, so it is on or off for all
+of them at once.
+
+Each keyboard can also have trigger keys of its own, listed under `trigger.keyboards` by the vendor and product ID that
+`betterglobekey doctor` and the companion show. A keyboard not listed has none:
 
 ```yaml
 trigger:
+  globe: true
   keyboards:
     "046d:c33f": # a Logitech keyboard
       - key: insert
         mode: pass_through
-    "05ac:0281": # the MacBook's own keyboard: its Globe key, plus Caps Lock and Left Command
-      - key: globe
+    "05ac:0281": # the MacBook's own keyboard: Caps Lock and Left Command, beside its Globe key
       - key: caps_lock
       - key: left_command
-    "05ac:029c": [] # a Magic Keyboard that switches nothing
 ```
 
-A key appears at most once per keyboard.
+A key appears at most once per keyboard, and `globe` is not one of a keyboard's own keys.
 
 The keys:
 
 | Key                                           | `key`                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------ |
-| Globe                                         | `globe`                                                                  |
 | Caps Lock                                     | `caps_lock`                                                              |
 | Right or left Command, Option, Control, Shift | `right_command`, `left_option`, `right_control`, `left_shift`, and so on |
 | F13 through F20                               | `f13` … `f20`                                                            |
 | Menu (the "Application" key on PC keyboards)  | `menu`                                                                   |
 | Insert, Print Screen, Scroll Lock, Pause      | `insert`, `print_screen`, `scroll_lock`, `pause`                         |
 
-A key other than the Globe key is read straight from the keyboard's raw input, which needs **Input Monitoring**
+A keyboard's own key is read straight from the keyboard's raw input, which needs **Input Monitoring**
 (_System Settings > Privacy & Security > Input Monitoring_; macOS asks the first time, and the service may need a
 restart after you grant it). How it is used depends on its `mode`:
 
@@ -98,8 +98,6 @@ restart after you grant it). How it is used depends on its `mode`:
   C) the key works as usual. Caps Lock cannot be passed through.
 - No trigger key acts as fn: a third-party keyboard has none of the fn combinations an Apple keyboard has, so a key
   remapped to fn would only half work there.
-- The Globe key cannot tell keyboards apart: while any keyboard switches with it, the Globe key switches on every
-  keyboard. The companion therefore adds or removes it on every keyboard with one at once.
 
 Keyboards plugged in while the service runs are remapped within two seconds. Things to know about remapping a
 dedicated key:

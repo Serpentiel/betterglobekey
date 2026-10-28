@@ -18,7 +18,7 @@ const baseConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['us'] }],
-  trigger: { keyboards: {} },
+  trigger: { globe: true, keyboards: {} },
 }
 
 function renderSection(onChange = vi.fn()) {

@@ -12,7 +12,7 @@ import (
 )
 
 // globeTrigger is the trigger a document without a trigger section loads as.
-var globeTrigger = domainconfig.Trigger{}
+var globeTrigger = domainconfig.Trigger{Globe: true}
 
 func sampleConfig() domainconfig.Config {
 	return domainconfig.Config{
@@ -21,13 +21,13 @@ func sampleConfig() domainconfig.Config {
 		Reverse:     domainconfig.Reverse{Enabled: false, Modifier: "option"},
 		HUD:         domainconfig.HUD{Enabled: true, Duration: 1200 * time.Millisecond, ShowCollection: false},
 		Trigger: domainconfig.Trigger{
+			Globe: false,
 			Keyboards: map[string][]domainconfig.KeyboardTrigger{
 				"046d:c33f": {{Key: "insert", Mode: domainconfig.TriggerModePassThrough}},
 				"05ac:0281": {
-					domainconfig.GlobeTrigger,
 					{Key: domainconfig.TriggerCapsLock, Mode: domainconfig.TriggerModeDedicated},
+					{Key: "left_command", Mode: domainconfig.TriggerModeDedicated},
 				},
-				"05ac:029c": {},
 			},
 		},
 		Collections: []domainconfig.Collection{

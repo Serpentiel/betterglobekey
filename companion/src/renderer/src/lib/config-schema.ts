@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { Config } from '../../../shared/types'
-import { allowedModes, KEYBOARD_ID, TRIGGER_KEY_VALUES, TRIGGER_MODES } from './trigger-keys'
+import { allowedModes, GLOBE, KEYBOARD_ID, TRIGGER_KEY_VALUES, TRIGGER_MODES } from './trigger-keys'
 
 // GO_DURATION matches a Go time.Duration string (e.g. "250ms", "1m30s").
 const GO_DURATION = /^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$/
@@ -87,6 +87,7 @@ export const configSchema = z
     }),
     collections: z.array(collectionSchema),
     trigger: z.object({
+      globe: z.boolean(),
       keyboards: z.record(
         z.string().regex(KEYBOARD_ID, 'Keyboard IDs are vendor:product in hex'),
         z.array(z.object({ key: z.enum(TRIGGER_KEY_VALUES), mode: z.enum(TRIGGER_MODES) })),
@@ -97,7 +98,9 @@ export const configSchema = z
     for (const [id, keys] of Object.entries(config.trigger.keyboards)) {
       keys.forEach((trigger, index) => {
         let message: string | null = null
-        if (!allowedModes(trigger.key).includes(trigger.mode)) {
+        if (trigger.key === GLOBE) {
+          message = 'The Globe key is on or off for every keyboard at once'
+        } else if (!allowedModes(trigger.key).includes(trigger.mode)) {
           message = 'This key can only be remapped'
         } else if (keys.findIndex((other) => other.key === trigger.key) !== index) {
           message = 'A keyboard lists a trigger key more than once'

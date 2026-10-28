@@ -2,13 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import {
   allowedModes,
-  appleKeyboard,
   GLOBE,
-  switchesWithGlobe,
   triggersFor,
-  withGlobe,
   withKey,
-  withoutGlobe,
   TRIGGER_KEYS,
   triggerKey,
   triggerLabel,
@@ -57,30 +53,10 @@ describe('trigger keys', () => {
 
   it('resolves keyboard triggers like the daemon', () => {
     const insert = { key: 'insert', mode: 'pass_through' }
-    const globe = { key: 'globe', mode: 'dedicated' }
-    const trigger = { keyboards: { '046d:c33f': [insert], '05ac:029c': [globe, insert], '05ac:0342': [] } }
+    const trigger = { globe: true, keyboards: { '046d:c33f': [insert] } }
 
-    expect(triggersFor(trigger, '046d:c33f', false)).toEqual([[insert], true])
-    expect(triggersFor(trigger, '05ac:029c', true)).toEqual([[globe, insert], true])
-    expect(triggersFor(trigger, '05ac:0342', true)).toEqual([[], true])
-    expect(triggersFor(trigger, '05ac:0281', true)).toEqual([[globe], false])
-    expect(triggersFor(trigger, '1234:5678', false)).toEqual([[], false])
-
-    expect(switchesWithGlobe([insert, globe])).toBe(true)
-    expect(switchesWithGlobe([insert])).toBe(false)
-  })
-
-  it('adds and drops the Globe key, and spots Apple keyboards', () => {
-    const globe = { key: 'globe', mode: 'dedicated' }
-    const caps = { key: 'caps_lock', mode: 'dedicated' }
-
-    expect(withGlobe([caps])).toEqual([globe, caps])
-    expect(withGlobe([caps, globe])).toEqual([caps, globe])
-    expect(withoutGlobe([globe, caps])).toEqual([caps])
-
-    expect(appleKeyboard('05ac:029c')).toBe(true)
-    expect(appleKeyboard('004c:0267')).toBe(true)
-    expect(appleKeyboard('046d:c33f')).toBe(false)
+    expect(triggersFor(trigger, '046d:c33f')).toEqual([[insert], true])
+    expect(triggersFor(trigger, '05ac:0281')).toEqual([[], false])
   })
 
   it('keeps a mode the new key allows', () => {

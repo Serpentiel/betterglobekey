@@ -65,6 +65,7 @@ type schemaV2 struct {
 		ShowCollection *bool  `yaml:"show_collection"`
 	} `yaml:"hud"`
 	Trigger struct {
+		Globe     *bool                          `yaml:"globe"`
 		Keyboards map[string][]keyboardTriggerV2 `yaml:"keyboards,omitempty"`
 	} `yaml:"trigger,omitempty"`
 	Collections []collectionV2 `yaml:"collections"`

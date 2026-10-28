@@ -426,15 +426,17 @@ func TestRunDoctorReportsStatus(t *testing.T) {
 
 func TestTriggerStatus(t *testing.T) {
 	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
+	listed := map[string][]domainconfig.KeyboardTrigger{"046d:c33f": {caps}}
 
 	tests := []struct {
 		trigger domainconfig.Trigger
 		want    string
 	}{
-		{domainconfig.Trigger{}, "Globe key on keyboards that have one"},
+		{domainconfig.Trigger{Globe: true}, "Globe key on keyboards that have one"},
+		{domainconfig.Trigger{}, "Globe key off"},
 		{
-			domainconfig.Trigger{Keyboards: map[string][]domainconfig.KeyboardTrigger{"046d:c33f": {caps}}},
-			"1 keyboard(s) set their own; others use their Globe key, if any",
+			domainconfig.Trigger{Globe: true, Keyboards: listed},
+			"Globe key on keyboards that have one; 1 keyboard(s) with keys of their own",
 		},
 	}
 
@@ -451,10 +453,7 @@ func TestKeyboardLines(t *testing.T) {
 	caps := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
 	insert := domainconfig.KeyboardTrigger{Key: "insert", Mode: "pass_through"}
 	statuses := []keymap.Status{
-		{
-			Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true},
-			Triggers: []domainconfig.KeyboardTrigger{domainconfig.GlobeTrigger},
-		},
+		{Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x0281, Name: "Apple Keyboard", BuiltIn: true}},
 		{
 			Keyboard: keymap.Keyboard{Vendor: 0x046d, Product: 0xc33f, Name: "Logitech", Transport: "USB"},
 			Triggers: []domainconfig.KeyboardTrigger{caps},
@@ -470,28 +469,32 @@ func TestKeyboardLines(t *testing.T) {
 		{Keyboard: keymap.Keyboard{Vendor: 0x04d9, Product: 0x0169, Name: "Holtek"}},
 		{
 			Keyboard: keymap.Keyboard{Vendor: 0x05ac, Product: 0x029c, Name: "Magic Keyboard"},
-			Triggers: []domainconfig.KeyboardTrigger{domainconfig.GlobeTrigger, caps, insert},
+			Triggers: []domainconfig.KeyboardTrigger{caps, insert},
 			Listed:   true,
 			Ours:     []keymap.Mapping{capsSilenced},
 		},
 	}
 
-	got := strings.Join(keyboardLines(statuses, []keymap.Mapping{escape}), "\n")
+	got := strings.Join(keyboardLines(statuses, []keymap.Mapping{escape}, true), "\n")
 
 	for _, want := range []string{
 		"Apple Keyboard (05ac:0281, built-in, has Globe key): trigger Globe key",
-		"Logitech (046d:c33f, USB): trigger caps_lock (silenced, read directly), set for this keyboard; " +
+		"Logitech (046d:c33f, USB): trigger caps_lock (silenced, read directly); " +
 			"Caps Lock silenced; Grave Accent → Escape (other tool)",
-		"Unnamed keyboard (1234:5678): trigger caps_lock (silenced, read directly), set for this keyboard; " +
-			"caps_lock not remapped yet",
+		"Unnamed keyboard (1234:5678): trigger caps_lock (silenced, read directly); caps_lock not remapped yet",
 		"Holtek (04d9:0169): trigger none",
 		"Magic Keyboard (05ac:029c, has Globe key): trigger Globe key, caps_lock (silenced, read directly), " +
-			"insert (passed through, read directly), set for this keyboard; Caps Lock silenced",
+			"insert (passed through, read directly); Caps Lock silenced",
 		"system-wide:   Grave Accent → Escape",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("keyboard lines missing %q; got:\n%s", want, got)
 		}
+	}
+
+	off := strings.Join(keyboardLines(statuses[:1], nil, false), "\n")
+	if !strings.Contains(off, "Apple Keyboard (05ac:0281, built-in, has Globe key): trigger none") {
+		t.Errorf("keyboard lines with the Globe key off = %q", off)
 	}
 }
 
@@ -500,10 +503,12 @@ func TestReadsRawInput(t *testing.T) {
 
 	dedicated := domainconfig.KeyboardTrigger{Key: "caps_lock", Mode: "dedicated"}
 	on := func(triggers ...domainconfig.KeyboardTrigger) domainconfig.Trigger {
-		return domainconfig.Trigger{Keyboards: map[string][]domainconfig.KeyboardTrigger{"046d:c33f": triggers}}
+		keyboards := map[string][]domainconfig.KeyboardTrigger{"046d:c33f": triggers}
+
+		return domainconfig.Trigger{Globe: true, Keyboards: keyboards}
 	}
 
-	if readsRawInput(domainconfig.Trigger{}) || readsRawInput(on(domainconfig.GlobeTrigger)) {
+	if readsRawInput(domainconfig.Trigger{Globe: true}) || readsRawInput(on()) {
 		t.Error("the Globe key reads raw input")
 	}
 
@@ -513,10 +518,6 @@ func TestReadsRawInput(t *testing.T) {
 
 	if !readsRawInput(on(dedicated)) {
 		t.Error("a dedicated trigger does not read raw input")
-	}
-
-	if !readsRawInput(on(domainconfig.GlobeTrigger, insert)) {
-		t.Error("a passed-through key beside the Globe key does not read raw input")
 	}
 }
 

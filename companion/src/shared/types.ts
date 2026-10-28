@@ -31,8 +31,9 @@ export interface KeyboardTrigger {
 
 /** Trigger holds the triggers of single keyboards by vendor:product ID; any
  * other keyboard uses the Globe key. */
-/** Trigger lists each listed keyboard's trigger keys, each different; an empty list is none. */
+/** Trigger turns the Globe key on or off for every keyboard that has one, and lists keyboards' own keys, each different. */
 export interface Trigger {
+  globe: boolean
   keyboards: Record<string, KeyboardTrigger[]>
 }
 
@@ -68,7 +69,7 @@ export interface Keyboard {
   transport: string
   builtIn: boolean
   hasGlobe: boolean
-  /** triggers are the keyboard's trigger keys, and listed whether they are set for the keyboard rather than a default. */
+  /** triggers are the keyboard's own trigger keys, the Globe key aside, and listed whether it is in Trigger.keyboards. */
   triggers: KeyboardTrigger[]
   listed: boolean
   /** triggerMappings are the daemon's own mappings, one per dedicated trigger key in place. */

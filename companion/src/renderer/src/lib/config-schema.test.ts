@@ -10,7 +10,7 @@ function validConfig(): Config {
     reverse: { enabled: true, modifier: 'shift' },
     hud: { enabled: true, duration: '900ms', showCollection: true },
     collections: [{ name: 'Latin', sources: ['com.apple.keylayout.US'] }],
-    trigger: { keyboards: {} },
+    trigger: { globe: true, keyboards: {} },
   }
 }
 
@@ -53,10 +53,10 @@ describe('validateConfig', () => {
   it('accepts every trigger mode, several keys per keyboard, and none', () => {
     const config = validConfig()
     config.trigger = {
+      globe: false,
       keyboards: {
         '046d:c33f': [{ key: 'insert', mode: 'pass_through' }],
         '05ac:0281': [
-          { key: 'globe', mode: 'dedicated' },
           { key: 'caps_lock', mode: 'dedicated' },
           { key: 'left_command', mode: 'pass_through' },
         ],
@@ -64,6 +64,14 @@ describe('validateConfig', () => {
       },
     }
     expect(validateConfig(config).valid).toBe(true)
+  })
+
+  it("rejects the Globe key among a keyboard's own keys", () => {
+    const config = validConfig()
+    config.trigger.keyboards = { '05ac:0281': [{ key: 'globe', mode: 'dedicated' }] }
+    const result = validateConfig(config)
+    expect(result.valid).toBe(false)
+    expect(result.errors.trigger.keyboards).toBe('The Globe key is on or off for every keyboard at once')
   })
 
   it('rejects a key listed twice on a keyboard', () => {

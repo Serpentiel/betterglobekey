@@ -201,17 +201,15 @@ func TestObserveReportsResolvedTriggers(t *testing.T) {
 	insert := config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}
 	apply(t, remapper, config.Trigger{
 		Keyboards: map[string][]config.KeyboardTrigger{
-			magicID:    {config.GlobeTrigger, insert},
+			magicID:    {insert},
 			logitechID: {caps(config.TriggerModeDedicated)},
 		},
 	})
 
 	want := []Resolved{
-		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, Triggers: []ResolvedTrigger{
-			{KeyboardTrigger: config.GlobeTrigger},
-		}},
+		{Vendor: appleUSBVendor, Product: 0x0281, Location: 1, Triggers: []ResolvedTrigger{}},
 		{Vendor: appleBluetoothVendor, Product: 0x029c, Location: 2, Triggers: []ResolvedTrigger{
-			{KeyboardTrigger: config.GlobeTrigger}, {KeyboardTrigger: insert},
+			{KeyboardTrigger: insert},
 		}},
 		{Vendor: 0x046d, Product: 0xc33f, Location: 3, Triggers: []ResolvedTrigger{
 			{KeyboardTrigger: caps(config.TriggerModeDedicated), Applied: true},
@@ -279,7 +277,6 @@ func TestApplyPerKeyboard(t *testing.T) {
 		{"several keys on one keyboard", config.Trigger{
 			Keyboards: map[string][]config.KeyboardTrigger{
 				builtInID: {
-					config.GlobeTrigger,
 					caps(config.TriggerModeDedicated),
 					{Key: "insert", Mode: config.TriggerModePassThrough},
 					{Key: "right_command", Mode: config.TriggerModeDedicated},
@@ -442,9 +439,9 @@ func TestRestoreRemovesSeveralKeys(t *testing.T) {
 
 func TestApplyWithoutRemapRemovesEntries(t *testing.T) {
 	for name, trigger := range map[string]config.Trigger{
-		"none listed":     {},
-		"listed as Globe": onLogitech(config.GlobeTrigger),
-		"pass-through":    onLogitech(config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}),
+		"none listed":         {},
+		"listed without keys": onLogitech(),
+		"pass-through":        onLogitech(config.KeyboardTrigger{Key: "insert", Mode: config.TriggerModePassThrough}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := newStore(userMapping)
@@ -640,7 +637,7 @@ func TestKeyboards(t *testing.T) {
 		t.Errorf("logitech = %+v, want the user's mapping once", logitech)
 	}
 
-	if !slices.Equal(statuses[0].Triggers, []config.KeyboardTrigger{config.GlobeTrigger}) || statuses[0].Ours != nil {
+	if statuses[0].Triggers != nil || statuses[0].Listed || statuses[0].Ours != nil {
 		t.Errorf("built-in = %+v, want out of scope", statuses[0])
 	}
 

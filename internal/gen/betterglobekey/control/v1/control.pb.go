@@ -35,8 +35,8 @@ type Config struct {
 	// collections are the ordered input source collections the trigger key
 	// cycles through.
 	Collections []*Collection `protobuf:"bytes,5,rep,name=collections,proto3" json:"collections,omitempty"`
-	// trigger selects the keys that switch input sources. When absent, keyboards
-	// with a Globe key use it.
+	// trigger selects the keys that switch input sources. When absent, the Globe
+	// key switches and no keyboard has keys of its own.
 	Trigger       *Trigger `protobuf:"bytes,6,opt,name=trigger,proto3" json:"trigger,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -114,14 +114,18 @@ func (x *Config) GetTrigger() *Trigger {
 	return nil
 }
 
-// Trigger selects the keys that switch input sources on each keyboard. A
-// keyboard with a Globe key of its own uses it, unless it is listed in
-// keyboards; one without has none, unless it is listed.
+// Trigger selects the keys that switch input sources: the Globe key, on every
+// keyboard that has one, and each keyboard's own keys.
 type Trigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// keyboards are the trigger keys of single keyboards, by ID: the vendor and
-	// product IDs as four lower-case hex digits each ("05ac:029c").
-	Keyboards     map[string]*KeyboardTriggers `protobuf:"bytes,6,rep,name=keyboards,proto3" json:"keyboards,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// product IDs as four lower-case hex digits each ("05ac:029c"). Any other
+	// keyboard has none.
+	Keyboards map[string]*KeyboardTriggers `protobuf:"bytes,6,rep,name=keyboards,proto3" json:"keyboards,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// globe makes the Globe key switch on every keyboard that has one; the
+	// daemon cannot tell which keyboard a Globe press came from. When unset, it
+	// does.
+	Globe         *bool `protobuf:"varint,7,opt,name=globe,proto3,oneof" json:"globe,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,8 +167,14 @@ func (x *Trigger) GetKeyboards() map[string]*KeyboardTriggers {
 	return nil
 }
 
-// KeyboardTriggers are one keyboard's trigger keys, each different; empty is
-// none.
+func (x *Trigger) GetGlobe() bool {
+	if x != nil && x.Globe != nil {
+		return *x.Globe
+	}
+	return false
+}
+
+// KeyboardTriggers are one keyboard's trigger keys, each different.
 type KeyboardTriggers struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Keys          []*KeyboardTrigger     `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
@@ -212,15 +222,15 @@ func (x *KeyboardTriggers) GetKeys() []*KeyboardTrigger {
 // KeyboardTrigger is one of a keyboard's trigger keys and how it is detected.
 type KeyboardTrigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// key is the trigger key: globe, caps_lock, right_command, right_option,
+	// key is the trigger key: caps_lock, right_command, right_option,
 	// right_control, right_shift, left_command, left_option, left_control,
 	// left_shift, f13 through f20, menu, insert, print_screen, scroll_lock, or
-	// pause.
+	// pause; the Globe key is Trigger.globe.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// mode is how a key other than globe is detected, both needing Input
-	// Monitoring: dedicated (silenced and read from raw input; the default when
-	// empty) or pass_through (keeps its function and is read from raw input;
-	// not allowed for caps_lock).
+	// mode is how the key is detected, both needing Input Monitoring: dedicated
+	// (silenced and read from raw input; the default when empty) or
+	// pass_through (keeps its function and is read from raw input; not allowed
+	// for caps_lock).
 	Mode          string `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1156,8 +1166,7 @@ type Keyboard struct {
 	HasGlobe bool `protobuf:"varint,5,opt,name=has_globe,json=hasGlobe,proto3" json:"has_globe,omitempty"`
 	// other_mappings are the keyboard's mappings set by other tools.
 	OtherMappings []*KeyMapping `protobuf:"bytes,8,rep,name=other_mappings,json=otherMappings,proto3" json:"other_mappings,omitempty"`
-	// listed reports whether the trigger keys are set for the keyboard rather
-	// than a default.
+	// listed reports whether the keyboard is listed in Trigger.keyboards.
 	Listed bool `protobuf:"varint,10,opt,name=listed,proto3" json:"listed,omitempty"`
 	// trigger_mappings are the daemon's mappings on the keyboard, one per
 	// dedicated trigger key in place.
@@ -1453,12 +1462,14 @@ const file_betterglobekey_control_v1_control_proto_rawDesc = "" +
 	"\areverse\x18\x03 \x01(\v2\".betterglobekey.control.v1.ReverseR\areverse\x120\n" +
 	"\x03hud\x18\x04 \x01(\v2\x1e.betterglobekey.control.v1.HudR\x03hud\x12G\n" +
 	"\vcollections\x18\x05 \x03(\v2%.betterglobekey.control.v1.CollectionR\vcollections\x12<\n" +
-	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\xe4\x01\n" +
+	"\atrigger\x18\x06 \x01(\v2\".betterglobekey.control.v1.TriggerR\atrigger\"\x89\x02\n" +
 	"\aTrigger\x12O\n" +
-	"\tkeyboards\x18\x06 \x03(\v21.betterglobekey.control.v1.Trigger.KeyboardsEntryR\tkeyboards\x1ai\n" +
+	"\tkeyboards\x18\x06 \x03(\v21.betterglobekey.control.v1.Trigger.KeyboardsEntryR\tkeyboards\x12\x19\n" +
+	"\x05globe\x18\a \x01(\bH\x00R\x05globe\x88\x01\x01\x1ai\n" +
 	"\x0eKeyboardsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12A\n" +
-	"\x05value\x18\x02 \x01(\v2+.betterglobekey.control.v1.KeyboardTriggersR\x05value:\x028\x01J\x04\b\x01\x10\x06R\x03keyR\x04modeR\fpass_through\"R\n" +
+	"\x05value\x18\x02 \x01(\v2+.betterglobekey.control.v1.KeyboardTriggersR\x05value:\x028\x01B\b\n" +
+	"\x06_globeJ\x04\b\x01\x10\x06R\x03keyR\x04modeR\fpass_through\"R\n" +
 	"\x10KeyboardTriggers\x12>\n" +
 	"\x04keys\x18\x01 \x03(\v2*.betterglobekey.control.v1.KeyboardTriggerR\x04keys\"7\n" +
 	"\x0fKeyboardTrigger\x12\x10\n" +
@@ -1629,6 +1640,7 @@ func file_betterglobekey_control_v1_control_proto_init() {
 	if File_betterglobekey_control_v1_control_proto != nil {
 		return
 	}
+	file_betterglobekey_control_v1_control_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

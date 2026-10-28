@@ -71,6 +71,7 @@ func WriteDefault(path string, sources []string) error {
 	schema.HUD.Enabled = boolPtr(true)
 	schema.HUD.Duration = defaultHUDDuration
 	schema.HUD.ShowCollection = boolPtr(true)
+	schema.Trigger.Globe = boolPtr(true)
 
 	if len(sources) > 0 {
 		schema.Collections = []collectionV2{{Name: defaultCollectionName, Sources: sources}}
@@ -151,7 +152,7 @@ func toDomain(schema schemaV2) (config.Config, error) {
 
 // triggerToDomain converts the parsed trigger section.
 func triggerToDomain(schema schemaV2) config.Trigger {
-	var trigger config.Trigger
+	trigger := config.Trigger{Globe: schema.Trigger.Globe == nil || *schema.Trigger.Globe}
 
 	if len(schema.Trigger.Keyboards) > 0 {
 		trigger.Keyboards = make(map[string][]config.KeyboardTrigger, len(schema.Trigger.Keyboards))

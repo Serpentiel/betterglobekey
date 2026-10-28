@@ -51,19 +51,14 @@ func logRawInput(logger *logging.Logger) func(keyboard.RawInputState, int32) {
 	}
 }
 
-// watchTriggers points the event tap at every connected keyboard's trigger
-// keys: the Globe key while any keyboard switches with it, and raw input for
-// dedicated and passed-through keys.
+// watchTriggers points raw input at every connected keyboard's dedicated and
+// passed-through trigger keys.
 func watchTriggers(resolved []keymap.Resolved) {
-	globe := len(resolved) == 0
 	keys := make([]keyboard.RawKey, 0, len(resolved))
 
 	for _, r := range resolved {
 		for _, trigger := range r.Triggers {
-			switch {
-			case trigger.Globe():
-				globe = true
-			case trigger.PassThrough() || (trigger.Dedicated() && trigger.Applied):
+			if trigger.PassThrough() || (trigger.Dedicated() && trigger.Applied) {
 				keys = append(keys, keyboard.RawKey{
 					Vendor:   r.Vendor,
 					Product:  r.Product,
@@ -75,7 +70,6 @@ func watchTriggers(resolved []keymap.Resolved) {
 		}
 	}
 
-	keyboard.SetGlobe(globe)
 	keyboard.SetRawKeys(keys)
 }
 

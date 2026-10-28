@@ -220,6 +220,7 @@ func newSwitcherBuilder(
 
 	return func(c domainconfig.Config) *switcher.Switcher {
 		keyboard.SetReverseModifier(c.Reverse.Modifier)
+		keyboard.SetGlobe(c.Trigger.Globe)
 
 		if readsRawInput(c.Trigger) && !inputmonitoring.Granted() {
 			logger.Error("input monitoring permission not granted; dedicated and passed-through trigger keys are " +
@@ -367,24 +368,35 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// triggerStatus describes how many keyboards set their own trigger keys.
+// triggerStatus describes whether the Globe key switches, and how many
+// keyboards have trigger keys of their own.
 func triggerStatus(trigger domainconfig.Trigger) string {
-	if listed := len(trigger.Keyboards); listed > 0 {
-		return fmt.Sprintf("%d keyboard(s) set their own; others use their Globe key, if any", listed)
+	status := "Globe key off"
+	if trigger.Globe {
+		status = "Globe key on keyboards that have one"
 	}
 
-	return "Globe key on keyboards that have one"
+	if listed := len(trigger.Keyboards); listed > 0 {
+		status += fmt.Sprintf("; %d keyboard(s) with keys of their own", listed)
+	}
+
+	return status
 }
 
-// describeTriggers renders a keyboard's trigger keys, or "none".
-func describeTriggers(triggers []domainconfig.KeyboardTrigger) string {
-	if len(triggers) == 0 {
-		return "none"
+// describeTriggers renders a keyboard's trigger keys, the Globe key first when
+// it switches there, or "none".
+func describeTriggers(globe bool, triggers []domainconfig.KeyboardTrigger) string {
+	described := make([]string, 0, len(triggers)+1)
+	if globe {
+		described = append(described, "Globe key")
 	}
 
-	described := make([]string, 0, len(triggers))
 	for _, trigger := range triggers {
 		described = append(described, describeTrigger(trigger))
+	}
+
+	if len(described) == 0 {
+		return "none"
 	}
 
 	return strings.Join(described, ", ")
@@ -393,8 +405,6 @@ func describeTriggers(triggers []domainconfig.KeyboardTrigger) string {
 // describeTrigger renders a trigger key and how it is detected.
 func describeTrigger(trigger domainconfig.KeyboardTrigger) string {
 	switch {
-	case trigger.Globe():
-		return "Globe key"
 	case trigger.Dedicated():
 		return trigger.Key + " (silenced, read directly)"
 	default:
@@ -411,7 +421,7 @@ func reportKeyboards(out io.Writer, trigger domainconfig.Trigger) {
 		return
 	}
 
-	for _, line := range keyboardLines(statuses, systemWide) {
+	for _, line := range keyboardLines(statuses, systemWide, trigger.Globe) {
 		fmt.Fprintln(out, line)
 	}
 }
@@ -426,12 +436,13 @@ func listKeyboards(trigger domainconfig.Trigger) ([]keymap.Status, []keymap.Mapp
 	return remapper.Keyboards(trigger)
 }
 
-// keyboardLines renders the doctor's keyboard report.
-func keyboardLines(statuses []keymap.Status, systemWide []keymap.Mapping) []string {
+// keyboardLines renders the doctor's keyboard report; globe reports whether
+// the Globe key switches.
+func keyboardLines(statuses []keymap.Status, systemWide []keymap.Mapping, globe bool) []string {
 	lines := make([]string, 0, len(statuses)+1)
 
 	for _, status := range statuses {
-		lines = append(lines, keyboardLine(status))
+		lines = append(lines, keyboardLine(status, globe))
 	}
 
 	if len(systemWide) > 0 {
@@ -448,7 +459,7 @@ func keyboardLines(statuses []keymap.Status, systemWide []keymap.Mapping) []stri
 
 // keyboardLine renders one keyboard: its identity, its trigger keys, and its
 // key mappings.
-func keyboardLine(status keymap.Status) string {
+func keyboardLine(status keymap.Status, globe bool) string {
 	details := []string{status.KeyboardID()}
 
 	if status.BuiltIn {
@@ -461,12 +472,7 @@ func keyboardLine(status keymap.Status) string {
 		details = append(details, "has Globe key")
 	}
 
-	trigger := "trigger " + describeTriggers(status.Triggers)
-	if status.Listed {
-		trigger += ", set for this keyboard"
-	}
-
-	mappings := []string{trigger}
+	mappings := []string{"trigger " + describeTriggers(globe && status.HasGlobe(), status.Triggers)}
 
 	for _, ours := range status.Ours {
 		mappings = append(mappings, keymap.UsageName(ours.Src)+" silenced")

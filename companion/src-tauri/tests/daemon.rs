@@ -99,8 +99,9 @@ async fn reads_config_sources_and_version() {
     assert!(
         config.logger.is_some() && config.double_press.is_some() && config.reverse.is_some() && config.hud.is_some()
     );
-    // The stub predates the trigger, so an empty one fills it in.
-    assert!(config.trigger.unwrap().keyboards.is_empty());
+    // The stub predates the trigger, so one with the Globe key alone fills it in.
+    let trigger = config.trigger.unwrap();
+    assert!(trigger.keyboards.is_empty() && trigger.globe == Some(true));
 
     assert_eq!(daemon.list_keyboards().await.unwrap().keyboards[0].name, "Logitech");
 

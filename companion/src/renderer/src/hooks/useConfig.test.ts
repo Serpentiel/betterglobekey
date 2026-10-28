@@ -12,7 +12,7 @@ const validConfig: Config = {
   reverse: { enabled: true, modifier: 'shift' },
   hud: { enabled: true, duration: '900ms', showCollection: true },
   collections: [{ name: 'primary', sources: ['com.apple.keylayout.US'] }],
-  trigger: { keyboards: {} },
+  trigger: { globe: true, keyboards: {} },
 }
 
 const sources: InputSource[] = [

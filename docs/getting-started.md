@@ -24,7 +24,7 @@ brew install betterglobekey
 automatically; grant it under _System Settings > Privacy & Security > Accessibility_ by enabling the switch next to
 **betterglobekey**.
 
-A [trigger key](configuration.md#trigger-keys) other than the Globe key, and recording keys in the companion, also
+A keyboard's own [trigger keys](configuration.md#trigger-keys), and recording keys in the companion, also
 need Input Monitoring, under _System Settings > Privacy & Security > Input Monitoring_.
 
 You can check the permissions (and the rest of your setup) at any time with:

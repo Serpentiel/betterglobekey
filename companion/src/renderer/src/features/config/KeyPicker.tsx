@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Globe, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 
 import type { KeyboardTrigger } from '../../../../shared/types'
@@ -16,10 +16,10 @@ interface Props {
   keyboardId?: string
   /** keyboardName names the keyboard to press the key on. */
   keyboardName?: string
-  /** hasGlobe offers the Globe key while recording, for a keyboard with one. */
-  hasGlobe?: boolean
-  /** globeShared labels the Globe key's controls as acting on every keyboard with one. */
-  globeShared?: boolean
+  /** globe shows the Globe key first, read-only: it is on or off for every keyboard at once. */
+  globe?: boolean
+  /** onGlobe turns the Globe key on, when the Globe key is recorded while it is off. */
+  onGlobe?: () => void
 }
 
 /** Slot is the key being recorded: an index into triggers, or a new key. */
@@ -29,16 +29,17 @@ type Slot = number | 'new'
  * KeyPicker shows a keyboard's trigger keys as keycaps. Clicking a keycap, or
  * the add button, records a key: the daemon reads the next key pressed straight
  * from the keyboard, before any remapping, so a remapped key records as itself.
- * While recording, icons inside the keycap use the Globe key, on a keyboard with
- * one, or cancel; otherwise a keycap's icon removes its key.
+ * A keycap's icon cancels recording, or removes its key otherwise. The Globe
+ * key is not one of a keyboard's own keys: recording it turns it on for every
+ * keyboard.
  */
 export function KeyPicker({
   triggers,
   onChange,
   keyboardId,
   keyboardName,
-  hasGlobe = true,
-  globeShared = false,
+  globe = false,
+  onGlobe,
 }: Props): ReactElement {
   const [recording, setRecording] = useState<Slot | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +73,12 @@ export function KeyPicker({
 
         if (!recorded.key) {
           setError(`${recorded.keyName} can't switch input sources. Try another key.`)
+        } else if (recorded.key === GLOBE) {
+          if (onGlobe) {
+            onGlobe()
+          } else {
+            setError('The Globe key already switches input sources, on every keyboard at once.')
+          }
         } else if (takenElsewhere(slot, recorded.key)) {
           setError(`${triggerName(recorded.key)} already switches input sources here.`)
         } else {
@@ -95,37 +102,26 @@ export function KeyPicker({
     setRecording(null)
   }
 
-  const choose = (slot: Slot, key: string): void => {
-    cancel()
-    put(slot, key)
-  }
-
   const remove = (index: number): void => {
     cancel()
     setError(null)
     onChange(triggers.filter((_, other) => other !== index))
   }
 
-  // While recording, the keycap offers the Globe key, unless another keycap has it, and cancelling.
-  const recordingIcons = (slot: Slot): ReactElement => (
-    <>
-      {hasGlobe && !takenElsewhere(slot, GLOBE) && (slot === 'new' || triggers[slot]?.key !== GLOBE) ? (
-        <IconButton
-          icon={Globe}
-          label={globeShared ? 'Use Globe key on every keyboard' : 'Use Globe key'}
-          className={styles.icon}
-          onClick={() => choose(slot, GLOBE)}
-        />
-      ) : null}
-      <IconButton icon={X} label="Cancel" className={styles.icon} onClick={cancel} />
-    </>
-  )
+  const cancelIcon = <IconButton icon={X} label="Cancel" className={styles.icon} onClick={cancel} />
 
   const status = error ?? (recording !== null ? `Press a key on ${keyboardName ?? 'any keyboard'}.` : null)
 
   return (
     <div className={styles.picker}>
       <div className={styles.keys}>
+        {globe ? (
+          <Tooltip label="On for every keyboard with a Globe key">
+            <span className={clsx(styles.keycap, styles.fixed)}>
+              <span className={styles.key}>{triggerLabel(GLOBE)}</span>
+            </span>
+          </Tooltip>
+        ) : null}
         {triggers.map((trigger, index) => {
           const name = triggerName(trigger.key)
           const active = recording === index
@@ -144,14 +140,9 @@ export function KeyPicker({
                 </button>
               </Tooltip>
               {active ? (
-                recordingIcons(index)
+                cancelIcon
               ) : (
-                <IconButton
-                  icon={X}
-                  label={trigger.key === GLOBE && globeShared ? 'Remove Globe from every keyboard' : `Remove ${name}`}
-                  className={styles.icon}
-                  onClick={() => remove(index)}
-                />
+                <IconButton icon={X} label={`Remove ${name}`} className={styles.icon} onClick={() => remove(index)} />
               )}
             </div>
           )
@@ -161,7 +152,7 @@ export function KeyPicker({
             <span className={styles.key} aria-live="polite">
               Press a key…
             </span>
-            {recordingIcons('new')}
+            {cancelIcon}
           </div>
         ) : (
           <Tooltip label="Add a trigger key">

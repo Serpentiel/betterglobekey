@@ -122,6 +122,17 @@ func TestLoadV2(t *testing.T) {
 	}
 }
 
+func TestLoadTurnsTheGlobeKeyOff(t *testing.T) {
+	cfg, err := Load(write(t, "config.yaml", v2Doc+"trigger:\n  globe: false\n"))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if cfg.Trigger.Globe {
+		t.Error("trigger.globe = true, want false")
+	}
+}
+
 func TestLoadMigratesV1AndWritesBackup(t *testing.T) {
 	path := write(t, "config.yaml", v1Doc)
 
@@ -160,6 +171,11 @@ double_press: {maximum_delay: nope}
 		"empty path": `version: 2
 logger: {path: "", retention: {days: 1, files: 1}}
 double_press: {maximum_delay: 250ms}
+`,
+		"globe in a keyboard's keys": `version: 2
+logger: {path: x, retention: {days: 1, files: 1}}
+double_press: {maximum_delay: 250ms}
+trigger: {keyboards: {"05ac:0281": [{key: globe}]}}
 `,
 	}
 

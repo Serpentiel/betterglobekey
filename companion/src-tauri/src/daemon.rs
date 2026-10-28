@@ -126,7 +126,8 @@ fn complete(mut config: Config) -> Config {
     config.double_press.get_or_insert_default();
     config.reverse.get_or_insert_default();
     config.hud.get_or_insert_default();
-    config.trigger.get_or_insert_default();
+    // An unset Globe key switches, as the daemon treats it.
+    config.trigger.get_or_insert_default().globe.get_or_insert(true);
 
     config
 }
@@ -150,7 +151,7 @@ mod tests {
                 "reverse": { "enabled": false, "modifier": "" },
                 "hud": { "enabled": false, "duration": "", "showCollection": false },
                 "collections": [],
-                "trigger": { "keyboards": {} },
+                "trigger": { "keyboards": {}, "globe": true },
             }),
         );
     }
@@ -164,8 +165,9 @@ mod tests {
             "hud": { "enabled": true, "duration": "900ms", "showCollection": true },
             "collections": [{ "name": "primary", "sources": ["com.apple.keylayout.US"] }],
             "trigger": {
+                "globe": false,
                 "keyboards": {
-                    "046d:c33f": [{ "key": "globe", "mode": "dedicated" }, { "key": "insert", "mode": "pass_through" }],
+                    "046d:c33f": [{ "key": "caps_lock", "mode": "dedicated" }, { "key": "insert", "mode": "pass_through" }],
                     "05ac:0281": [],
                 },
             },
@@ -178,6 +180,7 @@ mod tests {
         assert_eq!(config.collections[0].sources, ["com.apple.keylayout.US"]);
 
         let trigger = config.trigger.unwrap();
+        assert_eq!(trigger.globe, Some(false));
         let logitech = &trigger.keyboards["046d:c33f"].keys;
         assert_eq!(logitech.len(), 2);
         assert_eq!((logitech[1].key.as_str(), logitech[1].mode.as_str()), ("insert", "pass_through"));
@@ -188,6 +191,7 @@ mod tests {
     fn complete_keeps_a_set_trigger() {
         let config = complete(Config {
             trigger: Some(Trigger {
+                globe: None,
                 keyboards: [(
                     "046d:c33f".to_owned(),
                     KeyboardTriggers {
@@ -201,6 +205,7 @@ mod tests {
 
         let value = serde_json::to_value(config).unwrap();
         assert_eq!(value["trigger"]["keyboards"]["046d:c33f"], json!([{ "key": "insert", "mode": "pass_through" }]));
+        assert_eq!(value["trigger"]["globe"], json!(true));
     }
 
     #[test]

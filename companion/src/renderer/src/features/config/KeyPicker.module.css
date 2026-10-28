@@ -60,6 +60,22 @@
   height: 24px;
 }
 
+/* fixed is the Globe key, set for every keyboard at once rather than here. */
+.fixed {
+  background: transparent;
+  border-bottom-width: 1px;
+  padding-right: var(--space-2);
+}
+
+.fixed:hover {
+  border-color: var(--border-strong);
+}
+
+.fixed .key {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
 .recording {
   min-width: 150px;
   border-color: var(--accent);

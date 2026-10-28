@@ -10,7 +10,6 @@ vi.mock('../../lib/api', () => ({ api: {} }))
 
 afterEach(cleanup)
 
-const globe: KeyboardTrigger = { key: 'globe', mode: 'dedicated' }
 const caps: KeyboardTrigger = { key: 'caps_lock', mode: 'dedicated' }
 const insert: KeyboardTrigger = { key: 'insert', mode: 'pass_through' }
 
@@ -22,11 +21,13 @@ function recordKey(result: Promise<RecordedKey>): Api['recordKey'] {
 }
 
 describe('KeyPicker', () => {
-  it('shows every key', () => {
-    render(<KeyPicker triggers={[globe, { key: 'right_command', mode: 'dedicated' }]} onChange={vi.fn()} />)
+  it('shows every key, and the Globe key read-only', () => {
+    render(<KeyPicker triggers={[caps, { key: 'right_command', mode: 'dedicated' }]} globe onChange={vi.fn()} />)
 
     expect(screen.getByText('🌐 Globe')).toBeTruthy()
     expect(screen.getByText('Right ⌘ Command')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Remove Globe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Change Globe' })).toBeNull()
   })
 
   it('adds a key recorded on the chosen keyboard through the daemon', async () => {
@@ -46,11 +47,11 @@ describe('KeyPicker', () => {
   it('replaces a key, keeping a mode it allows', async () => {
     recordKey(Promise.resolve({ key: 'f13', keyName: 'F13', keyboardId: '' }))
     const onChange = vi.fn()
-    render(<KeyPicker triggers={[globe, insert]} onChange={onChange} />)
+    render(<KeyPicker triggers={[caps, insert]} onChange={onChange} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Change Insert' }))
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith([globe, { key: 'f13', mode: 'pass_through' }]))
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith([caps, { key: 'f13', mode: 'pass_through' }]))
   })
 
   it('records from any keyboard without one chosen', async () => {
@@ -95,47 +96,47 @@ describe('KeyPicker', () => {
     let resolve: (key: RecordedKey) => void = () => undefined
     recordKey(new Promise((done) => (resolve = done)))
     const onChange = vi.fn()
-    render(<KeyPicker triggers={[globe]} onChange={onChange} />)
+    render(<KeyPicker triggers={[caps]} onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Change Globe' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change Caps Lock' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     resolve({ key: 'insert', keyName: 'Insert', keyboardId: '' })
 
     await Promise.resolve()
     expect(onChange).not.toHaveBeenCalled()
-    expect(screen.getByText('🌐 Globe')).toBeTruthy()
+    expect(screen.getByText('⇪ Caps Lock')).toBeTruthy()
   })
 
-  it('offers the Globe key while recording, unless another keycap has it', () => {
-    recordKey(new Promise(() => undefined))
+  it('turns the Globe key on when it is recorded while off, and explains when it is on', async () => {
+    recordKey(Promise.resolve({ key: 'globe', keyName: 'Globe', keyboardId: '05ac:0281' }))
     const onChange = vi.fn()
-    render(<KeyPicker triggers={[caps]} onChange={onChange} />)
-
-    expect(screen.queryByRole('button', { name: 'Use Globe key' })).toBeNull()
+    const onGlobe = vi.fn()
+    render(<KeyPicker triggers={[]} onChange={onChange} onGlobe={onGlobe} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a trigger key' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Use Globe key' }))
-    expect(onChange).toHaveBeenCalledWith([caps, globe])
+    await waitFor(() => expect(onGlobe).toHaveBeenCalled())
+    expect(onChange).not.toHaveBeenCalled()
 
     cleanup()
 
-    render(<KeyPicker triggers={[globe, caps]} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add a trigger key' }))
-    expect(screen.queryByRole('button', { name: 'Use Globe key' })).toBeNull()
+    recordKey(Promise.resolve({ key: 'globe', keyName: 'Globe', keyboardId: '05ac:0281' }))
+    render(<KeyPicker triggers={[]} globe onChange={onChange} />)
 
-    cleanup()
-
-    render(<KeyPicker triggers={[]} hasGlobe={false} onChange={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Add a trigger key' }))
-    expect(screen.queryByRole('button', { name: 'Use Globe key' })).toBeNull()
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toBe(
+        'The Globe key already switches input sources, on every keyboard at once.',
+      ),
+    )
+    expect(onChange).not.toHaveBeenCalled()
   })
 
   it('removes a key', () => {
     const onChange = vi.fn()
-    render(<KeyPicker triggers={[globe, caps]} onChange={onChange} />)
+    render(<KeyPicker triggers={[caps, insert]} onChange={onChange} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Globe' }))
-    expect(onChange).toHaveBeenCalledWith([caps])
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Caps Lock' }))
+    expect(onChange).toHaveBeenCalledWith([insert])
   })
 
   it('names the add button only while there are no keys', () => {
