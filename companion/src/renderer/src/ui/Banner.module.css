@@ -21,3 +21,21 @@
   background: var(--accent-soft);
   color: var(--accent);
 }
+
+.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.action {
+  flex-shrink: 0;
+}

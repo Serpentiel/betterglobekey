@@ -201,8 +201,8 @@ message GetStatusResponse {
   // permission required by the global event tap.
   bool accessibility_trusted = 1;
 
-  // input_monitoring_granted reports whether the daemon holds the Input
-  // Monitoring permission a dedicated trigger key's raw input requires.
+  // input_monitoring_granted reports whether the daemon holds Input
+  // Monitoring, which recording keys and a keyboard's own trigger keys need.
   bool input_monitoring_granted = 2;
 }
 
@@ -214,6 +214,14 @@ message ListKeyboardsResponse {
 
   // system_mappings are the system-wide key mappings (`hidutil property --set`).
   repeated KeyMapping system_mappings = 2;
+
+  // input_monitoring_granted reports whether the daemon holds Input
+  // Monitoring, which recording keys and a keyboard's own trigger keys need.
+  bool input_monitoring_granted = 3;
+
+  // executable is the path of the daemon's binary: what to add under Input
+  // Monitoring when macOS does not list it.
+  string executable = 4;
 }
 
 // Keyboard is a connected keyboard.

@@ -19,6 +19,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// testExecutable is the daemon binary the test server reports.
+const testExecutable = "/opt/homebrew/opt/betterglobekey/bin/betterglobekey"
+
 // fakeKeyboards reports a built-in keyboard and a remapped third-party one,
 // and records the keys in recorded.
 type fakeKeyboards struct {
@@ -86,7 +89,9 @@ func newTestClient(t *testing.T, path string, sources Sources, trusted bool) con
 	listener := bufconn.Listen(1 << 20)
 	server := NewServer(
 		path, sources, fakeKeyboards{}, func(fn func()) { fn() }, "1.2.3", "abc1234",
-		func() Permissions { return Permissions{Accessibility: trusted} },
+		func() Permissions {
+			return Permissions{Accessibility: trusted, Executable: testExecutable}
+		},
 	)
 
 	go func() { _ = server.grpc.Serve(listener) }()
@@ -300,6 +305,10 @@ func TestListKeyboards(t *testing.T) {
 		t.Fatalf("response = %+v", got)
 	}
 
+	if got.GetInputMonitoringGranted() || got.GetExecutable() != testExecutable {
+		t.Errorf("input monitoring = %v, executable = %q", got.GetInputMonitoringGranted(), got.GetExecutable())
+	}
+
 	builtIn, logitech := got.GetKeyboards()[0], got.GetKeyboards()[1]
 	if builtIn.GetId() != "05ac:0281" || !builtIn.GetHasGlobe() || !builtIn.GetBuiltIn() ||
 		len(builtIn.GetTriggerMappings()) != 0 {
@@ -392,6 +401,7 @@ func TestRecordKeyErrors(t *testing.T) {
 		want      codes.Code
 	}{
 		{"raw input", fakeKeyboards{recordErr: fmt.Errorf("%w (0xe00002e2)", ErrRawInput)}, codes.FailedPrecondition},
+		{"input monitoring", fakeKeyboards{recordErr: ErrInputMonitoring}, codes.FailedPrecondition},
 		{"no key in time", fakeKeyboards{}, codes.DeadlineExceeded},
 	}
 

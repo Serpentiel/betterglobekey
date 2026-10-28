@@ -13,6 +13,9 @@ use daemon::proto::{Config, GetVersionResponse, InputSource, ListKeyboardsRespon
 
 const MAIN_WINDOW: &str = "main";
 
+/// INPUT_MONITORING_SETTINGS opens System Settings at Privacy & Security > Input Monitoring.
+const INPUT_MONITORING_SETTINGS: &str = "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent";
+
 #[tauri::command]
 async fn get_config(daemon: State<'_, Daemon>) -> Result<Config, String> {
     daemon.get_config().await
@@ -31,6 +34,11 @@ async fn list_input_sources(daemon: State<'_, Daemon>) -> Result<Vec<InputSource
 #[tauri::command]
 async fn list_keyboards(daemon: State<'_, Daemon>) -> Result<ListKeyboardsResponse, String> {
     daemon.list_keyboards().await
+}
+
+#[tauri::command]
+fn open_input_monitoring_settings(app: AppHandle) -> Result<(), String> {
+    app.opener().open_url(INPUT_MONITORING_SETTINGS, None::<&str>).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -113,6 +121,7 @@ pub fn run() {
             list_input_sources,
             list_keyboards,
             record_key,
+            open_input_monitoring_settings,
             get_version
         ])
         .setup(|app| {

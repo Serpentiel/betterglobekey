@@ -49,7 +49,12 @@ const logitech: Keyboard = {
   otherMappings: [graveToEscape],
 }
 
-const report: KeyboardReport = { keyboards: [builtIn, logitech], systemMappings: [graveToEscape] }
+const report: KeyboardReport = {
+  keyboards: [builtIn, logitech],
+  systemMappings: [graveToEscape],
+  inputMonitoringGranted: true,
+  executable: '/opt/homebrew/opt/betterglobekey/bin/betterglobekey',
+}
 
 function renderSection(trigger: Partial<Config['trigger']> = {}, state: KeyboardsState = { report, error: null }) {
   const onChange = vi.fn()
@@ -146,6 +151,24 @@ describe('TriggerSection', () => {
     expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
   })
 
+  it('asks for Input Monitoring while it is off, with the binary to add', () => {
+    const open = vi.fn(() => Promise.resolve())
+    Object.assign(api, { openInputMonitoringSettings: open })
+
+    renderSection({}, { report: { ...report, inputMonitoringGranted: false }, error: null })
+
+    expect(screen.getByText('Input Monitoring is off')).toBeTruthy()
+    expect(screen.getByText('/opt/homebrew/opt/betterglobekey/bin/betterglobekey')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Settings…' }))
+    expect(open).toHaveBeenCalled()
+
+    cleanup()
+
+    renderSection()
+    expect(screen.queryByText('Input Monitoring is off')).toBeNull()
+  })
+
   it('shows other tools’ mappings behind a disclosure', () => {
     renderSection()
 
@@ -166,7 +189,10 @@ describe('TriggerSection', () => {
 
     cleanup()
 
-    renderSection({}, { report: { keyboards: [], systemMappings: [] }, error: null })
+    renderSection(
+      {},
+      { report: { keyboards: [], systemMappings: [], inputMonitoringGranted: true, executable: '' }, error: null },
+    )
     expect(screen.getByText('No keyboards connected.')).toBeTruthy()
   })
 })

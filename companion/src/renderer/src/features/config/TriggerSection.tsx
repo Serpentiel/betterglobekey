@@ -1,9 +1,11 @@
-import { type ReactElement, useId } from 'react'
+import { type ReactElement, useId, useState } from 'react'
 import { Globe } from 'lucide-react'
 
 import type { Config, Keyboard, KeyboardTrigger, KeyMapping } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
+import { api } from '../../lib/api'
 import type { ConfigErrors } from '../../lib/config-schema'
+import { toMessage } from '../../lib/errors'
 import { allowedModes, DEDICATED_USAGE, triggerName, triggersFor } from '../../lib/trigger-keys'
 import { Banner, Button, Disclosure, Section, Select, Setting, Switch } from '../../ui'
 import { KeyPicker } from './KeyPicker'
@@ -77,6 +79,9 @@ export function TriggerSection({ config, errors, keyboards, onChange }: Props): 
         control={<Switch checked={trigger.globe} onChange={setGlobe} label="Toggle the Globe key" />}
       />
       {keyboards.error ? <Banner tone="error">{`Keyboards unavailable: ${keyboards.error}`}</Banner> : null}
+      {keyboards.report && !keyboards.report.inputMonitoringGranted ? (
+        <InputMonitoringNotice executable={keyboards.report.executable} />
+      ) : null}
       {!keyboards.report && !keyboards.error ? <p className={styles.empty}>Checking connected keyboards…</p> : null}
       {keyboards.report && connected.length === 0 ? <p className={styles.empty}>No keyboards connected.</p> : null}
 
@@ -223,5 +228,37 @@ function ModeRow({ trigger, onChange }: ModeRowProps): ReactElement {
         />
       </div>
     </div>
+  )
+}
+
+/**
+ * InputMonitoringNotice asks for Input Monitoring, which recording keys and a keyboard's own keys need. macOS lists the
+ * service once it asks; when it does not, the service's binary is added by hand.
+ */
+function InputMonitoringNotice({ executable }: { executable: string }): ReactElement {
+  const [error, setError] = useState<string | null>(null)
+
+  const open = (): void => {
+    setError(null)
+    api.openInputMonitoringSettings().catch((cause: unknown) => setError(toMessage(cause)))
+  }
+
+  return (
+    <Banner
+      tone="warning"
+      action={
+        <Button variant="secondary" onClick={open}>
+          Open Settings…
+        </Button>
+      }
+    >
+      <p className={styles.noticeTitle}>Input Monitoring is off</p>
+      <p className={styles.noticeText}>
+        betterglobekey needs it to record keys and to read keys other than the Globe key. Turn on betterglobekey under
+        Privacy &amp; Security › Input Monitoring; if it is not listed, click + and add{' '}
+        <code className={styles.path}>{executable || 'the betterglobekey binary'}</code>.
+      </p>
+      {error ? <p className={styles.noticeText}>{error}</p> : null}
+    </Banner>
   )
 }

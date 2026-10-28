@@ -56,6 +56,11 @@ type RecordedKey struct {
 // want of Input Monitoring.
 var ErrRawInput = errors.New("reading raw keyboard input failed")
 
+// ErrInputMonitoring reports that Input Monitoring is not granted, so keys
+// cannot be recorded: without it, macOS passes only a few keys, such as Caps
+// Lock, through raw input.
+var ErrInputMonitoring = errors.New("input monitoring is not granted")
+
 // recordTimeout caps how long RecordKey waits for a key.
 const recordTimeout = 30 * time.Second
 
@@ -63,8 +68,12 @@ const recordTimeout = 30 * time.Second
 type Permissions struct {
 	// Accessibility is required by the global event tap.
 	Accessibility bool
-	// InputMonitoring is required to read a dedicated trigger key's raw input.
+	// InputMonitoring is required to record keys and to read a keyboard's own
+	// trigger keys from raw input.
 	InputMonitoring bool
+	// Executable is the path of the daemon's binary, which the permissions are
+	// granted to.
+	Executable string
 }
 
 // OnMain runs fn on the main thread, blocking until it returns. Input-source
@@ -226,7 +235,12 @@ func (s *Server) ListKeyboards(
 		return nil, status.Errorf(codes.Unavailable, "listing keyboards: %v", err)
 	}
 
-	return keyboardsToProto(statuses, systemWide), nil
+	response := keyboardsToProto(statuses, systemWide)
+	permissions := s.permissions()
+	response.InputMonitoringGranted = permissions.InputMonitoring
+	response.Executable = permissions.Executable
+
+	return response, nil
 }
 
 // RecordKey returns the next key pressed, as a trigger key when it can be one.
@@ -240,6 +254,10 @@ func (s *Server) RecordKey(
 	key, err := s.keyboards.Record(ctx, req.GetKeyboardId())
 
 	switch {
+	case errors.Is(err, ErrInputMonitoring):
+		return nil, status.Error(codes.FailedPrecondition,
+			"Input Monitoring is not granted; enable betterglobekey under System Settings > Privacy & Security > "+
+				"Input Monitoring")
 	case errors.Is(err, ErrRawInput):
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"%v; enable betterglobekey under System Settings > Privacy & Security > Input Monitoring", err)

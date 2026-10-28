@@ -22,8 +22,11 @@ function mockApi(overrides: Partial<Api> = {}): Api {
   return {
     getConfig: vi.fn(() => Promise.resolve(validConfig)),
     listInputSources: vi.fn(() => Promise.resolve(sources)),
-    listKeyboards: vi.fn(() => Promise.resolve({ keyboards: [], systemMappings: [] })),
+    listKeyboards: vi.fn(() =>
+      Promise.resolve({ keyboards: [], systemMappings: [], inputMonitoringGranted: true, executable: '' }),
+    ),
     recordKey: vi.fn(() => Promise.resolve({ key: 'caps_lock', keyName: 'Caps Lock', keyboardId: '' })),
+    openInputMonitoringSettings: vi.fn(() => Promise.resolve()),
     getVersion: vi.fn(() => Promise.resolve(version)),
     getCompanionVersion: vi.fn(() => Promise.resolve('4.1.0')),
     applyConfig: vi.fn(() => Promise.resolve()),

@@ -12,6 +12,7 @@ import (
 	"github.com/Serpentiel/betterglobekey/internal/infra/keymap"
 	"github.com/Serpentiel/betterglobekey/internal/infra/logging"
 	"github.com/Serpentiel/betterglobekey/pkg/hidkeymap"
+	"github.com/Serpentiel/betterglobekey/pkg/inputmonitoring"
 )
 
 // ioReturnNotPermitted is kIOReturnNotPermitted, what opening raw input fails
@@ -96,6 +97,15 @@ func (p keyboardsPort) Keyboards(trigger domainconfig.Trigger) ([]keymap.Status,
 }
 
 func (keyboardsPort) Record(ctx context.Context, keyboardID string) (control.RecordedKey, error) {
+	// Without Input Monitoring raw input still opens, but passes only a few
+	// keys, so a recording would wait for keys it never sees. Ask for it, which
+	// lists betterglobekey under Input Monitoring, and fail at once instead.
+	if !inputmonitoring.Granted() {
+		inputmonitoring.Request()
+
+		return control.RecordedKey{}, control.ErrInputMonitoring
+	}
+
 	key, err := keyboard.Record(ctx, func(key keyboard.RecordedKey) bool {
 		return keyboardID == "" || domainconfig.KeyboardID(key.Vendor, key.Product) == keyboardID
 	})

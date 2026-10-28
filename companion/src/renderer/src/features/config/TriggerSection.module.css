@@ -75,3 +75,20 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
+
+.noticeTitle {
+  font-weight: 600;
+}
+
+.noticeText {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+  word-break: break-all;
+}

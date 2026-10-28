@@ -80,6 +80,10 @@ export interface Keyboard {
 export interface KeyboardReport {
   keyboards: Keyboard[]
   systemMappings: KeyMapping[]
+  /** inputMonitoringGranted reports whether the service holds Input Monitoring, which recording keys and a keyboard's own trigger keys need. */
+  inputMonitoringGranted: boolean
+  /** executable is the service's binary: what to add under Input Monitoring when macOS does not list it. */
+  executable: string
 }
 
 export interface RecordedKey {
@@ -102,6 +106,7 @@ export interface Api {
   listInputSources: () => Promise<InputSource[]>
   listKeyboards: () => Promise<KeyboardReport>
   recordKey: (keyboardId: string) => Promise<RecordedKey>
+  openInputMonitoringSettings: () => Promise<void>
   getVersion: () => Promise<Version>
   getCompanionVersion: () => Promise<string>
 }

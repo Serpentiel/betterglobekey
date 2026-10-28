@@ -11,6 +11,7 @@ export const api: Api = {
   listInputSources: () => invoke('list_input_sources'),
   listKeyboards: () => invoke('list_keyboards'),
   recordKey: (keyboardId: string) => invoke('record_key', { keyboardId }),
+  openInputMonitoringSettings: () => invoke('open_input_monitoring_settings'),
   getVersion: () => invoke('get_version'),
   getCompanionVersion,
 }

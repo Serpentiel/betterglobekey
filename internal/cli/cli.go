@@ -223,8 +223,9 @@ func newSwitcherBuilder(
 		keyboard.SetGlobe(c.Trigger.Globe)
 
 		if readsRawInput(c.Trigger) && !inputmonitoring.Granted() {
-			logger.Error("input monitoring permission not granted; dedicated and passed-through trigger keys are " +
+			logger.Error("input monitoring permission not granted; trigger keys other than the Globe key are " +
 				"ignored until it is enabled in System Settings > Privacy & Security > Input Monitoring")
+			inputmonitoring.Request()
 		}
 
 		if err := remapper.Apply(c.Trigger); err != nil {
@@ -281,9 +282,16 @@ func watchConfig(
 	}
 }
 
-// permissions reports the macOS permissions this process holds.
+// permissions reports the macOS permissions this process holds, and the binary
+// they are granted to.
 func permissions() control.Permissions {
-	return control.Permissions{Accessibility: accessibility.Trusted(), InputMonitoring: inputmonitoring.Granted()}
+	executable, _ := os.Executable()
+
+	return control.Permissions{
+		Accessibility:   accessibility.Trusted(),
+		InputMonitoring: inputmonitoring.Granted(),
+		Executable:      executable,
+	}
 }
 
 // startControlServer launches the local gRPC control server on a background
@@ -623,8 +631,8 @@ func inputMonitoringStatusLine(granted bool) string {
 		return "input monitoring: granted"
 	}
 
-	return "input monitoring: not granted (trigger keys other than the Globe key need it; enable in " +
-		"System Settings > Privacy & Security > Input Monitoring, then restart the service)"
+	return "input monitoring: not granted (recording keys and trigger keys other than the Globe key need it; " +
+		"enable in System Settings > Privacy & Security > Input Monitoring)"
 }
 
 // newRemapper returns the trigger key remapper backed by the system's HID key

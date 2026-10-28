@@ -61,7 +61,12 @@ impl ConfigService for Stub {
     ) -> Result<Response<ListKeyboardsResponse>, Status> {
         let keyboard = Keyboard { id: "046d:c33f".into(), name: "Logitech".into(), listed: true, ..Default::default() };
 
-        Ok(Response::new(ListKeyboardsResponse { keyboards: vec![keyboard], system_mappings: vec![] }))
+        Ok(Response::new(ListKeyboardsResponse {
+            keyboards: vec![keyboard],
+            system_mappings: vec![],
+            input_monitoring_granted: true,
+            executable: String::new(),
+        }))
     }
 
     async fn record_key(&self, request: Request<RecordKeyRequest>) -> Result<Response<RecordKeyResponse>, Status> {
