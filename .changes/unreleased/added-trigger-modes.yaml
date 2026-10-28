@@ -1,0 +1,3 @@
+kind: Added
+body: Each trigger key has a `mode`. `dedicated`, the default, silences the key so it only switches input sources, remapping it on its own keyboard while the service runs; stopping the service puts it back. `pass_through` keeps the key's normal function and switches only when the key is pressed on its own.
+time: 2026-10-28T10:00:01.000000+02:00
