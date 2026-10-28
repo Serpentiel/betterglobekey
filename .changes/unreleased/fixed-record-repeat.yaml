@@ -1,3 +1,0 @@
-kind: Fixed
-body: Recording a key in the companion works more than once, not only until raw keyboard input closes and reopens.
-time: 2026-10-28T19:00:01.000000+02:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: The service asks for Input Monitoring when recording a key or a keyboard's own trigger keys need it, and picks it up once granted, without a restart. While it is off, recording fails at once with the reason instead of waiting for a key that never arrives, and the companion shows a notice that opens its settings and names the binary to add.
-time: 2026-10-28T19:00:02.000000+02:00
