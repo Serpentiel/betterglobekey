@@ -1,3 +1,0 @@
-kind: Added
-body: The companion's Trigger Keys section lists every connected keyboard with its trigger keys and turns the Globe key on or off. Click a key, or +, and press the key to record it. Keys are read straight from the keyboard, so Print Screen and Insert are told apart from the keys macOS reports them as, and a key already remapped records as itself. Keys set for keyboards that are not connected, and key mappings other tools have made, are listed too.
-time: 2026-10-28T10:00:03.000000+02:00

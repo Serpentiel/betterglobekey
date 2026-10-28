@@ -1,3 +1,0 @@
-kind: Added
-body: "`trigger.globe: false` turns the Globe key off, on every keyboard at once, for when other keys do the switching. macOS cannot tell which keyboard a Globe press came from, so it is one setting for all of them."
-time: 2026-10-28T10:00:02.000000+02:00

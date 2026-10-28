@@ -1,2 +1,0 @@
-kind: Fixed
-body: A configuration reload that was still pending when the service shut down no longer runs after shutdown.

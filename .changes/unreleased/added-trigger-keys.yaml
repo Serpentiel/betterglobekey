@@ -1,3 +1,0 @@
-kind: Added
-body: Each keyboard can switch input sources with trigger keys of its own besides the Globe key, as many as you like, such as Caps Lock, Right Command, F13, or Insert. List them under `trigger.keyboards` by the keyboard's vendor and product ID. They are read straight from the keyboard, which needs the Input Monitoring permission; `doctor` reports whether it is granted.
-time: 2026-10-28T10:00:00.000000+02:00
