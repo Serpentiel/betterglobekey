@@ -1,0 +1,4 @@
+[     626ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=3147e647:15804
+[     779ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[   30872ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/@fs/home/user/src/github.com/Serpentiel/betterglobekey/companion/node_modules/.vite/deps/react-dom_client.js?v=3147e647:15804
+[   37556ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:1082

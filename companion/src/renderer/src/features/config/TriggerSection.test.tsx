@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { Config, Keyboard } from '../../../../shared/types'
+import type { Config, Keyboard, KeyboardReport, KeyboardTrigger } from '../../../../shared/types'
 import type { KeyboardsState } from '../../hooks/useKeyboards'
 import type { ConfigErrors } from '../../lib/config-schema'
 import { TriggerSection } from './TriggerSection'
@@ -20,68 +20,142 @@ const config: Config = {
 
 const noErrors: ConfigErrors = { logger: {}, doublePress: {}, reverse: {}, hud: {}, collections: {}, trigger: {} }
 
-const keyboard = (id: string, hasGlobe: boolean): Keyboard => ({
-  id,
-  name: id,
-  transport: 'USB',
-  builtIn: false,
-  hasGlobe,
-  trigger: { key: 'globe', mode: 'dedicated' },
+const globe: KeyboardTrigger = { key: 'globe', mode: 'dedicated' }
+const capsDedicated: KeyboardTrigger = { key: 'caps_lock', mode: 'dedicated' }
+const capsSilenced = { src: 0x700000039, dst: 0x700000073, srcName: 'Caps Lock', dstName: 'F24' }
+const graveToEscape = { src: 0x700000035, dst: 0x700000029, srcName: 'Grave Accent', dstName: 'Escape' }
+
+const builtIn: Keyboard = {
+  id: '05ac:0281',
+  name: 'Apple Internal Keyboard',
+  transport: 'SPI',
+  builtIn: true,
+  hasGlobe: true,
+  trigger: globe,
   listed: false,
   triggerMapping: null,
   otherMappings: [],
-})
-
-const twoKeyboards: KeyboardsState = {
-  report: { keyboards: [keyboard('05ac:0281', true), keyboard('046d:c33f', false)], systemMappings: [] },
-  error: null,
 }
 
-function renderSection(trigger: Partial<Config['trigger']> = {}, keyboards: KeyboardsState = twoKeyboards) {
+const logitech: Keyboard = {
+  id: '046d:c33f',
+  name: 'Logitech K120',
+  transport: 'USB',
+  builtIn: false,
+  hasGlobe: false,
+  trigger: capsDedicated,
+  listed: false,
+  triggerMapping: capsSilenced,
+  otherMappings: [graveToEscape],
+}
+
+const report: KeyboardReport = { keyboards: [builtIn, logitech], systemMappings: [graveToEscape] }
+
+function renderSection(trigger: Partial<Config['trigger']> = {}, state: KeyboardsState = { report, error: null }) {
   const onChange = vi.fn()
   const merged = { ...config.trigger, ...trigger }
 
   render(
-    <TriggerSection
-      config={{ ...config, trigger: merged }}
-      errors={noErrors}
-      keyboards={keyboards}
-      onChange={onChange}
-    />,
+    <TriggerSection config={{ ...config, trigger: merged }} errors={noErrors} keyboards={state} onChange={onChange} />,
   )
 
   return { onChange, trigger: merged }
 }
 
+const row = (name: string) => within(screen.getByRole('group', { name }))
+
 afterEach(cleanup)
 
 describe('TriggerSection', () => {
-  it('summarizes the keyboards and opens the sheet', () => {
-    renderSection({ keyboards: { '046d:c33f': { key: 'insert', mode: 'pass_through' } } })
+  it('lists every keyboard inline, a Globe keyboard on its Globe key without a mode', () => {
+    renderSection()
 
-    expect(screen.getByText('2 keyboards connected; 1 set their own trigger key.')).toBeTruthy()
-    expect(screen.queryByRole('dialog')).toBeNull()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Keyboards…' }))
-    expect(screen.getByRole('dialog', { name: 'Keyboards' })).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281')).toBeTruthy()
+    expect(row('Apple Internal Keyboard').getByText('🌐 Globe')).toBeTruthy()
+    expect(row('Apple Internal Keyboard').queryByRole('combobox', { name: 'Mode' })).toBeNull()
+    expect(screen.getByRole('group', { name: 'Logitech K120' })).toBeTruthy()
   })
 
-  it('reports loading and errors', () => {
+  it('leaves a keyboard without a Globe key unassigned, with Clear instead of Use Globe', () => {
+    renderSection()
+
+    expect(row('Logitech K120').getByText('None')).toBeTruthy()
+    expect(row('Logitech K120').queryByRole('button', { name: 'Use Globe' })).toBeNull()
+    expect((row('Logitech K120').getByRole('button', { name: 'Clear' }) as HTMLButtonElement).disabled).toBe(true)
+
+    cleanup()
+
+    const { onChange, trigger } = renderSection({ keyboards: { '046d:c33f': capsDedicated } })
+    fireEvent.click(row('Logitech K120').getByRole('button', { name: 'Clear' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
+  it('shows a keyboard with its applied mapping', () => {
+    renderSection({ keyboards: { '046d:c33f': capsDedicated } })
+
+    expect(row('Logitech K120').getByText('USB · 046d:c33f · Caps Lock silenced')).toBeTruthy()
+    expect(row('Logitech K120').getByText('⇪ Caps Lock')).toBeTruthy()
+  })
+
+  it('sets a keyboard its own mode', () => {
+    const { onChange, trigger } = renderSection({ keyboards: { '046d:c33f': { key: 'insert', mode: 'dedicated' } } })
+
+    fireEvent.click(row('Logitech K120').getByRole('combobox', { name: 'Mode' }))
+    fireEvent.click(screen.getByRole('option', { name: "Keep the key's function" }))
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...config,
+      trigger: { ...trigger, keyboards: { '046d:c33f': { key: 'insert', mode: 'pass_through' } } },
+    })
+  })
+
+  it('puts a listed keyboard back on the Globe key', () => {
+    const insert = { key: 'insert', mode: 'pass_through' }
+    const { onChange, trigger } = renderSection({ keyboards: { '05ac:0281': insert } })
+
+    expect(row('Apple Internal Keyboard').getByText('Insert')).toBeTruthy()
+    expect(row('Apple Internal Keyboard').getByText('Built-in · 05ac:0281 · applies once saved')).toBeTruthy()
+
+    fireEvent.click(row('Apple Internal Keyboard').getByRole('button', { name: 'Use Globe' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
+  it('notes that the Globe key still switches while another keyboard switches with it', () => {
+    renderSection({ keyboards: { '05ac:0281': capsDedicated, '046d:c33f': globe } })
+
+    expect(row('Apple Internal Keyboard').getByText(/The Globe key still switches here/)).toBeTruthy()
+  })
+
+  it('folds keyboards set here that are not connected, and forgets them', () => {
+    const { onChange, trigger } = renderSection({ keyboards: { '1234:5678': { key: 'insert', mode: 'dedicated' } } })
+
+    expect(screen.getByText('Other keyboards (1)')).toBeTruthy()
+    expect(screen.getByText('Insert, switch input sources only · applies when connected')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forget' }))
+    expect(onChange).toHaveBeenCalledWith({ ...config, trigger: { ...trigger, keyboards: {} } })
+  })
+
+  it('shows other tools’ mappings behind a disclosure', () => {
+    renderSection()
+
+    expect(screen.getByText('Mappings from other tools')).toBeTruthy()
+    expect(screen.getAllByText('Grave Accent → Escape')).toHaveLength(2)
+    expect(screen.getByText('Every keyboard')).toBeTruthy()
+  })
+
+  it('reports loading, errors and no keyboards', () => {
     renderSection({}, { report: null, error: null })
     expect(screen.getByText('Checking connected keyboards…')).toBeTruthy()
 
     cleanup()
 
     renderSection({}, { report: null, error: 'daemon gone' })
-    expect(screen.getByText('Unavailable: daemon gone')).toBeTruthy()
-  })
+    expect(screen.getByText('Keyboards unavailable: daemon gone')).toBeTruthy()
 
-  it('counts a single keyboard', () => {
-    renderSection({}, { report: { keyboards: [keyboard('046d:c33f', false)], systemMappings: [] }, error: null })
+    cleanup()
 
-    expect(screen.getByText('1 keyboard connected.')).toBeTruthy()
+    renderSection({}, { report: { keyboards: [], systemMappings: [] }, error: null })
+    expect(screen.getByText('No keyboards connected.')).toBeTruthy()
   })
 })

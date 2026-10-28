@@ -155,7 +155,7 @@ describe('ConfigEditor', () => {
   it('names the trigger key', async () => {
     render(<ConfigEditor controller={makeController()} />)
 
-    expect(await screen.findByText('0 keyboards connected.')).toBeTruthy()
+    expect(await screen.findByText('No keyboards connected.')).toBeTruthy()
 
     expect(screen.getByText('How the trigger key responds to presses.')).toBeTruthy()
     expect(screen.getByText('Ordered groups of input sources the trigger key cycles through.')).toBeTruthy()

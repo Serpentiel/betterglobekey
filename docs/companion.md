@@ -23,11 +23,12 @@ service, so building collections is a matter of picking from a list rather than 
 
 1. Make sure the **betterglobekey** service is running (see [Getting Started](getting-started.md)).
 2. Launch the companion application.
-3. Edit your settings. Under **Trigger Key**, **Keyboards…** opens a sheet that sets each keyboard's trigger key and
-   how it works: switch input sources only, or keep its normal function too. It
-   also lists the key mappings other tools have set. **Record** reads the next key you press straight from the
-   keyboard, so a remapped key records as itself; it needs Input Monitoring. **Use Globe** puts a keyboard back on its
-   Globe key; on a keyboard without one, **Clear** leaves it without a trigger key.
+3. Edit your settings. **Trigger Key** lists each connected keyboard with its trigger key; once a key other than the
+   Globe key is set, **Mode** chooses how it works: switch input sources only, or keep its normal function too.
+   Keyboards set but not connected fold under **Other keyboards**, and key mappings other tools have set under
+   **Mappings from other tools**. **Record** reads the next key you press straight from the keyboard, so a remapped key
+   records as itself; it needs Input Monitoring. **Use Globe** puts a keyboard back on its Globe key; on a keyboard
+   without one, **Clear** leaves it without a trigger key.
 4. Click **Save**. The change is validated, written, and applied immediately.
 
 If a setting is invalid (for example, a malformed double-press delay), the save is rejected and the existing
