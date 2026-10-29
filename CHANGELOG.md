@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the changelog is generated
 with [Changie](https://github.com/miniscruff/changie).
 
+## [4.3.2](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.3.2) - 2026-10-29
+
+### Fixed
+
+- Accessibility is the only permission to grant. macOS grants the Input Monitoring that recording keys and a keyboard's own trigger keys need along with it, as soon as the service asks, so recording a key no longer fails the first time. The companion's Input Monitoring notice, the doctor's Input Monitoring line and the control API's Input Monitoring fields are gone; update the companion along with the service, as an older one shows its Input Monitoring notice against this service.
+- The companion shows why a key can't be recorded across the whole keyboard row instead of squeezed under the keys.
+
 ## [4.3.1](https://github.com/Serpentiel/betterglobekey/releases/tag/v4.3.1) - 2026-10-28
 
 ### Fixed
