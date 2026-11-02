@@ -50,7 +50,7 @@ lint:
     - stylelint@17.16.0
     - clang-format@20.1.0
     - actionlint@1.7.12
-    - checkov@3.3.30
+    - checkov@3.4.3
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint2@2.15.0
