@@ -56,21 +56,22 @@ reported to betterglobekey privately, to minimize attacks against current users 
 Vulnerabilities will be investigated and patched on the next patch or minor release as soon as possible. This
 information could be kept entirely internal to the project.
 
-If you know of a publicly disclosed security vulnerability for betterglobekey, please **IMMEDIATELY** contact us via any
-contact method available to you to inform our team.
+If you know of a publicly disclosed security vulnerability for betterglobekey, please **IMMEDIATELY** report it through
+a [private security advisory](https://github.com/Serpentiel/betterglobekey/security/advisories/new) to inform our team.
 
 > **N.B.** Do not file public issues on GitHub for security vulnerabilities.
 
-To report a vulnerability or a security-related issue, please contact us via any contact method available to you with
-the details of the vulnerability. The message will be fielded by our team, which is made up of betterglobekey
-maintainers who have committer and release permissions. Messages will be addressed within 3 business days, including a
-detailed plan to investigate the issue and any potential workarounds to perform in the meantime. Do not report
-non-security-impacting bugs through this channel.
+To report a vulnerability or a security-related issue, please open a [private security
+advisory](https://github.com/Serpentiel/betterglobekey/security/advisories/new) with the details of the vulnerability.
+Only you and our team can see it. The report will be fielded by our team, which is made up of betterglobekey maintainers
+who have committer and release permissions. Reports will be addressed within 3 business days, including a detailed plan
+to investigate the issue and any potential workarounds to perform in the meantime. Do not report non-security-impacting
+bugs through this channel.
 Use [GitHub Issues](https://github.com/Serpentiel/betterglobekey/issues/new/choose) instead.
 
 ### Proposed Message Content
 
-Please, include the following information to your message:
+Please, include the following information in your report:
 
 - Basic identity information, such as your name and your affiliation or company
 - Detailed steps to reproduce the vulnerability, e.g. PoC, screenshots, depending on what seems relevant
